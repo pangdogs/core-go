@@ -21,10 +21,6 @@ func (h *Hook) InitHook(rt internal.Runtime) {
 	h.id = rt.GetApp().(AppWhole).MakeUID()
 }
 
-func (h *Hook) BindEvent(eventSrc EventSource) {
-
-}
-
 func (h *Hook) GetHookID() uint64 {
 	return h.id
 }
