@@ -55,6 +55,10 @@ func (app *App) InitApp(ctx internal.Context, opts *AppOptions) {
 
 	app.InitRunnable()
 	app.Context = ctx
+
+	if app.initFunc != nil {
+		app.initFunc()
+	}
 }
 
 func (app *App) Run() chan struct{} {

@@ -83,10 +83,6 @@ func (e *Entity) Destroy() {
 		e.RemoveComponent(component.GetName())
 		return true
 	})
-
-	if e.destroyFunc != nil {
-		e.destroyFunc()
-	}
 }
 
 func (e *Entity) GetEntityID() uint64 {
@@ -224,10 +220,6 @@ func (e *Entity) CallUpdate() {
 		return
 	}
 
-	if e.updateFunc != nil {
-		e.updateFunc()
-	}
-
 	e.RangeComponents(func(component internal.Component) bool {
 		if cs, ok := component.(internal.ComponentUpdate); ok {
 			cs.Update()
@@ -239,10 +231,6 @@ func (e *Entity) CallUpdate() {
 func (e *Entity) CallLateUpdate() {
 	if e.destroyed {
 		return
-	}
-
-	if e.lateUpdateFunc != nil {
-		e.lateUpdateFunc()
 	}
 
 	e.RangeComponents(func(component internal.Component) bool {

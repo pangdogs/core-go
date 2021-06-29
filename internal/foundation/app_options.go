@@ -6,6 +6,7 @@ var NewAppOption = &NewAppOptions{}
 
 type AppOptions struct {
 	inheritor internal.App
+	initFunc  func()
 }
 
 type NewAppOptionFunc func(o *AppOptions)
@@ -21,5 +22,11 @@ func (*NewAppOptions) Default() NewAppOptionFunc {
 func (*NewAppOptions) Inheritor(v internal.App) NewAppOptionFunc {
 	return func(o *AppOptions) {
 		o.inheritor = v
+	}
+}
+
+func (*NewAppOptions) InitFunc(v func()) NewAppOptionFunc {
+	return func(o *AppOptions) {
+		o.initFunc = v
 	}
 }

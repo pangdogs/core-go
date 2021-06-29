@@ -6,6 +6,7 @@ var NewRuntimeOption = &NewRuntimeOptions{}
 
 type RuntimeOptions struct {
 	inheritor         internal.Runtime
+	initFunc          func()
 	autoRun           bool
 	autoRecover       bool
 	safeCallCacheSize int
@@ -28,6 +29,12 @@ func (*NewRuntimeOptions) Default() NewRuntimeOptionFunc {
 func (*NewRuntimeOptions) Inheritor(v internal.Runtime) NewRuntimeOptionFunc {
 	return func(o *RuntimeOptions) {
 		o.inheritor = v
+	}
+}
+
+func (*NewRuntimeOptions) InitFunc(v func()) NewRuntimeOptionFunc {
+	return func(o *RuntimeOptions) {
+		o.initFunc = v
 	}
 }
 

@@ -74,6 +74,10 @@ func (rt *Runtime) InitRuntime(ctx internal.Context, app internal.App, opts *Run
 	rt.entityList.Init()
 	rt.entityMap = map[uint64]*list.Element{}
 
+	if rt.initFunc != nil {
+		rt.initFunc()
+	}
+
 	if opts.autoRun {
 		rt.Run()
 	}
