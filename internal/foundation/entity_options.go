@@ -6,7 +6,8 @@ var NewEntityOption = &NewEntityOptions{}
 
 type EntityOptions struct {
 	inheritor internal.Entity
-	initFunc  func()
+	initFunc,
+	shutFunc func()
 }
 
 type NewEntityOptionFunc func(o *EntityOptions)
@@ -28,5 +29,11 @@ func (*NewEntityOptions) Inheritor(v internal.Entity) NewEntityOptionFunc {
 func (*NewEntityOptions) InitFunc(v func()) NewEntityOptionFunc {
 	return func(o *EntityOptions) {
 		o.initFunc = v
+	}
+}
+
+func (*NewEntityOptions) ShutFunc(v func()) NewEntityOptionFunc {
+	return func(o *EntityOptions) {
+		o.shutFunc = v
 	}
 }

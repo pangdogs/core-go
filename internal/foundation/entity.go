@@ -83,6 +83,10 @@ func (e *Entity) Destroy() {
 		e.RemoveComponent(component.GetName())
 		return true
 	})
+
+	if e.shutFunc != nil {
+		e.shutFunc()
+	}
 }
 
 func (e *Entity) GetEntityID() uint64 {
