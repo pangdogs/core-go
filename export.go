@@ -13,6 +13,8 @@ type App = internal.App
 
 var NewApp = foundation.NewApp
 
+type AppInheritorFoundation = foundation.AppInheritor
+
 type Runtime = internal.Runtime
 
 var NewRuntime = foundation.NewRuntime

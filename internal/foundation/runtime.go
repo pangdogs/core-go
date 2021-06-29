@@ -57,9 +57,16 @@ func (rt *Runtime) InitRuntime(ctx internal.Context, app internal.App, opts *Run
 		panic("nil opts")
 	}
 
+	rt.RuntimeOptions = *opts
+
+	if rt.inheritor != nil {
+		rt.inheritor.(RuntimeInheritorWhole).initRuntimeInheritor(rt)
+	} else {
+		rt.inheritor = rt
+	}
+
 	rt.InitRunnable()
 	rt.Context = ctx
-	rt.RuntimeOptions = *opts
 	rt.id = app.(AppWhole).MakeUID()
 	rt.app = app
 	rt.safeCallList = make(chan *SafeCallBundle)

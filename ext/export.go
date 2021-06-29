@@ -12,6 +12,10 @@ type AppWhole = foundation.AppWhole
 
 type AppFoundation = foundation.App
 
+type AppOptions = foundation.AppOptions
+
+type NewAppOptionFunc = foundation.NewAppOptionFunc
+
 type RuntimeWhole = foundation.RuntimeWhole
 
 type RuntimeFoundation = foundation.Runtime

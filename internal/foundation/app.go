@@ -8,29 +8,49 @@ import (
 
 type AppWhole interface {
 	internal.App
-	InitApp(ctx internal.Context)
+	InitApp(ctx internal.Context, opts *AppOptions)
 	MakeUID() uint64
 	AddEntity(entity internal.Entity)
 	RemoveEntity(entID uint64)
 	RangeEntities(func(entity internal.Entity) bool)
 }
 
-func NewApp(ctx internal.Context) internal.App {
+func NewApp(ctx internal.Context, optFuns ...NewAppOptionFunc) internal.App {
 	app := &App{}
-	app.InitApp(ctx)
+
+	opts := &AppOptions{}
+	for _, optFun := range append([]NewAppOptionFunc{NewAppOption.Default()}, optFuns...) {
+		optFun(opts)
+	}
+
+	app.InitApp(ctx, opts)
+
 	return app
 }
 
 type App struct {
 	Runnable
 	internal.Context
+	AppOptions
 	uidMaker  uint64
 	entityMap sync.Map
 }
 
-func (app *App) InitApp(ctx internal.Context) {
+func (app *App) InitApp(ctx internal.Context, opts *AppOptions) {
 	if ctx == nil {
 		panic("nil ctx")
+	}
+
+	if opts == nil {
+		panic("nil opts")
+	}
+
+	app.AppOptions = *opts
+
+	if app.inheritor != nil {
+		app.inheritor.(AppInheritorWhole).initAppInheritor(app)
+	} else {
+		app.inheritor = app
 	}
 
 	app.InitRunnable()
