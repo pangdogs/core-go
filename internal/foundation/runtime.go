@@ -190,6 +190,9 @@ func (rt *Runtime) Run() chan struct{} {
 			}
 
 			uptEntityFun := func() {
+				rt.frame.UpdateBegin()
+				defer rt.frame.UpdateEnd()
+
 				uptFun(func(entity EntityWhole) {
 					entity.CallUpdate()
 				})

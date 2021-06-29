@@ -7,6 +7,8 @@ type Frame interface {
 	GetCurFPS() float32
 	GetTotalFrames() uint64
 	GetCurFrames() uint64
-	GetCurBeginTime() time.Time
-	GetLastElapseTime() time.Duration
+	GetCurFrameBeginTime() time.Time
+	GetLastFrameElapseTime() time.Duration
+	GetCurUpdateBeginTime() time.Time
+	GetLastUpdateElapseTime() time.Duration
 }

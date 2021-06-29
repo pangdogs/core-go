@@ -10,9 +10,11 @@ type FrameWhole interface {
 	InitFrame(targetFPS float32, totalFrames uint64)
 	SetCurFrames(v uint64)
 	CycleBegin()
+	CycleEnd()
 	FrameBegin()
 	FrameEnd()
-	CycleEnd()
+	UpdateBegin()
+	UpdateEnd()
 }
 
 func NewFrame(targetFPS float32, totalFrames uint64) internal.Frame {
@@ -24,10 +26,12 @@ func NewFrame(targetFPS float32, totalFrames uint64) internal.Frame {
 type Frame struct {
 	targetFPS, curFPS      float32
 	totalFrames, curFrames uint64
-	curBeginTime           time.Time
-	lastElapseTime         time.Duration
-	statBeginTime          time.Time
-	statFrames             uint64
+	curFrameBeginTime      time.Time
+	lastFrameElapseTime    time.Duration
+	curUpdateBeginTime     time.Time
+	lastUpdateElapseTime   time.Duration
+	statFPSBeginTime       time.Time
+	statFPSFrames          uint64
 }
 
 func (f *Frame) InitFrame(targetFPS float32, totalFrames uint64) {
@@ -51,12 +55,20 @@ func (f *Frame) GetCurFrames() uint64 {
 	return f.curFrames
 }
 
-func (f *Frame) GetCurBeginTime() time.Time {
-	return f.curBeginTime
+func (f *Frame) GetCurFrameBeginTime() time.Time {
+	return f.curFrameBeginTime
 }
 
-func (f *Frame) GetLastElapseTime() time.Duration {
-	return f.lastElapseTime
+func (f *Frame) GetLastFrameElapseTime() time.Duration {
+	return f.lastFrameElapseTime
+}
+
+func (f *Frame) GetCurUpdateBeginTime() time.Time {
+	return f.curUpdateBeginTime
+}
+
+func (f *Frame) GetLastUpdateElapseTime() time.Duration {
+	return f.lastUpdateElapseTime
 }
 
 func (f *Frame) SetCurFrames(v uint64) {
@@ -64,31 +76,46 @@ func (f *Frame) SetCurFrames(v uint64) {
 }
 
 func (f *Frame) CycleBegin() {
-	f.statBeginTime = time.Now()
-	f.statFrames = 0
+	now := time.Now()
+
 	f.curFPS = 0
 	f.curFrames = 0
-	f.curBeginTime = f.statBeginTime
-	f.lastElapseTime = 0
+
+	f.statFPSBeginTime = now
+	f.statFPSFrames = 0
+
+	f.curFrameBeginTime = now
+	f.lastFrameElapseTime = 0
+
+	f.curUpdateBeginTime = now
+	f.lastUpdateElapseTime = 0
+}
+
+func (f *Frame) CycleEnd() {
 }
 
 func (f *Frame) FrameBegin() {
 	now := time.Now()
 
-	statInterval := now.Sub(f.statBeginTime).Seconds()
+	statInterval := now.Sub(f.statFPSBeginTime).Seconds()
 	if statInterval >= 1 {
-		f.curFPS = float32(float64(f.statFrames) / statInterval)
-		f.statBeginTime = now
-		f.statFrames = 0
+		f.curFPS = float32(float64(f.statFPSFrames) / statInterval)
+		f.statFPSBeginTime = now
+		f.statFPSFrames = 0
 	}
 
-	f.curBeginTime = now
+	f.curFrameBeginTime = now
 }
 
 func (f *Frame) FrameEnd() {
-	f.lastElapseTime = time.Now().Sub(f.curBeginTime)
-	f.statFrames++
+	f.lastFrameElapseTime = time.Now().Sub(f.curFrameBeginTime)
+	f.statFPSFrames++
 }
 
-func (f *Frame) CycleEnd() {
+func (f *Frame) UpdateBegin() {
+	f.curUpdateBeginTime = time.Now()
+}
+
+func (f *Frame) UpdateEnd() {
+	f.lastUpdateElapseTime = time.Now().Sub(f.curUpdateBeginTime)
 }
