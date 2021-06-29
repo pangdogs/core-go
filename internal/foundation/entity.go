@@ -26,7 +26,7 @@ func NewEntity(rt internal.Runtime, optFuns ...NewEntityOptionFunc) internal.Ent
 
 	e.InitEntity(rt, opts)
 
-	return e
+	return e.inheritor
 }
 
 type Entity struct {

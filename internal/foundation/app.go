@@ -25,7 +25,7 @@ func NewApp(ctx internal.Context, optFuns ...NewAppOptionFunc) internal.App {
 
 	app.InitApp(ctx, opts)
 
-	return app
+	return app.inheritor
 }
 
 type App struct {

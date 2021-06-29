@@ -27,7 +27,7 @@ func NewRuntime(ctx internal.Context, app internal.App, optFuns ...NewRuntimeOpt
 
 	rt.InitRuntime(ctx, app, opts)
 
-	return rt
+	return rt.inheritor
 }
 
 type Runtime struct {
