@@ -5,8 +5,10 @@ import "github.com/pangdogs/core/internal"
 var NewRuntimeOption = &NewRuntimeOptions{}
 
 type RuntimeOptions struct {
-	inheritor         internal.Runtime
-	initFunc          func()
+	inheritor internal.Runtime
+	initFunc,
+	startFunc,
+	stopFunc func()
 	autoRun           bool
 	autoRecover       bool
 	safeCallCacheSize int
@@ -35,6 +37,18 @@ func (*NewRuntimeOptions) Inheritor(v internal.Runtime) NewRuntimeOptionFunc {
 func (*NewRuntimeOptions) InitFunc(v func()) NewRuntimeOptionFunc {
 	return func(o *RuntimeOptions) {
 		o.initFunc = v
+	}
+}
+
+func (*NewRuntimeOptions) StartFunc(v func()) NewRuntimeOptionFunc {
+	return func(o *RuntimeOptions) {
+		o.startFunc = v
+	}
+}
+
+func (*NewRuntimeOptions) StopFunc(v func()) NewRuntimeOptionFunc {
+	return func(o *RuntimeOptions) {
+		o.stopFunc = v
 	}
 }
 

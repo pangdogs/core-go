@@ -75,10 +75,19 @@ func (app *App) Run() chan struct{} {
 			if parentCtx, ok := app.GetParentContext().(internal.Context); ok {
 				parentCtx.GetWaitGroup().Done()
 			}
+
 			app.GetWaitGroup().Wait()
 			app.MarkShutdown()
 			app.shutChan <- struct{}{}
+
+			if app.stopFunc != nil {
+				app.stopFunc()
+			}
 		}()
+
+		if app.startFunc != nil {
+			app.startFunc()
+		}
 
 		select {
 		case <-app.Done():

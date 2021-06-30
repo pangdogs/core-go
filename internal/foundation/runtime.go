@@ -158,13 +158,22 @@ func (rt *Runtime) Run() chan struct{} {
 			if parentCtx, ok := rt.GetParentContext().(internal.Context); ok {
 				parentCtx.GetWaitGroup().Done()
 			}
+
 			rt.GetWaitGroup().Wait()
 			rt.MarkShutdown()
 			rt.shutChan <- struct{}{}
+
+			if rt.stopFunc != nil {
+				rt.stopFunc()
+			}
 		}()
 
 		if rt.frameCreatorFunc == nil {
 			rt.frame = nil
+
+			if rt.startFunc != nil {
+				rt.startFunc()
+			}
 
 			for {
 				select {
@@ -281,6 +290,10 @@ func (rt *Runtime) Run() chan struct{} {
 				}
 
 				return true
+			}
+
+			if rt.startFunc != nil {
+				rt.startFunc()
 			}
 
 			rt.frame.CycleBegin()
