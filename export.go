@@ -39,6 +39,16 @@ type Component = internal.Component
 
 type ComponentFoundation = foundation.Component
 
+type ComponentAwake = internal.ComponentAwake
+
+type ComponentStart = internal.ComponentStart
+
+type ComponentUpdate = internal.ComponentUpdate
+
+type ComponentLateUpdate = internal.ComponentLateUpdate
+
+type ComponentDestroy = internal.ComponentDestroy
+
 type Hook = internal.Hook
 
 type HookFoundation = foundation.Hook
