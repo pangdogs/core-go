@@ -9,7 +9,6 @@ import (
 type AppWhole interface {
 	internal.App
 	InitApp(ctx internal.Context, opts *AppOptions)
-	MakeUID() uint64
 	AddEntity(entity internal.Entity)
 	RemoveEntity(entID uint64)
 	RangeEntities(func(entity internal.Entity) bool)
