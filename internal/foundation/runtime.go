@@ -103,7 +103,15 @@ func (rt *Runtime) Run() chan struct{} {
 				if rt.autoRecover {
 					defer func() {
 						if info := recover(); info != nil {
-							panic(info)
+							if err, ok := info.(error); ok {
+								if rt.reportError != nil {
+									rt.reportError <- err
+								}
+							} else {
+								if rt.reportError != nil {
+									rt.reportError <- fmt.Errorf("%v", info)
+								}
+							}
 						}
 					}()
 				}
@@ -120,8 +128,14 @@ func (rt *Runtime) Run() chan struct{} {
 					if info := recover(); info != nil {
 						if err, ok := info.(error); ok {
 							ret = internal.SafeRet{Err: err}
+							if rt.reportError != nil {
+								rt.reportError <- ret.Err
+							}
 						} else {
 							ret = internal.SafeRet{Err: fmt.Errorf("%v", info)}
+							if rt.reportError != nil {
+								rt.reportError <- ret.Err
+							}
 						}
 					}
 				}()

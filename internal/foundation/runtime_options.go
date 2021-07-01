@@ -11,6 +11,7 @@ type RuntimeOptions struct {
 	stopFunc func()
 	autoRun           bool
 	autoRecover       bool
+	reportError       chan error
 	safeCallCacheSize int
 	frameCreatorFunc  func() internal.Frame
 }
@@ -61,6 +62,12 @@ func (*NewRuntimeOptions) AutoRun(v bool) NewRuntimeOptionFunc {
 func (*NewRuntimeOptions) AutoRecover(v bool) NewRuntimeOptionFunc {
 	return func(o *RuntimeOptions) {
 		o.autoRecover = v
+	}
+}
+
+func (*NewRuntimeOptions) ReportError(v chan error) NewRuntimeOptionFunc {
+	return func(o *RuntimeOptions) {
+		o.reportError = v
 	}
 }
 
