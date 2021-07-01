@@ -7,7 +7,7 @@ import (
 
 type FrameWhole interface {
 	internal.Frame
-	InitFrame(targetFPS float32, totalFrames uint64)
+	InitFrame(targetFPS float32, totalFrames uint64, blink bool)
 	SetCurFrames(v uint64)
 	CycleBegin()
 	CycleEnd()
