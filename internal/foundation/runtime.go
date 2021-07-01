@@ -204,7 +204,7 @@ func (rt *Runtime) Run() chan struct{} {
 
 			var ticker *time.Ticker
 
-			if rt.frame.GetTargetFPS() > 0 {
+			if !rt.frame.IsBlink() {
 				ticker = time.NewTicker(time.Duration(float64(time.Second) / float64(rt.frame.GetTargetFPS())))
 				defer ticker.Stop()
 			}

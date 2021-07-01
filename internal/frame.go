@@ -7,6 +7,9 @@ type Frame interface {
 	GetCurFPS() float32
 	GetTotalFrames() uint64
 	GetCurFrames() uint64
+	IsBlink() bool
+	GetCycleBeginTime() time.Time
+	GetCycleElapseTime() time.Duration
 	GetCurFrameBeginTime() time.Time
 	GetLastFrameElapseTime() time.Duration
 	GetCurUpdateBeginTime() time.Time
