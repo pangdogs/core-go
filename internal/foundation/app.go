@@ -55,7 +55,7 @@ func (app *App) InitApp(ctx internal.Context, opts *AppOptions) {
 	app.InitRunnable()
 	app.Context = ctx
 
-	CallOuter(app.autoRecover, app.reportError, app.initFunc)
+	CallOuter(app.autoRecover, app.GetReportError(), app.initFunc)
 }
 
 func (app *App) Run() chan struct{} {
@@ -77,10 +77,10 @@ func (app *App) Run() chan struct{} {
 			app.MarkShutdown()
 			app.shutChan <- struct{}{}
 
-			CallOuter(app.autoRecover, app.reportError, app.stopFunc)
+			CallOuter(app.autoRecover, app.GetReportError(), app.stopFunc)
 		}()
 
-		CallOuter(app.autoRecover, app.reportError, app.startFunc)
+		CallOuter(app.autoRecover, app.GetReportError(), app.startFunc)
 
 		select {
 		case <-app.Done():

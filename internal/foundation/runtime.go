@@ -73,7 +73,7 @@ func (rt *Runtime) InitRuntime(ctx internal.Context, app internal.App, opts *Run
 	rt.entityList.Init()
 	rt.entityMap = map[uint64]*list.Element{}
 
-	CallOuter(rt.autoRecover, rt.reportError, rt.initFunc)
+	CallOuter(rt.autoRecover, rt.GetReportError(), rt.initFunc)
 
 	if opts.autoRun {
 		rt.Run()
@@ -98,7 +98,7 @@ func (rt *Runtime) Run() chan struct{} {
 					return true
 				}
 
-				CallOuter(rt.autoRecover, rt.reportError, func() {
+				CallOuter(rt.autoRecover, rt.GetReportError(), func() {
 					fun(entity.(EntityWhole))
 				})
 
@@ -107,7 +107,7 @@ func (rt *Runtime) Run() chan struct{} {
 		}
 
 		runSafeCallFun := func(safeCall *SafeCallBundle) (ret internal.SafeRet) {
-			exception := CallOuter(rt.autoRecover, rt.reportError, func() {
+			exception := CallOuter(rt.autoRecover, rt.GetReportError(), func() {
 				ret = safeCall.Fun()
 			})
 
@@ -159,7 +159,7 @@ func (rt *Runtime) Run() chan struct{} {
 		rt.frame = nil
 
 		if rt.frameCreatorFunc == nil {
-			CallOuter(rt.autoRecover, rt.reportError, rt.startFunc)
+			CallOuter(rt.autoRecover, rt.GetReportError(), rt.startFunc)
 
 			for {
 				select {
@@ -182,7 +182,7 @@ func (rt *Runtime) Run() chan struct{} {
 			}
 
 		} else {
-			CallOuter(rt.autoRecover, rt.reportError, func() {
+			CallOuter(rt.autoRecover, rt.GetReportError(), func() {
 				rt.frame = rt.frameCreatorFunc().(FrameWhole)
 			})
 
@@ -276,7 +276,7 @@ func (rt *Runtime) Run() chan struct{} {
 				return true
 			}
 
-			CallOuter(rt.autoRecover, rt.reportError, rt.startFunc)
+			CallOuter(rt.autoRecover, rt.GetReportError(), rt.startFunc)
 
 			rt.frame.CycleBegin()
 			defer rt.frame.CycleEnd()

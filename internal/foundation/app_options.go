@@ -10,7 +10,6 @@ type AppOptions struct {
 	startFunc,
 	stopFunc func()
 	autoRecover bool
-	reportError chan error
 }
 
 type NewAppOptionFunc func(o *AppOptions)
@@ -32,12 +31,6 @@ func (*NewAppOptions) Inheritor(v internal.App) NewAppOptionFunc {
 func (*NewAppOptions) AutoRecover(v bool) NewAppOptionFunc {
 	return func(o *AppOptions) {
 		o.autoRecover = v
-	}
-}
-
-func (*NewAppOptions) ReportError(v chan error) NewAppOptionFunc {
-	return func(o *AppOptions) {
-		o.reportError = v
 	}
 }
 
