@@ -101,7 +101,7 @@ func (e *Entity) IsDestroyed() bool {
 	return e.destroyed
 }
 
-func (e *Entity) AddComponent(name string, component internal.Component) error {
+func (e *Entity) AddComponent(name string, component interface{}) error {
 	if name == "" {
 		return errors.New("empty component name")
 	}

@@ -5,7 +5,7 @@ type Entity interface {
 	GetEntityID() uint64
 	GetRuntime() Runtime
 	IsDestroyed() bool
-	AddComponent(name string, component Component) error
+	AddComponent(name string, component interface{}) error
 	RemoveComponent(name string)
 	GetComponent(name string) Component
 	GetComponents(name string) []Component
