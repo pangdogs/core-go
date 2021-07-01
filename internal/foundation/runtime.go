@@ -9,7 +9,6 @@ import (
 
 type RuntimeWhole interface {
 	internal.Runtime
-	internal.GCRoot
 	internal.GC
 	InitRuntime(ctx internal.Context, app internal.App, opts *RuntimeOptions)
 	AddEntity(entity internal.Entity)
