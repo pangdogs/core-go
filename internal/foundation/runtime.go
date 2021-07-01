@@ -73,9 +73,7 @@ func (rt *Runtime) InitRuntime(ctx internal.Context, app internal.App, opts *Run
 	rt.entityList.Init()
 	rt.entityMap = map[uint64]*list.Element{}
 
-	if rt.initFunc != nil {
-		rt.initFunc()
-	}
+	CallOuter(rt.autoRecover, rt.reportError, rt.initFunc)
 
 	if opts.autoRun {
 		rt.Run()
@@ -100,47 +98,24 @@ func (rt *Runtime) Run() chan struct{} {
 					return true
 				}
 
-				if rt.autoRecover {
-					defer func() {
-						if info := recover(); info != nil {
-							if err, ok := info.(error); ok {
-								if rt.reportError != nil {
-									rt.reportError <- err
-								}
-							} else {
-								if rt.reportError != nil {
-									rt.reportError <- fmt.Errorf("%v", info)
-								}
-							}
-						}
-					}()
-				}
-
-				fun(entity.(EntityWhole))
+				CallOuter(rt.autoRecover, rt.reportError, func() {
+					fun(entity.(EntityWhole))
+				})
 
 				return true
 			})
 		}
 
 		runSafeCallFun := func(safeCall *SafeCallBundle) (ret internal.SafeRet) {
-			if rt.autoRecover {
-				defer func() {
-					if info := recover(); info != nil {
-						if err, ok := info.(error); ok {
-							ret = internal.SafeRet{Err: err}
-							if rt.reportError != nil {
-								rt.reportError <- ret.Err
-							}
-						} else {
-							ret = internal.SafeRet{Err: fmt.Errorf("%v", info)}
-							if rt.reportError != nil {
-								rt.reportError <- ret.Err
-							}
-						}
-					}
-				}()
+			exception := CallOuter(rt.autoRecover, rt.reportError, func() {
+				ret = safeCall.Fun()
+			})
+
+			if exception != nil {
+				ret.Err = exception
 			}
-			return safeCall.Fun()
+
+			return
 		}
 
 		defer func() {
@@ -181,12 +156,10 @@ func (rt *Runtime) Run() chan struct{} {
 			}
 		}()
 
-		if rt.frameCreatorFunc == nil {
-			rt.frame = nil
+		rt.frame = nil
 
-			if rt.startFunc != nil {
-				rt.startFunc()
-			}
+		if rt.frameCreatorFunc == nil {
+			CallOuter(rt.autoRecover, rt.reportError, rt.startFunc)
 
 			for {
 				select {
@@ -209,11 +182,9 @@ func (rt *Runtime) Run() chan struct{} {
 			}
 
 		} else {
-			if frame, ok := rt.frameCreatorFunc().(FrameWhole); ok {
-				rt.frame = frame
-			} else {
-				panic("incorrect frameCreatorFunc")
-			}
+			CallOuter(rt.autoRecover, rt.reportError, func() {
+				rt.frame = rt.frameCreatorFunc().(FrameWhole)
+			})
 
 			var ticker *time.Ticker
 
@@ -305,9 +276,7 @@ func (rt *Runtime) Run() chan struct{} {
 				return true
 			}
 
-			if rt.startFunc != nil {
-				rt.startFunc()
-			}
+			CallOuter(rt.autoRecover, rt.reportError, rt.startFunc)
 
 			rt.frame.CycleBegin()
 			defer rt.frame.CycleEnd()
