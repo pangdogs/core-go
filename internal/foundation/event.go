@@ -5,7 +5,7 @@ import (
 	"github.com/pangdogs/core/internal"
 )
 
-func BindEvent(hook internal.Hook, eventSrc internal.EventSource, priority ...int) error {
+func BindEvent(hook internal.Hook, eventSrc interface{}, priority ...int) error {
 	if hook == nil {
 		return errors.New("nil hook")
 	}
@@ -29,7 +29,7 @@ func BindEvent(hook internal.Hook, eventSrc internal.EventSource, priority ...in
 	return nil
 }
 
-func UnbindEvent(hook internal.Hook, eventSrc internal.EventSource) {
+func UnbindEvent(hook internal.Hook, eventSrc interface{}) {
 	if hook == nil || eventSrc == nil {
 		return
 	}
