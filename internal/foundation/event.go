@@ -63,7 +63,7 @@ func UnbindAllHook(eventSrc internal.EventSource) {
 	})
 }
 
-func SendEvent(eventSrc internal.EventSource, fun func(hook internal.Hook) bool) {
+func SendEvent(eventSrc interface{}, fun func(hook internal.Hook) bool) {
 	if eventSrc == nil || fun == nil {
 		return
 	}
