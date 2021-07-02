@@ -193,13 +193,15 @@ func (rt *Runtime) Run() chan struct{} {
 				defer ticker.Stop()
 			}
 
-			uptEntityFun := func() {
+			uptEntityFun := func(first bool) {
 				rt.frame.UpdateBegin()
 				defer rt.frame.UpdateEnd()
 
-				uptFun(func(entity EntityWhole) {
-					entity.CallStart()
-				})
+				if first {
+					uptFun(func(entity EntityWhole) {
+						entity.CallStart()
+					})
+				}
 
 				uptFun(func(entity EntityWhole) {
 					entity.CallUpdate()
@@ -216,7 +218,7 @@ func (rt *Runtime) Run() chan struct{} {
 				rt.GC()
 			}
 
-			loopFun := func() bool {
+			loopFun := func(first bool) bool {
 				if rt.frame.GetTotalFrames() > 0 {
 					if rt.frame.GetCurFrames() >= rt.frame.GetTotalFrames() {
 						return false
@@ -243,7 +245,7 @@ func (rt *Runtime) Run() chan struct{} {
 							rt.GC()
 
 						case <-ticker.C:
-							uptEntityFun()
+							uptEntityFun(first)
 							return true
 
 						case <-rt.Done():
@@ -271,7 +273,7 @@ func (rt *Runtime) Run() chan struct{} {
 							return false
 
 						default:
-							uptEntityFun()
+							uptEntityFun(first)
 							return true
 						}
 					}
@@ -285,10 +287,13 @@ func (rt *Runtime) Run() chan struct{} {
 			rt.frame.CycleBegin()
 			defer rt.frame.CycleEnd()
 
+			first := true
+
 			for rt.frame.SetCurFrames(0); ; rt.frame.SetCurFrames(rt.frame.GetCurFrames() + 1) {
-				if !loopFun() {
+				if !loopFun(first) {
 					return
 				}
+				first = false
 			}
 		}
 	}()
