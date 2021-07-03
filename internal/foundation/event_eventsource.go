@@ -9,6 +9,7 @@ import (
 type EventSourceWhole interface {
 	internal.EventSource
 	internal.GC
+	getRuntime() internal.Runtime
 	addHook(hook internal.Hook, priority ...int) error
 	removeHook(hookID uint64)
 	rangeHooks(fun func(hook internal.Hook, priority int) bool)
@@ -56,6 +57,10 @@ func (es *EventSource) InitEventSource(rt internal.Runtime) {
 
 func (es *EventSource) GetEventSourceID() uint64 {
 	return es.id
+}
+
+func (es *EventSource) getRuntime() internal.Runtime {
+	return es.runtime
 }
 
 func (es *EventSource) addHook(hook internal.Hook, priority ...int) error {

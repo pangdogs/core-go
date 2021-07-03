@@ -7,6 +7,7 @@ import (
 
 type HookWhole interface {
 	internal.Hook
+	getRuntime() internal.Runtime
 	attachEventSource(eventSrc internal.EventSource) error
 	detachEventSource(eventSrcID uint64)
 	rangeEventSources(fun func(eventSrc internal.EventSource) bool)
@@ -14,15 +15,21 @@ type HookWhole interface {
 
 type Hook struct {
 	id           uint64
+	runtime      internal.Runtime
 	eventSrcList []internal.EventSource
 }
 
 func (h *Hook) InitHook(rt internal.Runtime) {
 	h.id = rt.GetApp().(AppWhole).MakeUID()
+	h.runtime = rt
 }
 
 func (h *Hook) GetHookID() uint64 {
 	return h.id
+}
+
+func (h *Hook) getRuntime() internal.Runtime {
+	return h.runtime
 }
 
 func (h *Hook) attachEventSource(eventSrc internal.EventSource) error {
