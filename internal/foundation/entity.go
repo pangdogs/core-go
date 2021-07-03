@@ -16,11 +16,11 @@ type EntityWhole interface {
 	CallLateUpdate()
 }
 
-func NewEntity(rt internal.Runtime, optFuns ...NewEntityOptionFunc) internal.Entity {
+func NewEntity(rt internal.Runtime, optFuncs ...NewEntityOptionFunc) internal.Entity {
 	e := &Entity{}
 
 	opts := &EntityOptions{}
-	for _, optFun := range append([]NewEntityOptionFunc{NewEntityOption.Default()}, optFuns...) {
+	for _, optFun := range append([]NewEntityOptionFunc{NewEntityOption.Default()}, optFuncs...) {
 		optFun(opts)
 	}
 

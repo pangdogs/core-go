@@ -16,11 +16,11 @@ type RuntimeWhole interface {
 	RangeEntities(fun func(entity internal.Entity) bool)
 }
 
-func NewRuntime(ctx internal.Context, app internal.App, optFuns ...NewRuntimeOptionFunc) internal.Runtime {
+func NewRuntime(ctx internal.Context, app internal.App, optFuncs ...NewRuntimeOptionFunc) internal.Runtime {
 	rt := &Runtime{}
 
 	opts := &RuntimeOptions{}
-	for _, optFun := range append([]NewRuntimeOptionFunc{NewRuntimeOption.Default()}, optFuns...) {
+	for _, optFun := range append([]NewRuntimeOptionFunc{NewRuntimeOption.Default()}, optFuncs...) {
 		optFun(opts)
 	}
 
@@ -278,8 +278,6 @@ func (rt *Runtime) Run() chan struct{} {
 						}
 					}
 				}
-
-				return true
 			}
 
 			CallOuter(rt.autoRecover, rt.GetReportError(), rt.startFunc)

@@ -14,11 +14,11 @@ type AppWhole interface {
 	RangeEntities(func(entity internal.Entity) bool)
 }
 
-func NewApp(ctx internal.Context, optFuns ...NewAppOptionFunc) internal.App {
+func NewApp(ctx internal.Context, optFuncs ...NewAppOptionFunc) internal.App {
 	app := &App{}
 
 	opts := &AppOptions{}
-	for _, optFun := range append([]NewAppOptionFunc{NewAppOption.Default()}, optFuns...) {
+	for _, optFun := range append([]NewAppOptionFunc{NewAppOption.Default()}, optFuncs...) {
 		optFun(opts)
 	}
 
