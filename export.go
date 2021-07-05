@@ -23,6 +23,8 @@ var NewRuntime = foundation.NewRuntime
 
 var NewRuntimeOption = foundation.NewRuntimeOption
 
+type RuntimeInheritorFoundation = foundation.RuntimeInheritor
+
 type GC = internal.GC
 
 type Frame = internal.Frame
