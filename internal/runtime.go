@@ -7,5 +7,4 @@ type Runtime interface {
 	GetRuntimeID() uint64
 	GetApp() App
 	GetFrame() Frame
-	SafeCall(fun func() SafeRet) chan SafeRet
 }

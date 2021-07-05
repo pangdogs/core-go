@@ -64,13 +64,17 @@ func (es *EventSource) getRuntime() internal.Runtime {
 }
 
 func (es *EventSource) addHook(hook internal.Hook, priority ...int) error {
-	hb, err := NewHookBundle(hook, priority...)
-	if err != nil {
-		return err
+	if hook == nil {
+		return errors.New("nil hook")
 	}
 
 	if _, ok := es.hookMap[hook.GetHookID()]; ok {
 		return errors.New("hook id already exists")
+	}
+
+	hb, err := NewHookBundle(hook, priority...)
+	if err != nil {
+		return err
 	}
 
 	for e := es.hookList.Front(); e != nil; e = e.Next() {

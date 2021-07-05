@@ -69,4 +69,10 @@ var UnbindAllHook = foundation.UnbindAllHook
 
 var SendEvent = foundation.SendEvent
 
+type SafeStack = internal.SafeStack
+
+var NewSafeStack = foundation.NewSafeStack
+
 type SafeRet = internal.SafeRet
+
+var UnsafeCall = foundation.UnsafeCall

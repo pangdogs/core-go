@@ -1,7 +1,6 @@
 package foundation
 
 import (
-	"fmt"
 	"github.com/pangdogs/core/internal"
 	"github.com/pangdogs/core/internal/list"
 	"time"
@@ -14,6 +13,7 @@ type RuntimeWhole interface {
 	AddEntity(entity internal.Entity)
 	RemoveEntity(entID uint64)
 	RangeEntities(fun func(entity internal.Entity) bool)
+	PushSafeCall(callBundle *SafeCallBundle)
 }
 
 func NewRuntime(ctx internal.Context, app internal.App, optFuncs ...NewRuntimeOptionFunc) internal.Runtime {
@@ -106,9 +106,13 @@ func (rt *Runtime) Run() chan struct{} {
 			})
 		}
 
-		runSafeCallFun := func(safeCall *SafeCallBundle) (ret internal.SafeRet) {
+		runSafeCallFun := func(callBundle *SafeCallBundle) (ret internal.SafeRet) {
 			exception := CallOuter(rt.autoRecover, rt.GetReportError(), func() {
-				ret = safeCall.Fun()
+				if callBundle.Stack != nil {
+					ret = callBundle.SafeFun(callBundle.Stack)
+				} else {
+					ret = callBundle.UnsafeFun()
+				}
 			})
 
 			if exception != nil {
@@ -124,12 +128,12 @@ func (rt *Runtime) Run() chan struct{} {
 			func() {
 				for {
 					select {
-					case safeCall, ok := <-rt.safeCallList:
+					case callBundle, ok := <-rt.safeCallList:
 						if !ok {
 							return
 						}
 
-						safeCall.Ret <- runSafeCallFun(safeCall)
+						callBundle.Ret <- runSafeCallFun(callBundle)
 
 						uptFun(func(entity EntityWhole) {
 							entity.CallStart()
@@ -163,12 +167,12 @@ func (rt *Runtime) Run() chan struct{} {
 
 			for {
 				select {
-				case safeCall, ok := <-rt.safeCallList:
+				case callBundle, ok := <-rt.safeCallList:
 					if !ok {
 						return
 					}
 
-					safeCall.Ret <- runSafeCallFun(safeCall)
+					callBundle.Ret <- runSafeCallFun(callBundle)
 
 					uptFun(func(entity EntityWhole) {
 						entity.CallStart()
@@ -231,12 +235,12 @@ func (rt *Runtime) Run() chan struct{} {
 				if ticker != nil {
 					for {
 						select {
-						case safeCall, ok := <-rt.safeCallList:
+						case callBundle, ok := <-rt.safeCallList:
 							if !ok {
 								return false
 							}
 
-							safeCall.Ret <- runSafeCallFun(safeCall)
+							callBundle.Ret <- runSafeCallFun(callBundle)
 
 							uptFun(func(entity EntityWhole) {
 								entity.CallStart()
@@ -256,12 +260,12 @@ func (rt *Runtime) Run() chan struct{} {
 				} else {
 					for {
 						select {
-						case safeCall, ok := <-rt.safeCallList:
+						case callBundle, ok := <-rt.safeCallList:
 							if !ok {
 								return false
 							}
 
-							safeCall.Ret <- runSafeCallFun(safeCall)
+							callBundle.Ret <- runSafeCallFun(callBundle)
 
 							uptFun(func(entity EntityWhole) {
 								entity.CallStart()
@@ -315,29 +319,12 @@ func (rt *Runtime) GetFrame() internal.Frame {
 	return rt.frame
 }
 
-func (rt *Runtime) SafeCall(fun func() internal.SafeRet) (ret chan internal.SafeRet) {
-	safeCall, err := NewSafeCallBundle(fun)
-	if err != nil {
-		ret = make(chan internal.SafeRet, 1)
-		ret <- internal.SafeRet{Err: err}
-		return
+func (rt *Runtime) PushSafeCall(callBundle *SafeCallBundle) {
+	if callBundle == nil {
+		panic("nil callBundle")
 	}
 
-	ret = safeCall.Ret
-
-	defer func() {
-		if info := recover(); info != nil {
-			if err, ok := info.(error); ok {
-				ret <- internal.SafeRet{Err: err}
-			} else {
-				ret <- internal.SafeRet{Err: fmt.Errorf("%v", info)}
-			}
-		}
-	}()
-
-	rt.safeCallList <- safeCall
-
-	return
+	rt.safeCallList <- callBundle
 }
 
 func (rt *Runtime) PushGC(gc internal.GC) {
