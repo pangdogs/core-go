@@ -67,6 +67,13 @@ func (e *Entity) InitEntity(rt internal.Runtime, opts *EntityOptions) {
 	if e.initFunc != nil {
 		e.initFunc()
 	}
+
+	e.RangeComponents(func(component internal.Component) bool {
+		if cl, ok := component.(internal.ComponentEntityInit); ok {
+			cl.EntityInit()
+		}
+		return true
+	})
 }
 
 func (e *Entity) Destroy() {
@@ -78,6 +85,13 @@ func (e *Entity) Destroy() {
 
 	e.GetRuntime().GetApp().(AppWhole).RemoveEntity(e.id)
 	e.GetRuntime().(RuntimeWhole).RemoveEntity(e.id)
+
+	e.RangeComponents(func(component internal.Component) bool {
+		if cl, ok := component.(internal.ComponentEntityShut); ok {
+			cl.EntityShut()
+		}
+		return true
+	})
 
 	e.RangeComponents(func(component internal.Component) bool {
 		e.RemoveComponent(component.GetName())

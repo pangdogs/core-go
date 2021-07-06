@@ -45,11 +45,15 @@ type ComponentFoundation = foundation.Component
 
 type ComponentAwake = internal.ComponentAwake
 
+type ComponentEntityInit = internal.ComponentEntityInit
+
 type ComponentStart = internal.ComponentStart
 
 type ComponentUpdate = internal.ComponentUpdate
 
 type ComponentLateUpdate = internal.ComponentLateUpdate
+
+type ComponentEntityShut = internal.ComponentEntityShut
 
 type ComponentDestroy = internal.ComponentDestroy
 

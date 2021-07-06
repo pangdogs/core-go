@@ -9,6 +9,10 @@ type ComponentAwake interface {
 	Awake()
 }
 
+type ComponentEntityInit interface {
+	EntityInit()
+}
+
 type ComponentStart interface {
 	Start()
 }
@@ -19,6 +23,10 @@ type ComponentUpdate interface {
 
 type ComponentLateUpdate interface {
 	LateUpdate()
+}
+
+type ComponentEntityShut interface {
+	EntityShut()
 }
 
 type ComponentDestroy interface {
