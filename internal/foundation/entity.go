@@ -239,8 +239,10 @@ func (e *Entity) CallUpdate() {
 	}
 
 	e.RangeComponents(func(component internal.Component) bool {
-		if cs, ok := component.(internal.ComponentUpdate); ok {
-			cs.Update()
+		if component.(ComponentWhole).getStarted() {
+			if cs, ok := component.(internal.ComponentUpdate); ok {
+				cs.Update()
+			}
 		}
 		return true
 	})
@@ -252,8 +254,10 @@ func (e *Entity) CallLateUpdate() {
 	}
 
 	e.RangeComponents(func(component internal.Component) bool {
-		if cs, ok := component.(internal.ComponentLateUpdate); ok {
-			cs.LateUpdate()
+		if component.(ComponentWhole).getStarted() {
+			if cs, ok := component.(internal.ComponentLateUpdate); ok {
+				cs.LateUpdate()
+			}
 		}
 		return true
 	})
