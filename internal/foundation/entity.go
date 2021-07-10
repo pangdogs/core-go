@@ -32,8 +32,8 @@ type Entity struct {
 	id              uint64
 	runtime         internal.Runtime
 	destroyed       bool
-	componentList   list.List
 	componentMap    map[string]*list.Element
+	componentList   list.List
 	componentGCList []*list.Element
 }
 

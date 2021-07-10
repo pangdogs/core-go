@@ -31,14 +31,15 @@ type Runtime struct {
 	Runnable
 	internal.Context
 	RuntimeOptions
-	id           uint64
-	app          internal.App
-	safeCallList chan *SafeCallBundle
-	entityList   list.List
-	entityMap    map[uint64]*list.Element
-	entityGCList []*list.Element
-	gcList       []internal.GC
-	frame        FrameWhole
+	id              uint64
+	app             internal.App
+	safeCallList    chan *SafeCallBundle
+	entityMap       map[uint64]*list.Element
+	entityList      list.List
+	entityStartList []*list.Element
+	entityGCList    []*list.Element
+	gcList          []internal.GC
+	frame           FrameWhole
 }
 
 func (rt *Runtime) InitRuntime(ctx internal.Context, app internal.App, opts *RuntimeOptions) {
@@ -90,21 +91,43 @@ func (rt *Runtime) Run() chan struct{} {
 			parentCtx.GetWaitGroup().Add(1)
 		}
 
-		uptFun := func(fun func(entity EntityWhole)) {
+		invokeFun := func(fun func(entity EntityWhole)) {
+			if fun == nil {
+				return
+			}
 			rt.RangeEntities(func(entity internal.Entity) bool {
-				if entity.IsDestroyed() {
-					return true
-				}
-
 				CallOuter(rt.autoRecover, rt.GetReportError(), func() {
 					fun(entity.(EntityWhole))
 				})
-
 				return true
 			})
 		}
 
-		runSafeCallFun := func(callBundle *SafeCallBundle) (ret internal.SafeRet) {
+		startChan := make(chan struct{})
+
+		notifyStart := func() {
+			if len(rt.entityStartList) > 0 {
+				go func() {
+					startChan <- struct{}{}
+				}()
+			}
+		}
+
+		invokeStartFun := func() {
+			count := len(rt.entityStartList)
+			if count <= 0 {
+				return
+			}
+			for _, e := range rt.entityStartList {
+				if e.Escape() || e.GetMark(0) {
+					continue
+				}
+				CallOuter(rt.autoRecover, rt.GetReportError(), e.Value.(EntityWhole).CallStart)
+			}
+			rt.entityStartList = rt.entityStartList[count:]
+		}
+
+		invokeSafeCallFun := func(callBundle *SafeCallBundle) (ret internal.SafeRet) {
 			exception := CallOuter(rt.autoRecover, rt.GetReportError(), func() {
 				if callBundle.Stack != nil {
 					ret = callBundle.SafeFun(callBundle.Stack)
@@ -112,11 +135,9 @@ func (rt *Runtime) Run() chan struct{} {
 					ret = callBundle.UnsafeFun()
 				}
 			})
-
 			if exception != nil {
 				ret.Err = exception
 			}
-
 			return
 		}
 
@@ -126,21 +147,18 @@ func (rt *Runtime) Run() chan struct{} {
 			func() {
 				for {
 					select {
+					case <-startChan:
+						invokeStartFun()
+						notifyStart()
+						rt.GC()
+
 					case callBundle, ok := <-rt.safeCallList:
 						if !ok {
 							return
 						}
 
-						uptFun(func(entity EntityWhole) {
-							entity.CallStart()
-						})
-
-						callBundle.Ret <- runSafeCallFun(callBundle)
-
-						uptFun(func(entity EntityWhole) {
-							entity.CallStart()
-						})
-
+						callBundle.Ret <- invokeSafeCallFun(callBundle)
+						notifyStart()
 						rt.GC()
 
 					default:
@@ -157,9 +175,7 @@ func (rt *Runtime) Run() chan struct{} {
 			rt.MarkShutdown()
 			rt.shutChan <- struct{}{}
 
-			if rt.stopFunc != nil {
-				rt.stopFunc()
-			}
+			CallOuter(rt.autoRecover, rt.GetReportError(), rt.stopFunc)
 		}()
 
 		rt.frame = nil
@@ -169,21 +185,18 @@ func (rt *Runtime) Run() chan struct{} {
 
 			for {
 				select {
+				case <-startChan:
+					invokeStartFun()
+					notifyStart()
+					rt.GC()
+
 				case callBundle, ok := <-rt.safeCallList:
 					if !ok {
 						return
 					}
 
-					uptFun(func(entity EntityWhole) {
-						entity.CallStart()
-					})
-
-					callBundle.Ret <- runSafeCallFun(callBundle)
-
-					uptFun(func(entity EntityWhole) {
-						entity.CallStart()
-					})
-
+					callBundle.Ret <- invokeSafeCallFun(callBundle)
+					notifyStart()
 					rt.GC()
 
 				case <-rt.Done():
@@ -207,22 +220,15 @@ func (rt *Runtime) Run() chan struct{} {
 				rt.frame.UpdateBegin()
 				defer rt.frame.UpdateEnd()
 
-				uptFun(func(entity EntityWhole) {
-					entity.CallStart()
-				})
-
-				uptFun(func(entity EntityWhole) {
+				invokeFun(func(entity EntityWhole) {
 					entity.CallUpdate()
 				})
 
-				uptFun(func(entity EntityWhole) {
+				invokeFun(func(entity EntityWhole) {
 					entity.CallLateUpdate()
 				})
 
-				uptFun(func(entity EntityWhole) {
-					entity.CallStart()
-				})
-
+				notifyStart()
 				rt.GC()
 			}
 
@@ -239,21 +245,18 @@ func (rt *Runtime) Run() chan struct{} {
 				if ticker != nil {
 					for {
 						select {
+						case <-startChan:
+							invokeStartFun()
+							notifyStart()
+							rt.GC()
+
 						case callBundle, ok := <-rt.safeCallList:
 							if !ok {
 								return false
 							}
 
-							uptFun(func(entity EntityWhole) {
-								entity.CallStart()
-							})
-
-							callBundle.Ret <- runSafeCallFun(callBundle)
-
-							uptFun(func(entity EntityWhole) {
-								entity.CallStart()
-							})
-
+							callBundle.Ret <- invokeSafeCallFun(callBundle)
+							notifyStart()
 							rt.GC()
 
 						case <-ticker.C:
@@ -268,21 +271,18 @@ func (rt *Runtime) Run() chan struct{} {
 				} else {
 					for {
 						select {
+						case <-startChan:
+							invokeStartFun()
+							notifyStart()
+							rt.GC()
+
 						case callBundle, ok := <-rt.safeCallList:
 							if !ok {
 								return false
 							}
 
-							uptFun(func(entity EntityWhole) {
-								entity.CallStart()
-							})
-
-							callBundle.Ret <- runSafeCallFun(callBundle)
-
-							uptFun(func(entity EntityWhole) {
-								entity.CallStart()
-							})
-
+							callBundle.Ret <- invokeSafeCallFun(callBundle)
+							notifyStart()
 							rt.GC()
 
 						case <-rt.Done():
@@ -385,7 +385,9 @@ func (rt *Runtime) AddEntity(entity internal.Entity) {
 		panic("entity id already exists")
 	}
 
-	rt.entityMap[entity.GetEntityID()] = rt.entityList.PushBack(entity)
+	ele := rt.entityList.PushBack(entity)
+	rt.entityMap[entity.GetEntityID()] = ele
+	rt.entityStartList = append(rt.entityStartList, ele)
 }
 
 func (rt *Runtime) RemoveEntity(entID uint64) {
