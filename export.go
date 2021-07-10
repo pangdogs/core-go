@@ -43,6 +43,8 @@ type Component = internal.Component
 
 type ComponentFoundation = foundation.Component
 
+type ComponentInit = internal.ComponentInit
+
 type ComponentAwake = internal.ComponentAwake
 
 type ComponentEntityInit = internal.ComponentEntityInit

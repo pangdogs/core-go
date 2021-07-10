@@ -5,6 +5,10 @@ type Component interface {
 	GetName() string
 }
 
+type ComponentInit interface {
+	Init()
+}
+
 type ComponentAwake interface {
 	Awake()
 }

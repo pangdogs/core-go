@@ -139,6 +139,10 @@ func (e *Entity) AddComponent(name string, component interface{}) error {
 		e.componentMap[name] = e.componentList.PushBack(component)
 	}
 
+	if cl, ok := component.(internal.ComponentInit); ok {
+		cl.Init()
+	}
+
 	if cl, ok := component.(internal.ComponentAwake); ok {
 		cl.Awake()
 	}
