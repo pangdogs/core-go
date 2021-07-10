@@ -163,6 +163,9 @@ func (e *Entity) RemoveComponent(name string) {
 		e.componentGCList = append(e.componentGCList, elements...)
 
 		for i := 0; i < len(elements); i++ {
+			if cl, ok := elements[i].Value.(internal.ComponentHalt); ok {
+				cl.Halt()
+			}
 			if cl, ok := elements[i].Value.(internal.ComponentShut); ok {
 				cl.Shut()
 			}

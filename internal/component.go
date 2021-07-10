@@ -33,6 +33,10 @@ type ComponentEntityShut interface {
 	EntityShut()
 }
 
+type ComponentHalt interface {
+	Halt()
+}
+
 type ComponentShut interface {
 	Shut()
 }
