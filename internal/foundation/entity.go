@@ -9,6 +9,7 @@ import (
 type EntityWhole interface {
 	internal.Entity
 	internal.GC
+	GetInheritor() internal.Entity
 	CallStart()
 	CallUpdate()
 	CallLateUpdate()
@@ -209,6 +210,10 @@ func (e *Entity) GC() {
 		e.componentList.Remove(e.componentGCList[i])
 	}
 	e.componentGCList = e.componentGCList[:0]
+}
+
+func (e *Entity) GetInheritor() internal.Entity {
+	return e.inheritor
 }
 
 func (e *Entity) CallStart() {

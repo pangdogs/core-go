@@ -9,6 +9,7 @@ import (
 type RuntimeWhole interface {
 	internal.Runtime
 	internal.GC
+	GetInheritor() internal.Runtime
 	AddEntity(entity internal.Entity)
 	RemoveEntity(entID uint64)
 	PushSafeCall(callBundle *SafeCallBundle)
@@ -374,6 +375,10 @@ func (rt *Runtime) GC() {
 		rt.gcList[i].GC()
 	}
 	rt.gcList = rt.gcList[:0]
+}
+
+func (rt *Runtime) GetInheritor() internal.Runtime {
+	return rt.inheritor
 }
 
 func (rt *Runtime) AddEntity(entity internal.Entity) {

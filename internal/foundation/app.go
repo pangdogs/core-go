@@ -8,6 +8,7 @@ import (
 
 type AppWhole interface {
 	internal.App
+	GetInheritor() internal.App
 	AddEntity(entity internal.Entity)
 	RemoveEntity(entID uint64)
 }
@@ -91,6 +92,10 @@ func (app *App) Run() chan struct{} {
 
 func (app *App) Stop() {
 	app.GetCancelFunc()()
+}
+
+func (app *App) GetInheritor() internal.App {
+	return app.inheritor
 }
 
 func (app *App) GetEntity(entID uint64) internal.Entity {
