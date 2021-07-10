@@ -5,7 +5,7 @@ import "github.com/pangdogs/core/internal"
 var NewEntityOption = &NewEntityOptions{}
 
 type EntityOptions struct {
-	inheritor internal.Entity
+	inheritor EntityWhole
 	initFunc,
 	shutFunc func()
 }
@@ -22,7 +22,7 @@ func (*NewEntityOptions) Default() NewEntityOptionFunc {
 
 func (*NewEntityOptions) Inheritor(v internal.Entity) NewEntityOptionFunc {
 	return func(o *EntityOptions) {
-		o.inheritor = v
+		o.inheritor = v.(EntityWhole)
 	}
 }
 

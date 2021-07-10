@@ -8,10 +8,8 @@ import (
 
 type AppWhole interface {
 	internal.App
-	InitApp(ctx internal.Context, opts *AppOptions)
 	AddEntity(entity internal.Entity)
 	RemoveEntity(entID uint64)
-	RangeEntities(func(entity internal.Entity) bool)
 }
 
 func NewApp(ctx internal.Context, optFuncs ...NewAppOptionFunc) internal.App {
@@ -100,6 +98,16 @@ func (app *App) GetEntity(entID uint64) internal.Entity {
 	return entity.(internal.Entity)
 }
 
+func (app *App) RangeEntities(fun func(entity internal.Entity) bool) {
+	if fun == nil {
+		return
+	}
+
+	app.entityMap.Range(func(key, value interface{}) bool {
+		return fun(value.(internal.Entity))
+	})
+}
+
 func (app *App) MakeUID() uint64 {
 	return atomic.AddUint64(&app.uidMaker, 1)
 }
@@ -109,21 +117,11 @@ func (app *App) AddEntity(entity internal.Entity) {
 		panic("nil entity")
 	}
 
-	if _, loaded := app.entityMap.LoadOrStore(entity.GetEntityID(), entity.(EntityWhole).GetInheritor()); loaded {
+	if _, loaded := app.entityMap.LoadOrStore(entity.GetEntityID(), entity); loaded {
 		panic("entity id already exists")
 	}
 }
 
 func (app *App) RemoveEntity(entID uint64) {
 	app.entityMap.Delete(entID)
-}
-
-func (app *App) RangeEntities(fun func(entity internal.Entity) bool) {
-	if fun == nil {
-		return
-	}
-
-	app.entityMap.Range(func(key, value interface{}) bool {
-		return fun(value.(internal.Entity))
-	})
 }

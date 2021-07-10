@@ -20,7 +20,7 @@ type Hook struct {
 }
 
 func (h *Hook) InitHook(rt internal.Runtime) {
-	h.id = rt.GetApp().(AppWhole).MakeUID()
+	h.id = rt.GetApp().MakeUID()
 	h.runtime = rt
 }
 

@@ -9,10 +9,8 @@ import (
 type RuntimeWhole interface {
 	internal.Runtime
 	internal.GC
-	InitRuntime(ctx internal.Context, app internal.App, opts *RuntimeOptions)
 	AddEntity(entity internal.Entity)
 	RemoveEntity(entID uint64)
-	RangeEntities(fun func(entity internal.Entity) bool)
 	PushSafeCall(callBundle *SafeCallBundle)
 }
 
@@ -66,7 +64,7 @@ func (rt *Runtime) InitRuntime(ctx internal.Context, app internal.App, opts *Run
 
 	rt.InitRunnable()
 	rt.Context = ctx
-	rt.id = app.(AppWhole).MakeUID()
+	rt.id = app.MakeUID()
 	rt.app = app
 	rt.safeCallList = make(chan *SafeCallBundle)
 	close(rt.safeCallList)
@@ -330,6 +328,28 @@ func (rt *Runtime) GetFrame() internal.Frame {
 	return rt.frame
 }
 
+func (rt *Runtime) GetEntity(entID uint64) internal.Entity {
+	e, _ := rt.entityMap[entID]
+	if e.Escape() || e.GetMark(0) {
+		return nil
+	}
+
+	return e.Value.(internal.Entity)
+}
+
+func (rt *Runtime) RangeEntities(fun func(entity internal.Entity) bool) {
+	if fun == nil {
+		return
+	}
+
+	rt.entityList.UnsafeTraversal(func(e *list.Element) bool {
+		if e.Escape() || e.GetMark(0) {
+			return true
+		}
+		return fun(e.Value.(internal.Entity))
+	})
+}
+
 func (rt *Runtime) PushSafeCall(callBundle *SafeCallBundle) {
 	if callBundle == nil {
 		panic("nil callBundle")
@@ -365,7 +385,7 @@ func (rt *Runtime) AddEntity(entity internal.Entity) {
 		panic("entity id already exists")
 	}
 
-	rt.entityMap[entity.GetEntityID()] = rt.entityList.PushBack(entity.(EntityWhole).GetInheritor())
+	rt.entityMap[entity.GetEntityID()] = rt.entityList.PushBack(entity)
 }
 
 func (rt *Runtime) RemoveEntity(entID uint64) {
@@ -374,17 +394,4 @@ func (rt *Runtime) RemoveEntity(entID uint64) {
 		e.SetMark(0, true)
 		rt.entityGCList = append(rt.entityGCList, e)
 	}
-}
-
-func (rt *Runtime) RangeEntities(fun func(entity internal.Entity) bool) {
-	if fun == nil {
-		return
-	}
-
-	rt.entityList.UnsafeTraversal(func(e *list.Element) bool {
-		if e.Escape() || e.GetMark(0) {
-			return true
-		}
-		return fun(e.Value.(internal.Entity))
-	})
 }

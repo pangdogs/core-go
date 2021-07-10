@@ -5,7 +5,7 @@ import "github.com/pangdogs/core/internal"
 var NewRuntimeOption = &NewRuntimeOptions{}
 
 type RuntimeOptions struct {
-	inheritor internal.Runtime
+	inheritor RuntimeWhole
 	initFunc,
 	startFunc,
 	stopFunc func()
@@ -30,7 +30,7 @@ func (*NewRuntimeOptions) Default() NewRuntimeOptionFunc {
 
 func (*NewRuntimeOptions) Inheritor(v internal.Runtime) NewRuntimeOptionFunc {
 	return func(o *RuntimeOptions) {
-		o.inheritor = v
+		o.inheritor = v.(RuntimeWhole)
 	}
 }
 

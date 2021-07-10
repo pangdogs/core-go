@@ -6,11 +6,6 @@ import (
 	"sync"
 )
 
-type ContextWhole interface {
-	internal.Context
-	InitContext(parentCtx context.Context)
-}
-
 func NewContext(parentCtx context.Context, reportError ...chan error) internal.Context {
 	ctx := &Context{}
 	ctx.InitContext(parentCtx, reportError...)

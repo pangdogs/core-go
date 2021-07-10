@@ -55,7 +55,7 @@ type ComponentLateUpdate = internal.ComponentLateUpdate
 
 type ComponentEntityShut = internal.ComponentEntityShut
 
-type ComponentDestroy = internal.ComponentDestroy
+type ComponentShut = internal.ComponentShut
 
 type Hook = internal.Hook
 

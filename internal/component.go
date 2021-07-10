@@ -29,6 +29,6 @@ type ComponentEntityShut interface {
 	EntityShut()
 }
 
-type ComponentDestroy interface {
-	Destroy()
+type ComponentShut interface {
+	Shut()
 }

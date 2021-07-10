@@ -9,8 +9,6 @@ import (
 type EntityWhole interface {
 	internal.Entity
 	internal.GC
-	InitEntity(rt internal.Runtime, opts *EntityOptions)
-	GetInheritor() internal.Entity
 	CallStart()
 	CallUpdate()
 	CallLateUpdate()
@@ -48,7 +46,7 @@ func (e *Entity) InitEntity(rt internal.Runtime, opts *EntityOptions) {
 		panic("nil opts")
 	}
 
-	e.id = rt.GetApp().(AppWhole).MakeUID()
+	e.id = rt.GetApp().MakeUID()
 	e.EntityOptions = *opts
 
 	if e.inheritor != nil {
@@ -61,8 +59,8 @@ func (e *Entity) InitEntity(rt internal.Runtime, opts *EntityOptions) {
 	e.componentList.Init()
 	e.componentMap = map[string]*list.Element{}
 
-	rt.GetApp().(AppWhole).AddEntity(e)
-	rt.(RuntimeWhole).AddEntity(e)
+	rt.GetApp().(AppWhole).AddEntity(e.inheritor)
+	rt.(RuntimeWhole).AddEntity(e.inheritor)
 
 	if e.initFunc != nil {
 		e.initFunc()
@@ -160,13 +158,13 @@ func (e *Entity) RemoveComponent(name string) {
 		e.componentGCList = append(e.componentGCList, elements...)
 
 		for i := 0; i < len(elements); i++ {
-			if cl, ok := elements[i].Value.(internal.ComponentDestroy); ok {
-				cl.Destroy()
+			if cl, ok := elements[i].Value.(internal.ComponentShut); ok {
+				cl.Shut()
 			}
 		}
 
 		if !e.destroyed {
-			e.runtime.(RuntimeWhole).PushGC(e)
+			e.runtime.PushGC(e)
 		}
 	}
 }
@@ -211,10 +209,6 @@ func (e *Entity) GC() {
 		e.componentList.Remove(e.componentGCList[i])
 	}
 	e.componentGCList = e.componentGCList[:0]
-}
-
-func (e *Entity) GetInheritor() internal.Entity {
-	return e.inheritor
 }
 
 func (e *Entity) CallStart() {

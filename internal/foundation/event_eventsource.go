@@ -49,7 +49,7 @@ func (es *EventSource) InitEventSource(rt internal.Runtime) {
 		panic("nil runtime")
 	}
 
-	es.id = rt.GetApp().(AppWhole).MakeUID()
+	es.id = rt.GetApp().MakeUID()
 	es.runtime = rt
 	es.hookList.Init()
 	es.hookMap = map[uint64]*list.Element{}
@@ -94,7 +94,7 @@ func (es *EventSource) removeHook(hookID uint64) {
 		delete(es.hookMap, hookID)
 		e.SetMark(0, true)
 		es.hookGCList = append(es.hookGCList, e)
-		es.runtime.(RuntimeWhole).PushGC(es)
+		es.runtime.PushGC(es)
 	}
 }
 

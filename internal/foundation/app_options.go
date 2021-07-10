@@ -5,7 +5,7 @@ import "github.com/pangdogs/core/internal"
 var NewAppOption = &NewAppOptions{}
 
 type AppOptions struct {
-	inheritor internal.App
+	inheritor AppWhole
 	initFunc,
 	startFunc,
 	stopFunc func()
@@ -24,7 +24,7 @@ func (*NewAppOptions) Default() NewAppOptionFunc {
 
 func (*NewAppOptions) Inheritor(v internal.App) NewAppOptionFunc {
 	return func(o *AppOptions) {
-		o.inheritor = v
+		o.inheritor = v.(AppWhole)
 	}
 }
 
