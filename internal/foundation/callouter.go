@@ -1,6 +1,9 @@
 package foundation
 
-import "fmt"
+import (
+	"fmt"
+	"runtime"
+)
 
 func CallOuter(autoRecover bool, reportError chan error, fun func()) (exception error) {
 	if fun == nil {
@@ -10,19 +13,10 @@ func CallOuter(autoRecover bool, reportError chan error, fun func()) (exception 
 	if autoRecover {
 		defer func() {
 			if info := recover(); info != nil {
-				if err, ok := info.(error); ok {
-					exception = err
+				exception = ErrorAddStackTrace(info)
 
-					if reportError != nil {
-						reportError <- exception
-					}
-
-				} else {
-					exception = fmt.Errorf("%v", info)
-
-					if reportError != nil {
-						reportError <- exception
-					}
+				if reportError != nil {
+					reportError <- exception
 				}
 			}
 		}()
@@ -31,4 +25,10 @@ func CallOuter(autoRecover bool, reportError chan error, fun func()) (exception 
 	fun()
 
 	return
+}
+
+func ErrorAddStackTrace(info interface{}) error {
+	stackBuf := make([]byte, 1<<16)
+	runtime.Stack(stackBuf, false)
+	return fmt.Errorf("Error: %v\nStack:\n%v\n", info, stackBuf)
 }
