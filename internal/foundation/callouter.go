@@ -13,10 +13,8 @@ func CallOuter(autoRecover bool, reportError chan error, fun func()) (exception 
 	if autoRecover {
 		defer func() {
 			if info := recover(); info != nil {
-				exception = ErrorAddStackTrace(info)
-
 				if reportError != nil {
-					reportError <- exception
+					reportError <- ErrorAddStackTrace(info)
 				}
 			}
 		}()
@@ -28,7 +26,7 @@ func CallOuter(autoRecover bool, reportError chan error, fun func()) (exception 
 }
 
 func ErrorAddStackTrace(info interface{}) error {
-	stackBuf := make([]byte, 1<<16)
-	runtime.Stack(stackBuf, false)
-	return fmt.Errorf("Error: %v\nStack:\n%v\n", info, stackBuf)
+	stackBuf := make([]byte, 4096)
+	n := runtime.Stack(stackBuf, false)
+	return fmt.Errorf("Error: %v\nStack: %s\n", info, stackBuf[:n])
 }
