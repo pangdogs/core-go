@@ -14,7 +14,9 @@ func CallOuter(autoRecover bool, reportError chan error, fun func()) (exception 
 		defer func() {
 			if info := recover(); info != nil {
 				if reportError != nil {
-					reportError <- ErrorAddStackTrace(info)
+					go func() {
+						reportError <- ErrorAddStackTrace(info)
+					}()
 				}
 			}
 		}()
