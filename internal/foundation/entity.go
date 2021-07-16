@@ -140,7 +140,7 @@ func (e *Entity) AddComponent(name string, component interface{}) error {
 	}
 
 	if cl, ok := component.(internal.ComponentInit); ok {
-		cl.Init()
+		cl.Init(component.(internal.Component))
 	}
 
 	if cl, ok := component.(internal.ComponentAwake); ok {
@@ -167,7 +167,7 @@ func (e *Entity) RemoveComponent(name string) {
 				cl.Halt()
 			}
 			if cl, ok := elements[i].Value.(internal.ComponentShut); ok {
-				cl.Shut()
+				cl.Shut(elements[i].Value.(internal.Component))
 			}
 		}
 

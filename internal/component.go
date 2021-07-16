@@ -6,7 +6,7 @@ type Component interface {
 }
 
 type ComponentInit interface {
-	Init()
+	Init(c Component)
 }
 
 type ComponentAwake interface {
@@ -38,5 +38,5 @@ type ComponentHalt interface {
 }
 
 type ComponentShut interface {
-	Shut()
+	Shut(c Component)
 }
