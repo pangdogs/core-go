@@ -8,7 +8,7 @@ type AppOptions struct {
 	inheritor AppWhole
 	initFunc,
 	startFunc,
-	stopFunc func()
+	stopFunc func(app internal.App)
 	autoRecover bool
 }
 
@@ -34,19 +34,19 @@ func (*NewAppOptions) AutoRecover(v bool) NewAppOptionFunc {
 	}
 }
 
-func (*NewAppOptions) InitFunc(v func()) NewAppOptionFunc {
+func (*NewAppOptions) InitFunc(v func(app internal.App)) NewAppOptionFunc {
 	return func(o *AppOptions) {
 		o.initFunc = v
 	}
 }
 
-func (*NewAppOptions) StartFunc(v func()) NewAppOptionFunc {
+func (*NewAppOptions) StartFunc(v func(app internal.App)) NewAppOptionFunc {
 	return func(o *AppOptions) {
 		o.startFunc = v
 	}
 }
 
-func (*NewAppOptions) StopFunc(v func()) NewAppOptionFunc {
+func (*NewAppOptions) StopFunc(v func(app internal.App)) NewAppOptionFunc {
 	return func(o *AppOptions) {
 		o.stopFunc = v
 	}

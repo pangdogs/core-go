@@ -8,11 +8,11 @@ type RuntimeOptions struct {
 	inheritor RuntimeWhole
 	initFunc,
 	startFunc,
-	stopFunc func()
+	stopFunc func(rt internal.Runtime)
 	autoRun           bool
 	autoRecover       bool
 	safeCallCacheSize int
-	frameCreatorFunc  func() internal.Frame
+	frameCreatorFunc  func(rt internal.Runtime) internal.Frame
 }
 
 type NewRuntimeOptionFunc func(o *RuntimeOptions)
@@ -34,19 +34,19 @@ func (*NewRuntimeOptions) Inheritor(v internal.Runtime) NewRuntimeOptionFunc {
 	}
 }
 
-func (*NewRuntimeOptions) InitFunc(v func()) NewRuntimeOptionFunc {
+func (*NewRuntimeOptions) InitFunc(v func(rt internal.Runtime)) NewRuntimeOptionFunc {
 	return func(o *RuntimeOptions) {
 		o.initFunc = v
 	}
 }
 
-func (*NewRuntimeOptions) StartFunc(v func()) NewRuntimeOptionFunc {
+func (*NewRuntimeOptions) StartFunc(v func(rt internal.Runtime)) NewRuntimeOptionFunc {
 	return func(o *RuntimeOptions) {
 		o.startFunc = v
 	}
 }
 
-func (*NewRuntimeOptions) StopFunc(v func()) NewRuntimeOptionFunc {
+func (*NewRuntimeOptions) StopFunc(v func(rt internal.Runtime)) NewRuntimeOptionFunc {
 	return func(o *RuntimeOptions) {
 		o.stopFunc = v
 	}
@@ -70,7 +70,7 @@ func (*NewRuntimeOptions) SafeCallCacheSize(v int) NewRuntimeOptionFunc {
 	}
 }
 
-func (*NewRuntimeOptions) FrameCreatorFunc(v func() internal.Frame) NewRuntimeOptionFunc {
+func (*NewRuntimeOptions) FrameCreatorFunc(v func(rt internal.Runtime) internal.Frame) NewRuntimeOptionFunc {
 	return func(o *RuntimeOptions) {
 		o.frameCreatorFunc = v
 	}

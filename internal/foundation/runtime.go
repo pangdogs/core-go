@@ -73,7 +73,9 @@ func (rt *Runtime) InitRuntime(ctx internal.Context, app internal.App, opts *Run
 	rt.entityList.Init()
 	rt.entityMap = map[uint64]*list.Element{}
 
-	CallOuter(rt.autoRecover, rt.GetReportError(), rt.initFunc)
+	CallOuter(rt.autoRecover, rt.GetReportError(), func() {
+		rt.initFunc(rt)
+	})
 
 	if opts.autoRun {
 		rt.Run()
@@ -176,13 +178,17 @@ func (rt *Runtime) Run() chan struct{} {
 			rt.MarkShutdown()
 			rt.shutChan <- struct{}{}
 
-			CallOuter(rt.autoRecover, rt.GetReportError(), rt.stopFunc)
+			CallOuter(rt.autoRecover, rt.GetReportError(), func() {
+				rt.stopFunc(rt)
+			})
 		}()
 
 		rt.frame = nil
 
 		if rt.frameCreatorFunc == nil {
-			CallOuter(rt.autoRecover, rt.GetReportError(), rt.startFunc)
+			CallOuter(rt.autoRecover, rt.GetReportError(), func() {
+				rt.startFunc(rt)
+			})
 
 			for {
 				select {
@@ -207,7 +213,7 @@ func (rt *Runtime) Run() chan struct{} {
 
 		} else {
 			CallOuter(rt.autoRecover, rt.GetReportError(), func() {
-				rt.frame = rt.frameCreatorFunc().(FrameWhole)
+				rt.frame = rt.frameCreatorFunc(rt).(FrameWhole)
 			})
 
 			var ticker *time.Ticker
@@ -297,7 +303,9 @@ func (rt *Runtime) Run() chan struct{} {
 				}
 			}
 
-			CallOuter(rt.autoRecover, rt.GetReportError(), rt.startFunc)
+			CallOuter(rt.autoRecover, rt.GetReportError(), func() {
+				rt.startFunc(rt)
+			})
 
 			rt.frame.CycleBegin()
 			defer rt.frame.CycleEnd()

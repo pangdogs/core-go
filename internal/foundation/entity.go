@@ -64,7 +64,7 @@ func (e *Entity) InitEntity(rt internal.Runtime, opts *EntityOptions) {
 	rt.(RuntimeWhole).AddEntity(e.inheritor)
 
 	if e.initFunc != nil {
-		e.initFunc()
+		e.initFunc(e)
 	}
 
 	e.RangeComponents(func(component internal.Component) bool {
@@ -98,7 +98,7 @@ func (e *Entity) Destroy() {
 	})
 
 	if e.shutFunc != nil {
-		e.shutFunc()
+		e.shutFunc(e)
 	}
 }
 
