@@ -22,7 +22,7 @@ func (stack *SafeStack) Copy() *SafeStack {
 	return &t
 }
 
-func (stack *SafeStack) SafeCall(callee internal.Runtime, waitRet bool, fun func(stack internal.SafeStack) internal.SafeRet) (ret internal.SafeRet) {
+func (stack *SafeStack) SafeCall(callee internal.Runtime, fun func(stack internal.SafeStack) internal.SafeRet) (ret internal.SafeRet) {
 	defer func() {
 		if info := recover(); info != nil {
 			if err, ok := info.(error); ok {
@@ -50,10 +50,7 @@ func (stack *SafeStack) SafeCall(callee internal.Runtime, waitRet bool, fun func
 
 	retChan := make(chan internal.SafeRet, 1)
 
-	newStack := stack.Copy()
-	if waitRet {
-		newStack.Push(callee)
-	}
+	newStack := stack.Copy().Push(callee)
 
 	callBundle, err := NewSafeCallBundle(newStack, fun, nil, retChan)
 	if err != nil {
@@ -62,9 +59,7 @@ func (stack *SafeStack) SafeCall(callee internal.Runtime, waitRet bool, fun func
 
 	callee.(RuntimeWhole).PushSafeCall(callBundle)
 
-	if waitRet {
-		ret = <-callBundle.Ret
-	}
+	ret = <-callBundle.Ret
 
 	return
 }
