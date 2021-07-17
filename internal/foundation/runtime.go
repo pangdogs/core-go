@@ -74,7 +74,9 @@ func (rt *Runtime) InitRuntime(ctx internal.Context, app internal.App, opts *Run
 	rt.entityMap = map[uint64]*list.Element{}
 
 	CallOuter(rt.autoRecover, rt.GetReportError(), func() {
-		rt.initFunc(rt)
+		if rt.initFunc != nil {
+			rt.initFunc(rt)
+		}
 	})
 
 	if opts.autoRun {
@@ -179,7 +181,9 @@ func (rt *Runtime) Run() chan struct{} {
 			rt.shutChan <- struct{}{}
 
 			CallOuter(rt.autoRecover, rt.GetReportError(), func() {
-				rt.stopFunc(rt)
+				if rt.stopFunc != nil {
+					rt.stopFunc(rt)
+				}
 			})
 		}()
 
@@ -187,7 +191,9 @@ func (rt *Runtime) Run() chan struct{} {
 
 		if rt.frameCreatorFunc == nil {
 			CallOuter(rt.autoRecover, rt.GetReportError(), func() {
-				rt.startFunc(rt)
+				if rt.startFunc != nil {
+					rt.startFunc(rt)
+				}
 			})
 
 			for {
@@ -304,7 +310,9 @@ func (rt *Runtime) Run() chan struct{} {
 			}
 
 			CallOuter(rt.autoRecover, rt.GetReportError(), func() {
-				rt.startFunc(rt)
+				if rt.startFunc != nil {
+					rt.startFunc(rt)
+				}
 			})
 
 			rt.frame.CycleBegin()
