@@ -14,16 +14,46 @@
 
 ## 主要对象与函数
 * Context
+	* 上下文，提供存储变量、跨线程报告异常、停止线程几项功能，贯穿所有代码。
+
 * APP
+	* 应用，从Context继承，同时增加了Entity管理、开始停止几项功能，贯穿所有代码。
+
 * Entity
+	* 实体，提供Component管理功能。
+
 * Component
+	* 组件，提供一组生命周期回调函数：
+	[Init] -> [Awake] -> [EntityInit] -> [Start] -> [EntityShut] -> [Halt] -> [Shut]
+
 * Runtime
+	* 线程运行时，从Context继承，用于给Entity提供多线程运行环境，贯穿所有代码。
+
 * Frame
-* Hook
-* EventSource
-* BindEvent
-* UnbindEvent
-* UnbindAllEventSource
-* UnbindAllHook
+	* 结合Runtime，可以调整Runtime的运行方式。
+
 * SafeStack
+	* 跨线程安全调用栈，可用于提供不会死锁的跨线程调用，会阻塞当前线程。
+
 * UnsafeCall
+	* 跨线程不安全调用，可以选择是否阻塞当前线程，阻塞当前线程可能会造成死锁，例如：线程A -> 线程B -> 线程A。
+
+* 事件：
+	* Hook
+		钩子，事件的接收端，可以同时绑定多个EventSource。
+
+	* EventSource
+		事件源，事件的发送端，可以被不同的Hook绑定。
+
+* 事件函数：
+	* BindEvent
+	绑定Hook与EventSource。
+
+	* UnbindEvent
+	解绑定Hook与EventSource。
+
+	* UnbindAllEventSource
+	Hook解绑定所有已绑定的EventSource。
+
+	* UnbindAllHook
+	EventSource解绑定所有已绑定的Hook。
