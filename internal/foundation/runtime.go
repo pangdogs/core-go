@@ -346,7 +346,11 @@ func (rt *Runtime) GetFrame() internal.Frame {
 }
 
 func (rt *Runtime) GetEntity(entID uint64) internal.Entity {
-	e, _ := rt.entityMap[entID]
+	e, ok := rt.entityMap[entID]
+	if !ok {
+		return nil
+	}
+
 	if e.Escape() || e.GetMark(0) {
 		return nil
 	}

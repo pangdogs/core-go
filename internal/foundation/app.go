@@ -111,7 +111,11 @@ func (app *App) GetInheritor() internal.App {
 }
 
 func (app *App) GetEntity(entID uint64) internal.Entity {
-	entity, _ := app.entityMap.Load(entID)
+	entity, ok := app.entityMap.Load(entID)
+	if !ok {
+		return nil
+	}
+
 	return entity.(internal.Entity)
 }
 
