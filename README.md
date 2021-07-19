@@ -25,7 +25,7 @@
 
 ### Component
 * 组件，提供一组生命周期回调函数：
-` [Init] -> [Awake] -> [EntityInit] -> [Start] -> [EntityShut] -> [Halt] -> [Shut]`
+` [Init] -> [Awake] -> [EntityInit] -> [Start] -> [Update -> LateUpdate] -> [EntityShut] -> [Halt] -> [Shut]`
 
 ### Runtime
 * 线程运行时，从Context继承，用于给Entity提供多线程运行环境，贯穿所有代码。
