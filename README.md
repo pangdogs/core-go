@@ -28,7 +28,7 @@
 ` [Init] -> [Awake] -> [EntityInit] -> [Start] -> [Update -> LateUpdate] -> [EntityShut] -> [Halt] -> [Shut]`
 
 ### Runtime
-* 线程运行时，从Context继承，用于给Entity提供多线程运行环境，贯穿所有代码。
+* 线程运行时，从Context继承，用于给Entity提供多线程运行环境，提供GC能力，贯穿所有代码。
 
 ### Frame
 * 结合Runtime，可以调整Runtime的运行方式。
