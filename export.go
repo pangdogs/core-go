@@ -3,6 +3,7 @@ package core
 import (
 	"github.com/pangdogs/core/internal"
 	"github.com/pangdogs/core/internal/foundation"
+	"github.com/pangdogs/core/internal/list"
 )
 
 type Context = internal.Context
@@ -86,3 +87,7 @@ var NewSafeStack = foundation.NewSafeStack
 type SafeRet = internal.SafeRet
 
 var UnsafeCall = foundation.UnsafeCall
+
+type List = list.List
+
+type Element = list.Element
