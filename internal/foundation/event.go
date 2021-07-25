@@ -5,7 +5,7 @@ import (
 	"github.com/pangdogs/core/internal"
 )
 
-func BindEvent(hook, eventSrc interface{}, priority ...int) error {
+func BindEvent(hook, eventSrc interface{}, priority ...int) (ret error) {
 	if hook == nil {
 		return errors.New("nil hook")
 	}
@@ -21,8 +21,13 @@ func BindEvent(hook, eventSrc interface{}, priority ...int) error {
 		return err
 	}
 
+	defer func() {
+		if ret != nil {
+			h.detachEventSource(s.GetEventSourceID())
+		}
+	}()
+
 	if err := s.addHook(h, priority...); err != nil {
-		h.detachEventSource(s.GetEventSourceID())
 		return err
 	}
 
