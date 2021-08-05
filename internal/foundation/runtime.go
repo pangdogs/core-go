@@ -318,7 +318,7 @@ func (rt *Runtime) Run() chan struct{} {
 			rt.frame.CycleBegin()
 			defer rt.frame.CycleEnd()
 
-			for rt.frame.SetCurFrames(0); ; rt.frame.SetCurFrames(rt.frame.GetCurFrames() + 1) {
+			for ; ; rt.frame.SetCurFrames(rt.frame.GetCurFrames() + 1) {
 				if !loopFun() {
 					return
 				}

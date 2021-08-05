@@ -107,7 +107,6 @@ func (f *Frame) CycleBegin() {
 	now := time.Now()
 
 	f.curFPS = 0
-	f.curFrames = 0
 
 	f.statFPSBeginTime = now
 	f.statFPSFrames = 0
