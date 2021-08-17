@@ -108,13 +108,14 @@ func (rt *Runtime) Run() chan struct{} {
 			})
 		}
 
-		startChan := make(chan struct{})
+		startChan := make(chan struct{}, 1)
 
 		notifyStart := func() {
 			if len(rt.entityStartList) > 0 {
-				go func() {
-					startChan <- struct{}{}
-				}()
+				select {
+				case startChan <- struct{}{}:
+				default:
+				}
 			}
 		}
 
@@ -154,21 +155,19 @@ func (rt *Runtime) Run() chan struct{} {
 					select {
 					case <-startChan:
 						invokeStartFun()
-						notifyStart()
-						rt.GC()
 
 					case callBundle, ok := <-rt.safeCallList:
 						if !ok {
 							return
 						}
-
 						callBundle.Ret <- invokeSafeCallFun(callBundle)
-						notifyStart()
-						rt.GC()
 
 					default:
 						return
 					}
+
+					notifyStart()
+					rt.GC()
 				}
 			}()
 
@@ -200,21 +199,19 @@ func (rt *Runtime) Run() chan struct{} {
 				select {
 				case <-startChan:
 					invokeStartFun()
-					notifyStart()
-					rt.GC()
 
 				case callBundle, ok := <-rt.safeCallList:
 					if !ok {
 						return
 					}
-
 					callBundle.Ret <- invokeSafeCallFun(callBundle)
-					notifyStart()
-					rt.GC()
 
 				case <-rt.Done():
 					return
 				}
+
+				notifyStart()
+				rt.GC()
 			}
 
 		} else {
@@ -260,17 +257,12 @@ func (rt *Runtime) Run() chan struct{} {
 						select {
 						case <-startChan:
 							invokeStartFun()
-							notifyStart()
-							rt.GC()
 
 						case callBundle, ok := <-rt.safeCallList:
 							if !ok {
 								return false
 							}
-
 							callBundle.Ret <- invokeSafeCallFun(callBundle)
-							notifyStart()
-							rt.GC()
 
 						case <-ticker.C:
 							uptEntityFun()
@@ -279,6 +271,9 @@ func (rt *Runtime) Run() chan struct{} {
 						case <-rt.Done():
 							return false
 						}
+
+						notifyStart()
+						rt.GC()
 					}
 
 				} else {
@@ -286,17 +281,12 @@ func (rt *Runtime) Run() chan struct{} {
 						select {
 						case <-startChan:
 							invokeStartFun()
-							notifyStart()
-							rt.GC()
 
 						case callBundle, ok := <-rt.safeCallList:
 							if !ok {
 								return false
 							}
-
 							callBundle.Ret <- invokeSafeCallFun(callBundle)
-							notifyStart()
-							rt.GC()
 
 						case <-rt.Done():
 							return false
@@ -305,6 +295,9 @@ func (rt *Runtime) Run() chan struct{} {
 							uptEntityFun()
 							return true
 						}
+
+						notifyStart()
+						rt.GC()
 					}
 				}
 			}
