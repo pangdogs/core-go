@@ -15,9 +15,10 @@ func CallOuter(autoRecover bool, reportError chan error, fun func()) (exception 
 			if info := recover(); info != nil {
 				if reportError != nil {
 					exception = ErrorAddStackTrace(info)
-					go func() {
-						reportError <- exception
-					}()
+					select {
+					case reportError <- exception:
+					default:
+					}
 				}
 			}
 		}()
