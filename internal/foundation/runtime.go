@@ -237,9 +237,6 @@ func (rt *Runtime) Run() chan struct{} {
 				invokeFun(func(entity EntityWhole) {
 					entity.CallLateUpdate()
 				})
-
-				notifyStart()
-				rt.GC()
 			}
 
 			loopFun := func() bool {
@@ -253,6 +250,8 @@ func (rt *Runtime) Run() chan struct{} {
 				defer rt.frame.FrameEnd()
 
 				if ticker != nil {
+					onceUpdate := false
+
 					for {
 						select {
 						case <-startChan:
@@ -265,8 +264,12 @@ func (rt *Runtime) Run() chan struct{} {
 							callBundle.Ret <- invokeSafeCallFun(callBundle)
 
 						case <-ticker.C:
+							if onceUpdate {
+								return true
+							}
+							onceUpdate = true
+
 							uptEntityFun()
-							return true
 
 						case <-rt.Done():
 							return false
@@ -277,6 +280,8 @@ func (rt *Runtime) Run() chan struct{} {
 					}
 
 				} else {
+					onceUpdate := false
+
 					for {
 						select {
 						case <-startChan:
@@ -292,8 +297,12 @@ func (rt *Runtime) Run() chan struct{} {
 							return false
 
 						default:
+							if onceUpdate {
+								return true
+							}
+							onceUpdate = true
+
 							uptEntityFun()
-							return true
 						}
 
 						notifyStart()
