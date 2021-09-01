@@ -152,6 +152,8 @@ func (rt *Runtime) Run() chan struct{} {
 
 			func() {
 				for {
+					notifyStart()
+
 					select {
 					case <-startChan:
 						invokeStartFun()
@@ -166,7 +168,6 @@ func (rt *Runtime) Run() chan struct{} {
 						return
 					}
 
-					notifyStart()
 					rt.GC()
 				}
 			}()
@@ -196,6 +197,8 @@ func (rt *Runtime) Run() chan struct{} {
 			})
 
 			for {
+				notifyStart()
+
 				select {
 				case <-startChan:
 					invokeStartFun()
@@ -210,7 +213,6 @@ func (rt *Runtime) Run() chan struct{} {
 					return
 				}
 
-				notifyStart()
 				rt.GC()
 			}
 
@@ -253,6 +255,8 @@ func (rt *Runtime) Run() chan struct{} {
 					onceUpdate := false
 
 					for {
+						notifyStart()
+
 						select {
 						case <-startChan:
 							invokeStartFun()
@@ -275,7 +279,6 @@ func (rt *Runtime) Run() chan struct{} {
 							return false
 						}
 
-						notifyStart()
 						rt.GC()
 					}
 
@@ -283,6 +286,8 @@ func (rt *Runtime) Run() chan struct{} {
 					onceUpdate := false
 
 					for {
+						notifyStart()
+
 						select {
 						case <-startChan:
 							invokeStartFun()
@@ -305,7 +310,6 @@ func (rt *Runtime) Run() chan struct{} {
 							uptEntityFun()
 						}
 
-						notifyStart()
 						rt.GC()
 					}
 				}
