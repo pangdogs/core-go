@@ -56,7 +56,7 @@ func (es *EventSourceFoundation) InitEventSource(rt Runtime) {
 		panic("nil runtime")
 	}
 
-	es.id = rt.GetApp().MakeUID()
+	es.id = rt.GetApp().makeUID()
 	es.runtime = rt
 	es.hookList.Init()
 	es.hookMap = map[uint64]*list.Element{}

@@ -20,7 +20,7 @@ type HookFoundation struct {
 }
 
 func (h *HookFoundation) InitHook(rt Runtime) {
-	h.id = rt.GetApp().MakeUID()
+	h.id = rt.GetApp().makeUID()
 	h.runtime = rt
 }
 

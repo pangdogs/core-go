@@ -9,6 +9,7 @@ type Entity interface {
 	GC
 	Destroy()
 	GetEntityID() uint64
+	GetInheritor() Entity
 	GetRuntime() Runtime
 	IsDestroyed() bool
 	AddComponent(name string, component interface{}) error
@@ -16,10 +17,6 @@ type Entity interface {
 	GetComponent(name string) Component
 	GetComponents(name string) []Component
 	RangeComponents(fun func(component Component) bool)
-	GetInheritor() Entity
-	callStart()
-	callUpdate()
-	callLateUpdate()
 }
 
 func NewEntity(rt Runtime, optFuncs ...NewEntityOptionFunc) Entity {
@@ -35,6 +32,14 @@ func NewEntity(rt Runtime, optFuncs ...NewEntityOptionFunc) Entity {
 	e.initEntity(rt, opts)
 
 	return e.inheritor
+}
+
+type EntityLifecycleCaller interface {
+	CallEntityInit()
+	CallStart()
+	CallUpdate()
+	CallLateUpdate()
+	CallEntityShut()
 }
 
 const (
@@ -63,7 +68,7 @@ func (e *EntityFoundation) initEntity(rt Runtime, opts *EntityOptions) {
 		panic("nil opts")
 	}
 
-	e.id = rt.GetApp().MakeUID()
+	e.id = rt.GetApp().makeUID()
 	e.EntityOptions = *opts
 
 	if e.inheritor == nil {
@@ -81,12 +86,7 @@ func (e *EntityFoundation) initEntity(rt Runtime, opts *EntityOptions) {
 		e.initFunc(e)
 	}
 
-	e.RangeComponents(func(component Component) bool {
-		if cl, ok := component.(ComponentEntityInit); ok {
-			cl.EntityInit()
-		}
-		return true
-	})
+	e.CallEntityInit()
 }
 
 func (e *EntityFoundation) GC() {
@@ -106,12 +106,7 @@ func (e *EntityFoundation) Destroy() {
 	e.GetRuntime().GetApp().removeEntity(e.id)
 	e.GetRuntime().removeEntity(e.id)
 
-	e.RangeComponents(func(component Component) bool {
-		if cl, ok := component.(ComponentEntityShut); ok {
-			cl.EntityShut()
-		}
-		return true
-	})
+	e.CallEntityShut()
 
 	e.RangeComponents(func(component Component) bool {
 		e.RemoveComponent(component.GetName())
@@ -125,6 +120,10 @@ func (e *EntityFoundation) Destroy() {
 
 func (e *EntityFoundation) GetEntityID() uint64 {
 	return e.id
+}
+
+func (e *EntityFoundation) GetInheritor() Entity {
+	return e.inheritor
 }
 
 func (e *EntityFoundation) GetRuntime() Runtime {
@@ -231,11 +230,23 @@ func (e *EntityFoundation) RangeComponents(fun func(component Component) bool) {
 	})
 }
 
-func (e *EntityFoundation) GetInheritor() Entity {
-	return e.inheritor
+func (e *EntityFoundation) CallEntityInit() {
+	if e.destroyed {
+		return
+	}
+
+	e.componentList.UnsafeTraversal(func(e *list.Element) bool {
+		if e.Escape() || e.GetMark(EntityComponentsMark_Removed) {
+			return true
+		}
+		if cl, ok := e.Value.(ComponentEntityInit); ok {
+			cl.EntityInit()
+		}
+		return true
+	})
 }
 
-func (e *EntityFoundation) callStart() {
+func (e *EntityFoundation) CallStart() {
 	if e.destroyed {
 		return
 	}
@@ -255,7 +266,7 @@ func (e *EntityFoundation) callStart() {
 	})
 }
 
-func (e *EntityFoundation) callUpdate() {
+func (e *EntityFoundation) CallUpdate() {
 	if e.destroyed {
 		return
 	}
@@ -275,7 +286,7 @@ func (e *EntityFoundation) callUpdate() {
 	})
 }
 
-func (e *EntityFoundation) callLateUpdate() {
+func (e *EntityFoundation) CallLateUpdate() {
 	if e.destroyed {
 		return
 	}
@@ -290,6 +301,18 @@ func (e *EntityFoundation) callLateUpdate() {
 			} else {
 				e.SetMark(EntityComponentsMark_NoLateUpdate, true)
 			}
+		}
+		return true
+	})
+}
+
+func (e *EntityFoundation) CallEntityShut() {
+	e.componentList.UnsafeTraversal(func(e *list.Element) bool {
+		if e.Escape() || e.GetMark(EntityComponentsMark_Removed) {
+			return true
+		}
+		if cl, ok := e.Value.(ComponentEntityShut); ok {
+			cl.EntityShut()
 		}
 		return true
 	})

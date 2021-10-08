@@ -11,7 +11,7 @@ type App interface {
 	GetInheritor() App
 	GetEntity(entID uint64) Entity
 	RangeEntities(func(entity Entity) bool)
-	MakeUID() uint64
+	makeUID() uint64
 	addEntity(entity Entity)
 	removeEntity(entID uint64)
 }
@@ -132,7 +132,7 @@ func (app *AppFoundation) RangeEntities(fun func(entity Entity) bool) {
 	})
 }
 
-func (app *AppFoundation) MakeUID() uint64 {
+func (app *AppFoundation) makeUID() uint64 {
 	return atomic.AddUint64(&app.uidMaker, 1)
 }
 

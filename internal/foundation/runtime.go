@@ -72,7 +72,7 @@ func (rt *RuntimeFoundation) initRuntime(ctx Context, app App, opts *RuntimeOpti
 
 	rt.initRunnable()
 	rt.Context = ctx
-	rt.id = app.MakeUID()
+	rt.id = app.makeUID()
 	rt.app = app
 	rt.safeCallList = make(chan *SafeCallBundle)
 	close(rt.safeCallList)
@@ -102,14 +102,16 @@ func (rt *RuntimeFoundation) Run() chan struct{} {
 			parentCtx.GetWaitGroup().Add(1)
 		}
 
-		invokeFun := func(fun func(entity Entity)) {
+		invokeLifecycleFunc := func(fun func(entityLifecycle EntityLifecycleCaller)) {
 			if fun == nil {
 				return
 			}
-			rt.RangeEntities(func(entity Entity) bool {
-				CallOuter(rt.autoRecover, rt.GetReportError(), func() {
-					fun(entity)
-				})
+
+			rt.entityList.UnsafeTraversal(func(e *list.Element) bool {
+				if e.Escape() || e.GetMark(0) {
+					return true
+				}
+				fun(e.Value.(EntityLifecycleCaller))
 				return true
 			})
 		}
@@ -134,7 +136,7 @@ func (rt *RuntimeFoundation) Run() chan struct{} {
 				if e.Escape() || e.GetMark(0) {
 					continue
 				}
-				CallOuter(rt.autoRecover, rt.GetReportError(), e.Value.(Entity).callStart)
+				CallOuter(rt.autoRecover, rt.GetReportError(), e.Value.(EntityLifecycleCaller).CallStart)
 			}
 			rt.entityStartList = rt.entityStartList[count:]
 		}
@@ -238,12 +240,12 @@ func (rt *RuntimeFoundation) Run() chan struct{} {
 				rt.frame.updateBegin()
 				defer rt.frame.updateEnd()
 
-				invokeFun(func(entity Entity) {
-					entity.callUpdate()
+				invokeLifecycleFunc(func(entityLifecycle EntityLifecycleCaller) {
+					entityLifecycle.CallUpdate()
 				})
 
-				invokeFun(func(entity Entity) {
-					entity.callLateUpdate()
+				invokeLifecycleFunc(func(entityLifecycle EntityLifecycleCaller) {
+					entityLifecycle.CallLateUpdate()
 				})
 			}
 
