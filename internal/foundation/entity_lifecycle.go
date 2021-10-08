@@ -11,7 +11,7 @@ type EntityLifecycleCaller interface {
 }
 
 const (
-	EntityComponentsMark_Removed uint = iota
+	EntityComponentsMark_Removed int = iota
 	EntityComponentsMark_Inited
 	EntityComponentsMark_Started
 	EntityComponentsMark_NoUpdate

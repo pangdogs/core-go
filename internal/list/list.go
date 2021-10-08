@@ -51,7 +51,7 @@ func (e *Element) Escape() bool {
 	return e.list == nil
 }
 
-func (e *Element) SetMark(bit uint, v bool) {
+func (e *Element) SetMark(bit int, v bool) {
 	if v {
 		e.Mark |= 1 << bit
 	} else {
@@ -59,7 +59,7 @@ func (e *Element) SetMark(bit uint, v bool) {
 	}
 }
 
-func (e *Element) GetMark(bit uint) bool {
+func (e *Element) GetMark(bit int) bool {
 	return (e.Mark>>bit)&uint64(1) == 1
 }
 
