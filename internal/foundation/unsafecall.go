@@ -2,18 +2,17 @@ package foundation
 
 import (
 	"fmt"
-	"github.com/pangdogs/core/internal"
 )
 
-func UnsafeCall(callee internal.Runtime, fun func() internal.SafeRet) (ret chan internal.SafeRet) {
-	ret = make(chan internal.SafeRet, 1)
+func UnsafeCall(callee Runtime, fun func() SafeRet) (ret chan SafeRet) {
+	ret = make(chan SafeRet, 1)
 
 	defer func() {
 		if info := recover(); info != nil {
 			if err, ok := info.(error); ok {
-				ret <- internal.SafeRet{Err: err}
+				ret <- SafeRet{Err: err}
 			} else {
-				ret <- internal.SafeRet{Err: fmt.Errorf("%v", info)}
+				ret <- SafeRet{Err: fmt.Errorf("%v", info)}
 			}
 		}
 	}()
@@ -23,7 +22,7 @@ func UnsafeCall(callee internal.Runtime, fun func() internal.SafeRet) (ret chan 
 		panic(err)
 	}
 
-	callee.(RuntimeWhole).PushSafeCall(callBundle)
+	callee.pushSafeCall(callBundle)
 
 	return
 }

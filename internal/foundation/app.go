@@ -1,40 +1,45 @@
 package foundation
 
 import (
-	"github.com/pangdogs/core/internal"
 	"sync"
 	"sync/atomic"
 )
 
-type AppWhole interface {
-	internal.App
-	GetInheritor() internal.App
-	AddEntity(entity internal.Entity)
-	RemoveEntity(entID uint64)
+type App interface {
+	Runnable
+	Context
+	GetInheritor() App
+	GetEntity(entID uint64) Entity
+	RangeEntities(func(entity Entity) bool)
+	MakeUID() uint64
+	addEntity(entity Entity)
+	removeEntity(entID uint64)
 }
 
-func NewApp(ctx internal.Context, optFuncs ...NewAppOptionFunc) internal.App {
-	app := &App{}
+func NewApp(ctx Context, optFuncs ...NewAppOptionFunc) App {
+	app := &AppFoundation{}
 
 	opts := &AppOptions{}
-	for _, optFun := range append([]NewAppOptionFunc{NewAppOption.Default()}, optFuncs...) {
+	NewAppOption.Default()(opts)
+
+	for _, optFun := range optFuncs {
 		optFun(opts)
 	}
 
-	app.InitApp(ctx, opts)
+	app.initApp(ctx, opts)
 
 	return app.inheritor
 }
 
-type App struct {
-	Runnable
-	internal.Context
+type AppFoundation struct {
+	_Runnable
+	Context
 	AppOptions
 	uidMaker  uint64
 	entityMap sync.Map
 }
 
-func (app *App) InitApp(ctx internal.Context, opts *AppOptions) {
+func (app *AppFoundation) initApp(ctx Context, opts *AppOptions) {
 	if ctx == nil {
 		panic("nil ctx")
 	}
@@ -45,13 +50,11 @@ func (app *App) InitApp(ctx internal.Context, opts *AppOptions) {
 
 	app.AppOptions = *opts
 
-	if app.inheritor != nil {
-		app.inheritor.(AppInheritorWhole).initAppInheritor(app)
-	} else {
+	if app.inheritor == nil {
 		app.inheritor = app
 	}
 
-	app.InitRunnable()
+	app.initRunnable()
 	app.Context = ctx
 
 	CallOuter(app.autoRecover, app.GetReportError(), func() {
@@ -61,23 +64,23 @@ func (app *App) InitApp(ctx internal.Context, opts *AppOptions) {
 	})
 }
 
-func (app *App) Run() chan struct{} {
-	if !app.MarkRunning() {
+func (app *AppFoundation) Run() chan struct{} {
+	if !app.markRunning() {
 		panic("app already running")
 	}
 
 	go func() {
-		if parentCtx, ok := app.GetParentContext().(internal.Context); ok {
+		if parentCtx, ok := app.GetParentContext().(Context); ok {
 			parentCtx.GetWaitGroup().Add(1)
 		}
 
 		defer func() {
-			if parentCtx, ok := app.GetParentContext().(internal.Context); ok {
+			if parentCtx, ok := app.GetParentContext().(Context); ok {
 				parentCtx.GetWaitGroup().Done()
 			}
 
 			app.GetWaitGroup().Wait()
-			app.MarkShutdown()
+			app.markShutdown()
 			app.shutChan <- struct{}{}
 
 			CallOuter(app.autoRecover, app.GetReportError(), func() {
@@ -102,38 +105,38 @@ func (app *App) Run() chan struct{} {
 	return app.shutChan
 }
 
-func (app *App) Stop() {
+func (app *AppFoundation) Stop() {
 	app.GetCancelFunc()()
 }
 
-func (app *App) GetInheritor() internal.App {
+func (app *AppFoundation) GetInheritor() App {
 	return app.inheritor
 }
 
-func (app *App) GetEntity(entID uint64) internal.Entity {
+func (app *AppFoundation) GetEntity(entID uint64) Entity {
 	entity, ok := app.entityMap.Load(entID)
 	if !ok {
 		return nil
 	}
 
-	return entity.(internal.Entity)
+	return entity.(Entity)
 }
 
-func (app *App) RangeEntities(fun func(entity internal.Entity) bool) {
+func (app *AppFoundation) RangeEntities(fun func(entity Entity) bool) {
 	if fun == nil {
 		return
 	}
 
 	app.entityMap.Range(func(key, value interface{}) bool {
-		return fun(value.(internal.Entity))
+		return fun(value.(Entity))
 	})
 }
 
-func (app *App) MakeUID() uint64 {
+func (app *AppFoundation) MakeUID() uint64 {
 	return atomic.AddUint64(&app.uidMaker, 1)
 }
 
-func (app *App) AddEntity(entity internal.Entity) {
+func (app *AppFoundation) addEntity(entity Entity) {
 	if entity == nil {
 		panic("nil entity")
 	}
@@ -143,6 +146,6 @@ func (app *App) AddEntity(entity internal.Entity) {
 	}
 }
 
-func (app *App) RemoveEntity(entID uint64) {
+func (app *AppFoundation) removeEntity(entID uint64) {
 	app.entityMap.Delete(entID)
 }

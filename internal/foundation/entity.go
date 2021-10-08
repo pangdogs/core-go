@@ -2,43 +2,59 @@ package foundation
 
 import (
 	"errors"
-	"github.com/pangdogs/core/internal"
 	"github.com/pangdogs/core/internal/list"
 )
 
-type EntityWhole interface {
-	internal.Entity
-	internal.GC
-	GetInheritor() internal.Entity
-	CallStart()
-	CallUpdate()
-	CallLateUpdate()
+type Entity interface {
+	GC
+	Destroy()
+	GetEntityID() uint64
+	GetRuntime() Runtime
+	IsDestroyed() bool
+	AddComponent(name string, component interface{}) error
+	RemoveComponent(name string)
+	GetComponent(name string) Component
+	GetComponents(name string) []Component
+	RangeComponents(fun func(component Component) bool)
+	GetInheritor() Entity
+	callStart()
+	callUpdate()
+	callLateUpdate()
 }
 
-func NewEntity(rt internal.Runtime, optFuncs ...NewEntityOptionFunc) internal.Entity {
-	e := &Entity{}
+func NewEntity(rt Runtime, optFuncs ...NewEntityOptionFunc) Entity {
+	e := &EntityFoundation{}
 
 	opts := &EntityOptions{}
-	for _, optFun := range append([]NewEntityOptionFunc{NewEntityOption.Default()}, optFuncs...) {
+	NewEntityOption.Default()(opts)
+
+	for _, optFun := range optFuncs {
 		optFun(opts)
 	}
 
-	e.InitEntity(rt, opts)
+	e.initEntity(rt, opts)
 
 	return e.inheritor
 }
 
-type Entity struct {
+const (
+	EntityComponentsMark_Removed uint = iota
+	EntityComponentsMark_Started
+	EntityComponentsMark_NoUpdate
+	EntityComponentsMark_NoLateUpdate
+)
+
+type EntityFoundation struct {
 	EntityOptions
 	id              uint64
-	runtime         internal.Runtime
+	runtime         Runtime
 	destroyed       bool
 	componentMap    map[string]*list.Element
 	componentList   list.List
 	componentGCList []*list.Element
 }
 
-func (e *Entity) InitEntity(rt internal.Runtime, opts *EntityOptions) {
+func (e *EntityFoundation) initEntity(rt Runtime, opts *EntityOptions) {
 	if rt == nil {
 		panic("nil runtime")
 	}
@@ -50,9 +66,7 @@ func (e *Entity) InitEntity(rt internal.Runtime, opts *EntityOptions) {
 	e.id = rt.GetApp().MakeUID()
 	e.EntityOptions = *opts
 
-	if e.inheritor != nil {
-		e.inheritor.(EntityInheritorWhole).initEntityInheritor(e)
-	} else {
+	if e.inheritor == nil {
 		e.inheritor = e
 	}
 
@@ -60,39 +74,46 @@ func (e *Entity) InitEntity(rt internal.Runtime, opts *EntityOptions) {
 	e.componentList.Init()
 	e.componentMap = map[string]*list.Element{}
 
-	rt.GetApp().(AppWhole).AddEntity(e.inheritor)
-	rt.(RuntimeWhole).AddEntity(e.inheritor)
+	rt.GetApp().addEntity(e.inheritor)
+	rt.addEntity(e.inheritor)
 
 	if e.initFunc != nil {
 		e.initFunc(e)
 	}
 
-	e.RangeComponents(func(component internal.Component) bool {
-		if cl, ok := component.(internal.ComponentEntityInit); ok {
+	e.RangeComponents(func(component Component) bool {
+		if cl, ok := component.(ComponentEntityInit); ok {
 			cl.EntityInit()
 		}
 		return true
 	})
 }
 
-func (e *Entity) Destroy() {
+func (e *EntityFoundation) GC() {
+	for i := 0; i < len(e.componentGCList); i++ {
+		e.componentList.Remove(e.componentGCList[i])
+	}
+	e.componentGCList = e.componentGCList[:0]
+}
+
+func (e *EntityFoundation) Destroy() {
 	if e.destroyed {
 		return
 	}
 
 	e.destroyed = true
 
-	e.GetRuntime().GetApp().(AppWhole).RemoveEntity(e.id)
-	e.GetRuntime().(RuntimeWhole).RemoveEntity(e.id)
+	e.GetRuntime().GetApp().removeEntity(e.id)
+	e.GetRuntime().removeEntity(e.id)
 
-	e.RangeComponents(func(component internal.Component) bool {
-		if cl, ok := component.(internal.ComponentEntityShut); ok {
+	e.RangeComponents(func(component Component) bool {
+		if cl, ok := component.(ComponentEntityShut); ok {
 			cl.EntityShut()
 		}
 		return true
 	})
 
-	e.RangeComponents(func(component internal.Component) bool {
+	e.RangeComponents(func(component Component) bool {
 		e.RemoveComponent(component.GetName())
 		return true
 	})
@@ -102,24 +123,20 @@ func (e *Entity) Destroy() {
 	}
 }
 
-func (e *Entity) GetEntityID() uint64 {
+func (e *EntityFoundation) GetEntityID() uint64 {
 	return e.id
 }
 
-func (e *Entity) GetRuntime() internal.Runtime {
+func (e *EntityFoundation) GetRuntime() Runtime {
 	return e.runtime
 }
 
-func (e *Entity) IsDestroyed() bool {
+func (e *EntityFoundation) IsDestroyed() bool {
 	return e.destroyed
 }
 
-func (e *Entity) AddComponent(name string, component interface{}) error {
-	if name == "" {
-		return errors.New("empty component name")
-	}
-
-	if component == nil {
+func (e *EntityFoundation) AddComponent(name string, _component interface{}) error {
+	if _component == nil {
 		return errors.New("nil component")
 	}
 
@@ -127,47 +144,49 @@ func (e *Entity) AddComponent(name string, component interface{}) error {
 		return errors.New("entity destroyed")
 	}
 
-	component.(ComponentWhole).initComponent(name, e.inheritor)
+	component := _component.(Component)
+	component.initComponent(name, e.inheritor)
 
 	if ele, ok := e.componentMap[name]; ok {
 		old := ele
-		for t := ele; t != nil && t.Value.(internal.Component).GetName() == name; t = t.Next() {
+		for t := ele; t != nil && t.Value.(Component).GetName() == name; t = t.Next() {
 			old = t
 		}
-		e.componentList.InsertAfter(component, old)
+		e.componentList.InsertAfter(_component, old)
 	} else {
-		e.componentMap[name] = e.componentList.PushBack(component)
+		e.componentMap[name] = e.componentList.PushBack(_component)
 	}
 
-	if cl, ok := component.(internal.ComponentInit); ok {
-		cl.Init(component.(internal.Component))
+	if cl, ok := _component.(ComponentInit); ok {
+		cl.Init(component)
 	}
 
-	if cl, ok := component.(internal.ComponentAwake); ok {
+	if cl, ok := _component.(ComponentAwake); ok {
 		cl.Awake()
 	}
 
 	return nil
 }
 
-func (e *Entity) RemoveComponent(name string) {
+func (e *EntityFoundation) RemoveComponent(name string) {
 	if ele, ok := e.componentMap[name]; ok {
 		delete(e.componentMap, name)
 
 		var elements []*list.Element
-		for t := ele; t != nil && t.Value.(internal.Component).GetName() == name; t = t.Next() {
-			t.SetMark(0, true)
+
+		for t := ele; t != nil && t.Value.(Component).GetName() == name; t = t.Next() {
+			t.SetMark(EntityComponentsMark_Removed, true)
 			elements = append(elements, t)
 		}
 
 		e.componentGCList = append(e.componentGCList, elements...)
 
 		for i := 0; i < len(elements); i++ {
-			if cl, ok := elements[i].Value.(internal.ComponentHalt); ok {
+			if cl, ok := elements[i].Value.(ComponentHalt); ok {
 				cl.Halt()
 			}
-			if cl, ok := elements[i].Value.(internal.ComponentShut); ok {
-				cl.Shut(elements[i].Value.(internal.Component))
+			if cl, ok := elements[i].Value.(ComponentShut); ok {
+				cl.Shut(elements[i].Value.(Component))
 			}
 		}
 
@@ -177,20 +196,20 @@ func (e *Entity) RemoveComponent(name string) {
 	}
 }
 
-func (e *Entity) GetComponent(name string) internal.Component {
+func (e *EntityFoundation) GetComponent(name string) Component {
 	if ele, ok := e.componentMap[name]; ok {
-		return ele.Value.(internal.Component)
+		return ele.Value.(Component)
 	}
 
 	return nil
 }
 
-func (e *Entity) GetComponents(name string) []internal.Component {
+func (e *EntityFoundation) GetComponents(name string) []Component {
 	if ele, ok := e.componentMap[name]; ok {
-		var components []internal.Component
+		var components []Component
 
-		for t := ele; t != nil && t.Value.(internal.Component).GetName() == name; t = t.Next() {
-			components = append(components, t.Value.(internal.Component))
+		for t := ele; t != nil && t.Value.(Component).GetName() == name; t = t.Next() {
+			components = append(components, t.Value.(Component))
 		}
 
 		return components
@@ -199,70 +218,77 @@ func (e *Entity) GetComponents(name string) []internal.Component {
 	return nil
 }
 
-func (e *Entity) RangeComponents(fun func(component internal.Component) bool) {
+func (e *EntityFoundation) RangeComponents(fun func(component Component) bool) {
 	if fun == nil {
 		return
 	}
 
 	e.componentList.UnsafeTraversal(func(e *list.Element) bool {
-		if e.Escape() || e.GetMark(0) {
+		if e.Escape() || e.GetMark(EntityComponentsMark_Removed) {
 			return true
 		}
-		return fun(e.Value.(internal.Component))
+		return fun(e.Value.(Component))
 	})
 }
 
-func (e *Entity) GC() {
-	for i := 0; i < len(e.componentGCList); i++ {
-		e.componentList.Remove(e.componentGCList[i])
-	}
-	e.componentGCList = e.componentGCList[:0]
-}
-
-func (e *Entity) GetInheritor() internal.Entity {
+func (e *EntityFoundation) GetInheritor() Entity {
 	return e.inheritor
 }
 
-func (e *Entity) CallStart() {
+func (e *EntityFoundation) callStart() {
 	if e.destroyed {
 		return
 	}
 
-	e.RangeComponents(func(component internal.Component) bool {
-		if !component.(ComponentWhole).getStarted() {
-			component.(ComponentWhole).setStarted(true)
-			if cs, ok := component.(internal.ComponentStart); ok {
-				cs.Start()
+	e.componentList.UnsafeTraversal(func(e *list.Element) bool {
+		if e.Escape() || e.GetMark(EntityComponentsMark_Removed) {
+			return true
+		}
+		if !e.GetMark(EntityComponentsMark_Started) {
+			e.SetMark(EntityComponentsMark_Started, true)
+
+			if cl, ok := e.Value.(ComponentStart); ok {
+				cl.Start()
 			}
 		}
 		return true
 	})
 }
 
-func (e *Entity) CallUpdate() {
+func (e *EntityFoundation) callUpdate() {
 	if e.destroyed {
 		return
 	}
 
-	e.RangeComponents(func(component internal.Component) bool {
-		if component.(ComponentWhole).getStarted() {
-			if cs, ok := component.(internal.ComponentUpdate); ok {
-				cs.Update()
+	e.componentList.UnsafeTraversal(func(e *list.Element) bool {
+		if e.Escape() || e.GetMark(EntityComponentsMark_Removed) || e.GetMark(EntityComponentsMark_NoUpdate) {
+			return true
+		}
+		if e.GetMark(EntityComponentsMark_Started) {
+			if cl, ok := e.Value.(ComponentUpdate); ok {
+				cl.Update()
+			} else {
+				e.SetMark(EntityComponentsMark_NoUpdate, true)
 			}
 		}
 		return true
 	})
 }
 
-func (e *Entity) CallLateUpdate() {
+func (e *EntityFoundation) callLateUpdate() {
 	if e.destroyed {
 		return
 	}
 
-	e.RangeComponents(func(component internal.Component) bool {
-		if component.(ComponentWhole).getStarted() {
-			if cs, ok := component.(internal.ComponentLateUpdate); ok {
-				cs.LateUpdate()
+	e.componentList.UnsafeTraversal(func(e *list.Element) bool {
+		if e.Escape() || e.GetMark(EntityComponentsMark_Removed) || e.GetMark(EntityComponentsMark_NoLateUpdate) {
+			return true
+		}
+		if e.GetMark(EntityComponentsMark_Started) {
+			if cl, ok := e.Value.(ComponentLateUpdate); ok {
+				cl.LateUpdate()
+			} else {
+				e.SetMark(EntityComponentsMark_NoLateUpdate, true)
 			}
 		}
 		return true

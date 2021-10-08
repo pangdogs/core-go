@@ -2,49 +2,56 @@ package foundation
 
 import (
 	"errors"
-	"github.com/pangdogs/core/internal"
 	"github.com/pangdogs/core/internal/list"
 )
 
-type EventSourceWhole interface {
-	internal.EventSource
-	internal.GC
-	getRuntime() internal.Runtime
-	addHook(hook internal.Hook, priority ...int) error
+type EventSource interface {
+	GC
+	InitEventSource(rt Runtime)
+	GetEventSourceID() uint64
+	getRuntime() Runtime
+	addHook(hook Hook, priority ...int) error
 	removeHook(hookID uint64)
-	rangeHooks(fun func(hook internal.Hook, priority int) bool)
+	rangeHooks(fun func(hook Hook, priority int) bool)
 }
 
-func NewHookBundle(hook internal.Hook, priority ...int) (*HookBundle, error) {
+func NewHookBundle(hook Hook, _priority ...int) (*HookBundle, error) {
 	if hook == nil {
 		return nil, errors.New("nil hook")
 	}
 
+	priority := 0
+	if len(_priority) > 0 {
+		priority = _priority[0]
+	}
+
 	return &HookBundle{
-		Hook: hook,
-		Priority: func() int {
-			if len(priority) > 0 {
-				return priority[0]
-			}
-			return 0
-		}(),
+		Hook:     hook,
+		Priority: priority,
 	}, nil
 }
 
 type HookBundle struct {
-	Hook     internal.Hook
+	Hook     Hook
 	Priority int
 }
 
-type EventSource struct {
+type EventSourceFoundation struct {
 	id         uint64
-	runtime    internal.Runtime
+	runtime    Runtime
 	hookList   list.List
 	hookMap    map[uint64]*list.Element
 	hookGCList []*list.Element
 }
 
-func (es *EventSource) InitEventSource(rt internal.Runtime) {
+func (es *EventSourceFoundation) GC() {
+	for i := 0; i < len(es.hookGCList); i++ {
+		es.hookList.Remove(es.hookGCList[i])
+	}
+	es.hookGCList = es.hookGCList[:0]
+}
+
+func (es *EventSourceFoundation) InitEventSource(rt Runtime) {
 	if rt == nil {
 		panic("nil runtime")
 	}
@@ -55,15 +62,15 @@ func (es *EventSource) InitEventSource(rt internal.Runtime) {
 	es.hookMap = map[uint64]*list.Element{}
 }
 
-func (es *EventSource) GetEventSourceID() uint64 {
+func (es *EventSourceFoundation) GetEventSourceID() uint64 {
 	return es.id
 }
 
-func (es *EventSource) getRuntime() internal.Runtime {
+func (es *EventSourceFoundation) getRuntime() Runtime {
 	return es.runtime
 }
 
-func (es *EventSource) addHook(hook internal.Hook, priority ...int) error {
+func (es *EventSourceFoundation) addHook(hook Hook, priority ...int) error {
 	if hook == nil {
 		return errors.New("nil hook")
 	}
@@ -89,7 +96,7 @@ func (es *EventSource) addHook(hook internal.Hook, priority ...int) error {
 	return nil
 }
 
-func (es *EventSource) removeHook(hookID uint64) {
+func (es *EventSourceFoundation) removeHook(hookID uint64) {
 	if e, ok := es.hookMap[hookID]; ok {
 		delete(es.hookMap, hookID)
 		e.SetMark(0, true)
@@ -98,7 +105,7 @@ func (es *EventSource) removeHook(hookID uint64) {
 	}
 }
 
-func (es *EventSource) rangeHooks(fun func(hook internal.Hook, priority int) bool) {
+func (es *EventSourceFoundation) rangeHooks(fun func(hook Hook, priority int) bool) {
 	if fun == nil {
 		return
 	}
@@ -109,11 +116,4 @@ func (es *EventSource) rangeHooks(fun func(hook internal.Hook, priority int) boo
 		}
 		return fun(e.Value.(*HookBundle).Hook, e.Value.(*HookBundle).Priority)
 	})
-}
-
-func (es *EventSource) GC() {
-	for i := 0; i < len(es.hookGCList); i++ {
-		es.hookList.Remove(es.hookGCList[i])
-	}
-	es.hookGCList = es.hookGCList[:0]
 }

@@ -1,37 +1,27 @@
 package foundation
 
-import "github.com/pangdogs/core/internal"
-
-type ComponentWhole interface {
-	internal.Component
-	initComponent(name string, entity internal.Entity)
-	setStarted(v bool)
-	getStarted() bool
+type Component interface {
+	GetEntity() Entity
+	GetName() string
+	initComponent(name string, entity Entity)
 }
 
-type Component struct {
-	name    string
-	entity  internal.Entity
-	started bool
+type ComponentFoundation = _Component
+
+type _Component struct {
+	name   string
+	entity Entity
 }
 
-func (c *Component) GetEntity() internal.Entity {
+func (c *_Component) GetEntity() Entity {
 	return c.entity
 }
 
-func (c *Component) GetName() string {
+func (c *_Component) GetName() string {
 	return c.name
 }
 
-func (c *Component) initComponent(name string, entity internal.Entity) {
+func (c *_Component) initComponent(name string, entity Entity) {
 	c.name = name
 	c.entity = entity
-}
-
-func (c *Component) setStarted(v bool) {
-	c.started = v
-}
-
-func (c *Component) getStarted() bool {
-	return c.started
 }

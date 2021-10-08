@@ -1,74 +1,73 @@
 package core
 
 import (
-	"github.com/pangdogs/core/internal"
 	"github.com/pangdogs/core/internal/foundation"
 	"github.com/pangdogs/core/internal/list"
 )
 
-type Context = internal.Context
+type Context = foundation.Context
 
 var NewContext = foundation.NewContext
 
-type App = internal.App
+type App = foundation.App
 
 var NewApp = foundation.NewApp
 
 var NewAppOption = foundation.NewAppOption
 
-type AppInheritorFoundation = foundation.AppInheritor
+type AppFoundation = foundation.AppFoundation
 
-type Runtime = internal.Runtime
+type Runtime = foundation.Runtime
 
 var NewRuntime = foundation.NewRuntime
 
 var NewRuntimeOption = foundation.NewRuntimeOption
 
-type RuntimeInheritorFoundation = foundation.RuntimeInheritor
+type RuntimeFoundation = foundation.RuntimeFoundation
 
-type GC = internal.GC
+type GC = foundation.GC
 
-type Frame = internal.Frame
+type Frame = foundation.Frame
 
 var NewFrame = foundation.NewFrame
 
-type Entity = internal.Entity
+type Entity = foundation.Entity
 
 var NewEntity = foundation.NewEntity
 
 var NewEntityOption = foundation.NewEntityOption
 
-type EntityInheritorFoundation = foundation.EntityInheritor
+type EntityFoundation = foundation.EntityFoundation
 
-type Component = internal.Component
+type Component = foundation.Component
 
-type ComponentFoundation = foundation.Component
+type ComponentFoundation = foundation.ComponentFoundation
 
-type ComponentInit = internal.ComponentInit
+type ComponentInit = foundation.ComponentInit
 
-type ComponentAwake = internal.ComponentAwake
+type ComponentAwake = foundation.ComponentAwake
 
-type ComponentEntityInit = internal.ComponentEntityInit
+type ComponentEntityInit = foundation.ComponentEntityInit
 
-type ComponentStart = internal.ComponentStart
+type ComponentStart = foundation.ComponentStart
 
-type ComponentUpdate = internal.ComponentUpdate
+type ComponentUpdate = foundation.ComponentUpdate
 
-type ComponentLateUpdate = internal.ComponentLateUpdate
+type ComponentLateUpdate = foundation.ComponentLateUpdate
 
-type ComponentEntityShut = internal.ComponentEntityShut
+type ComponentEntityShut = foundation.ComponentEntityShut
 
-type ComponentHalt = internal.ComponentHalt
+type ComponentHalt = foundation.ComponentHalt
 
-type ComponentShut = internal.ComponentShut
+type ComponentShut = foundation.ComponentShut
 
-type Hook = internal.Hook
+type Hook = foundation.Hook
 
-type HookFoundation = foundation.Hook
+type HookFoundation = foundation.HookFoundation
 
-type EventSource = internal.EventSource
+type EventSource = foundation.EventSource
 
-type EventSourceFoundation = foundation.EventSource
+type EventSourceFoundation = foundation.EventSourceFoundation
 
 var BindEvent = foundation.BindEvent
 
@@ -80,11 +79,11 @@ var UnbindAllHook = foundation.UnbindAllHook
 
 var SendEvent = foundation.SendEvent
 
-type SafeStack = internal.SafeStack
+type SafeStack = foundation.SafeStack
 
 var NewSafeStack = foundation.NewSafeStack
 
-type SafeRet = internal.SafeRet
+type SafeRet = foundation.SafeRet
 
 var UnsafeCall = foundation.UnsafeCall
 

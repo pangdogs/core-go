@@ -2,11 +2,10 @@ package foundation
 
 import (
 	"errors"
-	"github.com/pangdogs/core/internal"
 )
 
-func NewSafeCallBundle(stack internal.SafeStack, safeFun func(stack internal.SafeStack) internal.SafeRet,
-	unsafeFun func() internal.SafeRet, retChan chan internal.SafeRet) (*SafeCallBundle, error) {
+func NewSafeCallBundle(stack SafeStack, safeFun func(stack SafeStack) SafeRet,
+	unsafeFun func() SafeRet, retChan chan SafeRet) (*SafeCallBundle, error) {
 	if stack != nil {
 		if safeFun == nil {
 			return nil, errors.New("nil safeFun")
@@ -30,8 +29,13 @@ func NewSafeCallBundle(stack internal.SafeStack, safeFun func(stack internal.Saf
 }
 
 type SafeCallBundle struct {
-	Stack     internal.SafeStack
-	SafeFun   func(stack internal.SafeStack) internal.SafeRet
-	UnsafeFun func() internal.SafeRet
-	Ret       chan internal.SafeRet
+	Stack     SafeStack
+	SafeFun   func(stack SafeStack) SafeRet
+	UnsafeFun func() SafeRet
+	Ret       chan SafeRet
+}
+
+type SafeRet struct {
+	Err error
+	Ret interface{}
 }

@@ -27,7 +27,7 @@ type Element struct {
 	Value interface{}
 
 	// 标记
-	mark uint8
+	mark uint32
 }
 
 // Next returns the next list element or nil.
@@ -60,7 +60,7 @@ func (e *Element) SetMark(bit uint, v bool) {
 }
 
 func (e *Element) GetMark(bit uint) bool {
-	return (e.mark>>bit)&uint8(1) == 1
+	return (e.mark>>bit)&uint32(1) == 1
 }
 
 // List represents a doubly linked list.

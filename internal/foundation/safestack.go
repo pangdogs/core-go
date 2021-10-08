@@ -2,33 +2,36 @@ package foundation
 
 import (
 	"fmt"
-	"github.com/pangdogs/core/internal"
 )
 
-func NewSafeStack(caller internal.Runtime) internal.SafeStack {
-	t := &SafeStack{caller}
+type SafeStack interface {
+	SafeCall(callee Runtime, fun func(stack SafeStack) SafeRet) SafeRet
+}
+
+func NewSafeStack(caller Runtime) SafeStack {
+	t := &_SafeStack{caller}
 	return t
 }
 
-type SafeStack []internal.Runtime
+type _SafeStack []Runtime
 
-func (stack *SafeStack) Push(rt internal.Runtime) *SafeStack {
+func (stack *_SafeStack) Push(rt Runtime) *_SafeStack {
 	*stack = append(*stack, rt)
 	return stack
 }
 
-func (stack *SafeStack) Copy() *SafeStack {
-	t := append(make(SafeStack, 0, len(*stack)+1), *stack...)
+func (stack *_SafeStack) Copy() *_SafeStack {
+	t := append(make(_SafeStack, 0, len(*stack)+1), *stack...)
 	return &t
 }
 
-func (stack *SafeStack) SafeCall(callee internal.Runtime, fun func(stack internal.SafeStack) internal.SafeRet) (ret internal.SafeRet) {
+func (stack *_SafeStack) SafeCall(callee Runtime, fun func(stack SafeStack) SafeRet) (ret SafeRet) {
 	defer func() {
 		if info := recover(); info != nil {
 			if err, ok := info.(error); ok {
-				ret = internal.SafeRet{Err: err}
+				ret = SafeRet{Err: err}
 			} else {
-				ret = internal.SafeRet{Err: fmt.Errorf("%v", info)}
+				ret = SafeRet{Err: fmt.Errorf("%v", info)}
 			}
 		}
 	}()
@@ -48,7 +51,7 @@ func (stack *SafeStack) SafeCall(callee internal.Runtime, fun func(stack interna
 		}
 	}
 
-	retChan := make(chan internal.SafeRet, 1)
+	retChan := make(chan SafeRet, 1)
 
 	newStack := stack.Copy().Push(callee)
 
@@ -57,7 +60,7 @@ func (stack *SafeStack) SafeCall(callee internal.Runtime, fun func(stack interna
 		panic(err)
 	}
 
-	callee.(RuntimeWhole).PushSafeCall(callBundle)
+	callee.pushSafeCall(callBundle)
 
 	ret = <-callBundle.Ret
 

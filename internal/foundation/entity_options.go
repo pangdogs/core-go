@@ -1,13 +1,11 @@
 package foundation
 
-import "github.com/pangdogs/core/internal"
-
 var NewEntityOption = &NewEntityOptions{}
 
 type EntityOptions struct {
-	inheritor EntityWhole
+	inheritor Entity
 	initFunc,
-	shutFunc func(entity internal.Entity)
+	shutFunc func(entity Entity)
 }
 
 type NewEntityOptionFunc func(o *EntityOptions)
@@ -17,22 +15,24 @@ type NewEntityOptions struct{}
 func (*NewEntityOptions) Default() NewEntityOptionFunc {
 	return func(o *EntityOptions) {
 		o.inheritor = nil
+		o.initFunc = nil
+		o.shutFunc = nil
 	}
 }
 
-func (*NewEntityOptions) Inheritor(v internal.Entity) NewEntityOptionFunc {
+func (*NewEntityOptions) Inheritor(v Entity) NewEntityOptionFunc {
 	return func(o *EntityOptions) {
-		o.inheritor = v.(EntityWhole)
+		o.inheritor = v
 	}
 }
 
-func (*NewEntityOptions) InitFunc(v func(entity internal.Entity)) NewEntityOptionFunc {
+func (*NewEntityOptions) InitFunc(v func(entity Entity)) NewEntityOptionFunc {
 	return func(o *EntityOptions) {
 		o.initFunc = v
 	}
 }
 
-func (*NewEntityOptions) ShutFunc(v func(entity internal.Entity)) NewEntityOptionFunc {
+func (*NewEntityOptions) ShutFunc(v func(entity Entity)) NewEntityOptionFunc {
 	return func(o *EntityOptions) {
 		o.shutFunc = v
 	}

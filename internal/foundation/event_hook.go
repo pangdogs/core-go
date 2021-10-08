@@ -2,37 +2,37 @@ package foundation
 
 import (
 	"errors"
-	"github.com/pangdogs/core/internal"
 )
 
-type HookWhole interface {
-	internal.Hook
-	getRuntime() internal.Runtime
-	attachEventSource(eventSrc internal.EventSource) error
+type Hook interface {
+	InitHook(rt Runtime)
+	GetHookID() uint64
+	getRuntime() Runtime
+	attachEventSource(eventSrc EventSource) error
 	detachEventSource(eventSrcID uint64)
-	rangeEventSources(fun func(eventSrc internal.EventSource) bool)
+	rangeEventSources(fun func(eventSrc EventSource) bool)
 }
 
-type Hook struct {
+type HookFoundation struct {
 	id           uint64
-	runtime      internal.Runtime
-	eventSrcList []internal.EventSource
+	runtime      Runtime
+	eventSrcList []EventSource
 }
 
-func (h *Hook) InitHook(rt internal.Runtime) {
+func (h *HookFoundation) InitHook(rt Runtime) {
 	h.id = rt.GetApp().MakeUID()
 	h.runtime = rt
 }
 
-func (h *Hook) GetHookID() uint64 {
+func (h *HookFoundation) GetHookID() uint64 {
 	return h.id
 }
 
-func (h *Hook) getRuntime() internal.Runtime {
+func (h *HookFoundation) getRuntime() Runtime {
 	return h.runtime
 }
 
-func (h *Hook) attachEventSource(eventSrc internal.EventSource) error {
+func (h *HookFoundation) attachEventSource(eventSrc EventSource) error {
 	if eventSrc == nil {
 		return errors.New("nil eventSrc")
 	}
@@ -48,7 +48,7 @@ func (h *Hook) attachEventSource(eventSrc internal.EventSource) error {
 	return nil
 }
 
-func (h *Hook) detachEventSource(eventSrcID uint64) {
+func (h *HookFoundation) detachEventSource(eventSrcID uint64) {
 	for i := 0; i < len(h.eventSrcList); i++ {
 		if eventSrcID == h.eventSrcList[i].GetEventSourceID() {
 			h.eventSrcList = append(h.eventSrcList[:i], h.eventSrcList[i+1:]...)
@@ -57,7 +57,7 @@ func (h *Hook) detachEventSource(eventSrcID uint64) {
 	}
 }
 
-func (h *Hook) rangeEventSources(fun func(eventSrc internal.EventSource) bool) {
+func (h *HookFoundation) rangeEventSources(fun func(eventSrc EventSource) bool) {
 	if fun == nil {
 		return
 	}

@@ -1,28 +1,37 @@
 package foundation
 
 import (
-	"github.com/pangdogs/core/internal"
 	"time"
 )
 
-type FrameWhole interface {
-	internal.Frame
-	SetCurFrames(v uint64)
-	CycleBegin()
-	CycleEnd()
-	FrameBegin()
-	FrameEnd()
-	UpdateBegin()
-	UpdateEnd()
+type Frame interface {
+	GetTargetFPS() float32
+	GetCurFPS() float32
+	GetTotalFrames() uint64
+	GetCurFrames() uint64
+	IsBlink() bool
+	GetCycleBeginTime() time.Time
+	GetCycleElapseTime() time.Duration
+	GetCurFrameBeginTime() time.Time
+	GetLastFrameElapseTime() time.Duration
+	GetCurUpdateBeginTime() time.Time
+	GetLastUpdateElapseTime() time.Duration
+	setCurFrames(v uint64)
+	cycleBegin()
+	cycleEnd()
+	frameBegin()
+	frameEnd()
+	updateBegin()
+	updateEnd()
 }
 
-func NewFrame(targetFPS float32, totalFrames uint64, blink bool) internal.Frame {
-	frame := &Frame{}
-	frame.InitFrame(targetFPS, totalFrames, blink)
+func NewFrame(targetFPS float32, totalFrames uint64, blink bool) Frame {
+	frame := &_Frame{}
+	frame.initFrame(targetFPS, totalFrames, blink)
 	return frame
 }
 
-type Frame struct {
+type _Frame struct {
 	targetFPS, curFPS      float32
 	totalFrames, curFrames uint64
 	blink                  bool
@@ -37,7 +46,7 @@ type Frame struct {
 	statFPSFrames          uint64
 }
 
-func (f *Frame) InitFrame(targetFPS float32, totalFrames uint64, blink bool) {
+func (f *_Frame) initFrame(targetFPS float32, totalFrames uint64, blink bool) {
 	if targetFPS <= 0 {
 		panic("[targetFPS > 0] is required")
 	}
@@ -55,55 +64,55 @@ func (f *Frame) InitFrame(targetFPS float32, totalFrames uint64, blink bool) {
 	}
 }
 
-func (f *Frame) GetTargetFPS() float32 {
+func (f *_Frame) GetTargetFPS() float32 {
 	return f.targetFPS
 }
 
-func (f *Frame) GetCurFPS() float32 {
+func (f *_Frame) GetCurFPS() float32 {
 	return f.curFPS
 }
 
-func (f *Frame) GetTotalFrames() uint64 {
+func (f *_Frame) GetTotalFrames() uint64 {
 	return f.totalFrames
 }
 
-func (f *Frame) GetCurFrames() uint64 {
+func (f *_Frame) GetCurFrames() uint64 {
 	return f.curFrames
 }
 
-func (f *Frame) IsBlink() bool {
+func (f *_Frame) IsBlink() bool {
 	return f.blink
 }
 
-func (f *Frame) GetCycleBeginTime() time.Time {
+func (f *_Frame) GetCycleBeginTime() time.Time {
 	return f.cycleBeginTime
 }
 
-func (f *Frame) GetCycleElapseTime() time.Duration {
+func (f *_Frame) GetCycleElapseTime() time.Duration {
 	return f.cycleElapseTime
 }
 
-func (f *Frame) GetCurFrameBeginTime() time.Time {
+func (f *_Frame) GetCurFrameBeginTime() time.Time {
 	return f.curFrameBeginTime
 }
 
-func (f *Frame) GetLastFrameElapseTime() time.Duration {
+func (f *_Frame) GetLastFrameElapseTime() time.Duration {
 	return f.lastFrameElapseTime
 }
 
-func (f *Frame) GetCurUpdateBeginTime() time.Time {
+func (f *_Frame) GetCurUpdateBeginTime() time.Time {
 	return f.curUpdateBeginTime
 }
 
-func (f *Frame) GetLastUpdateElapseTime() time.Duration {
+func (f *_Frame) GetLastUpdateElapseTime() time.Duration {
 	return f.lastUpdateElapseTime
 }
 
-func (f *Frame) SetCurFrames(v uint64) {
+func (f *_Frame) setCurFrames(v uint64) {
 	f.curFrames = v
 }
 
-func (f *Frame) CycleBegin() {
+func (f *_Frame) cycleBegin() {
 	now := time.Now()
 
 	f.curFPS = 0
@@ -121,13 +130,13 @@ func (f *Frame) CycleBegin() {
 	f.lastUpdateElapseTime = 0
 }
 
-func (f *Frame) CycleEnd() {
+func (f *_Frame) cycleEnd() {
 	if f.blink {
 		f.curFPS = float32(float64(f.curFrames) / time.Now().Sub(f.cycleBeginTime).Seconds())
 	}
 }
 
-func (f *Frame) FrameBegin() {
+func (f *_Frame) frameBegin() {
 	now := time.Now()
 
 	if !f.blink {
@@ -142,7 +151,7 @@ func (f *Frame) FrameBegin() {
 	f.curFrameBeginTime = now
 }
 
-func (f *Frame) FrameEnd() {
+func (f *_Frame) frameEnd() {
 	now := time.Now()
 
 	if f.blink {
@@ -155,10 +164,10 @@ func (f *Frame) FrameEnd() {
 	f.statFPSFrames++
 }
 
-func (f *Frame) UpdateBegin() {
+func (f *_Frame) updateBegin() {
 	f.curUpdateBeginTime = time.Now()
 }
 
-func (f *Frame) UpdateEnd() {
+func (f *_Frame) updateEnd() {
 	f.lastUpdateElapseTime = time.Now().Sub(f.curUpdateBeginTime)
 }

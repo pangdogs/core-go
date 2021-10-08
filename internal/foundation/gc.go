@@ -1,4 +1,4 @@
-package internal
+package foundation
 
 type GC interface {
 	GC()

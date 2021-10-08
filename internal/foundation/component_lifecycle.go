@@ -1,9 +1,4 @@
-package internal
-
-type Component interface {
-	GetEntity() Entity
-	GetName() string
-}
+package foundation
 
 type ComponentInit interface {
 	Init(c Component)

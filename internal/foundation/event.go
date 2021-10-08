@@ -2,7 +2,6 @@ package foundation
 
 import (
 	"errors"
-	"github.com/pangdogs/core/internal"
 )
 
 func BindEvent(hook, eventSrc interface{}, priority ...int) (ret error) {
@@ -14,8 +13,8 @@ func BindEvent(hook, eventSrc interface{}, priority ...int) (ret error) {
 		return errors.New("nil eventSrc")
 	}
 
-	h := hook.(HookWhole)
-	s := eventSrc.(EventSourceWhole)
+	h := hook.(Hook)
+	s := eventSrc.(EventSource)
 
 	if err := h.attachEventSource(s); err != nil {
 		return err
@@ -39,8 +38,8 @@ func UnbindEvent(hook, eventSrc interface{}) {
 		return
 	}
 
-	h := hook.(HookWhole)
-	s := eventSrc.(EventSourceWhole)
+	h := hook.(Hook)
+	s := eventSrc.(EventSource)
 
 	s.removeHook(h.GetHookID())
 	h.detachEventSource(s.GetEventSourceID())
@@ -51,7 +50,7 @@ func UnbindAllEventSource(hook interface{}) {
 		return
 	}
 
-	hook.(HookWhole).rangeEventSources(func(eventSrc internal.EventSource) bool {
+	hook.(Hook).rangeEventSources(func(eventSrc EventSource) bool {
 		UnbindEvent(hook, eventSrc)
 		return true
 	})
@@ -62,18 +61,18 @@ func UnbindAllHook(eventSrc interface{}) {
 		return
 	}
 
-	eventSrc.(EventSourceWhole).rangeHooks(func(hook internal.Hook, priority int) bool {
+	eventSrc.(EventSource).rangeHooks(func(hook Hook, priority int) bool {
 		UnbindEvent(hook, eventSrc)
 		return true
 	})
 }
 
-func SendEvent(eventSrc interface{}, fun func(hook internal.Hook) bool) {
+func SendEvent(eventSrc interface{}, fun func(hook Hook) bool) {
 	if eventSrc == nil || fun == nil {
 		return
 	}
 
-	eventSrc.(EventSourceWhole).rangeHooks(func(hook internal.Hook, priority int) bool {
+	eventSrc.(EventSource).rangeHooks(func(hook Hook, priority int) bool {
 		return fun(hook)
 	})
 }
