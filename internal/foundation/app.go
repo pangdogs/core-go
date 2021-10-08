@@ -32,7 +32,7 @@ func NewApp(ctx Context, optFuncs ...NewAppOptionFunc) App {
 }
 
 type AppFoundation struct {
-	_Runnable
+	RunnableFoundation
 	Context
 	AppOptions
 	uidMaker  uint64

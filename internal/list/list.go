@@ -27,7 +27,7 @@ type Element struct {
 	Value interface{}
 
 	// 标记
-	mark uint32
+	Mark uint64
 }
 
 // Next returns the next list element or nil.
@@ -53,14 +53,14 @@ func (e *Element) Escape() bool {
 
 func (e *Element) SetMark(bit uint, v bool) {
 	if v {
-		e.mark |= 1 << bit
+		e.Mark |= 1 << bit
 	} else {
-		e.mark &= ^(1 << bit)
+		e.Mark &= ^(1 << bit)
 	}
 }
 
 func (e *Element) GetMark(bit uint) bool {
-	return (e.mark>>bit)&uint32(1) == 1
+	return (e.Mark>>bit)&uint64(1) == 1
 }
 
 // List represents a doubly linked list.
@@ -175,9 +175,9 @@ func (l *List) PushBack(v interface{}) *Element {
 	return l.insertValue(v, l.root.prev)
 }
 
-// InsertBefore inserts a new element e with value v immediately before mark and returns e.
-// If mark is not an element of l, the list is not modified.
-// The mark must not be nil.
+// InsertBefore inserts a new element e with value v immediately before Mark and returns e.
+// If Mark is not an element of l, the list is not modified.
+// The Mark must not be nil.
 func (l *List) InsertBefore(v interface{}, mark *Element) *Element {
 	if mark.list != l {
 		return nil
@@ -186,9 +186,9 @@ func (l *List) InsertBefore(v interface{}, mark *Element) *Element {
 	return l.insertValue(v, mark.prev)
 }
 
-// InsertAfter inserts a new element e with value v immediately after mark and returns e.
-// If mark is not an element of l, the list is not modified.
-// The mark must not be nil.
+// InsertAfter inserts a new element e with value v immediately after Mark and returns e.
+// If Mark is not an element of l, the list is not modified.
+// The Mark must not be nil.
 func (l *List) InsertAfter(v interface{}, mark *Element) *Element {
 	if mark.list != l {
 		return nil
@@ -219,9 +219,9 @@ func (l *List) MoveToBack(e *Element) {
 	l.move(e, l.root.prev)
 }
 
-// MoveBefore moves element e to its new position before mark.
-// If e or mark is not an element of l, or e == mark, the list is not modified.
-// The element and mark must not be nil.
+// MoveBefore moves element e to its new position before Mark.
+// If e or Mark is not an element of l, or e == Mark, the list is not modified.
+// The element and Mark must not be nil.
 func (l *List) MoveBefore(e, mark *Element) {
 	if e.list != l || e == mark || mark.list != l {
 		return
@@ -229,9 +229,9 @@ func (l *List) MoveBefore(e, mark *Element) {
 	l.move(e, mark.prev)
 }
 
-// MoveAfter moves element e to its new position after mark.
-// If e or mark is not an element of l, or e == mark, the list is not modified.
-// The element and mark must not be nil.
+// MoveAfter moves element e to its new position after Mark.
+// If e or Mark is not an element of l, or e == Mark, the list is not modified.
+// The element and Mark must not be nil.
 func (l *List) MoveAfter(e, mark *Element) {
 	if e.list != l || e == mark || mark.list != l {
 		return
@@ -259,6 +259,10 @@ func (l *List) PushFrontList(other *List) {
 
 // SafeTraversal 安全遍历元素，性能较差，中途可以删除元素
 func (l *List) SafeTraversal(visitor func(e *Element) bool) {
+	if visitor == nil {
+		return
+	}
+
 	snap := make([]*Element, 0, l.Len())
 
 	for e := l.Front(); e != nil; e = e.Next() {
@@ -274,6 +278,10 @@ func (l *List) SafeTraversal(visitor func(e *Element) bool) {
 
 // UnsafeTraversal 不安全遍历元素，性能较好，中途不能删除元素
 func (l *List) UnsafeTraversal(visitor func(e *Element) bool) {
+	if visitor == nil {
+		return
+	}
+
 	for e := l.Front(); e != nil; e = e.Next() {
 		if !visitor(e) {
 			break

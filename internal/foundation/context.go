@@ -17,12 +17,12 @@ type Context interface {
 }
 
 func NewContext(parentCtx context.Context, reportError ...chan error) Context {
-	ctx := &_Context{}
+	ctx := &ContextFoundation{}
 	ctx.initContext(parentCtx, reportError...)
 	return ctx
 }
 
-type _Context struct {
+type ContextFoundation struct {
 	context.Context
 	parentContext context.Context
 	reportError   chan error
@@ -31,7 +31,7 @@ type _Context struct {
 	valueMap      sync.Map
 }
 
-func (ctx *_Context) initContext(parentCtx context.Context, reportError ...chan error) {
+func (ctx *ContextFoundation) initContext(parentCtx context.Context, reportError ...chan error) {
 	if parentCtx == nil {
 		ctx.parentContext = context.Background()
 	} else {
@@ -45,31 +45,31 @@ func (ctx *_Context) initContext(parentCtx context.Context, reportError ...chan 
 	ctx.Context, ctx.cancel = context.WithCancel(ctx.parentContext)
 }
 
-func (ctx *_Context) GetParentContext() context.Context {
+func (ctx *ContextFoundation) GetParentContext() context.Context {
 	return ctx.parentContext
 }
 
-func (ctx *_Context) GetReportError() chan error {
+func (ctx *ContextFoundation) GetReportError() chan error {
 	return ctx.reportError
 }
 
-func (ctx *_Context) GetOrSetValue(key string, value interface{}) (actual interface{}, got bool) {
+func (ctx *ContextFoundation) GetOrSetValue(key string, value interface{}) (actual interface{}, got bool) {
 	return ctx.valueMap.LoadOrStore(key, value)
 }
 
-func (ctx *_Context) SetValue(key string, value interface{}) {
+func (ctx *ContextFoundation) SetValue(key string, value interface{}) {
 	ctx.valueMap.Store(key, value)
 }
 
-func (ctx *_Context) GetValue(key string) interface{} {
+func (ctx *ContextFoundation) GetValue(key string) interface{} {
 	value, _ := ctx.valueMap.Load(key)
 	return value
 }
 
-func (ctx *_Context) GetWaitGroup() *sync.WaitGroup {
+func (ctx *ContextFoundation) GetWaitGroup() *sync.WaitGroup {
 	return &ctx.wg
 }
 
-func (ctx *_Context) GetCancelFunc() context.CancelFunc {
+func (ctx *ContextFoundation) GetCancelFunc() context.CancelFunc {
 	return ctx.cancel
 }

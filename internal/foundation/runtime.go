@@ -37,7 +37,7 @@ func NewRuntime(ctx Context, app App, optFuncs ...NewRuntimeOptionFunc) Runtime 
 }
 
 type RuntimeFoundation struct {
-	_Runnable
+	RunnableFoundation
 	Context
 	RuntimeOptions
 	id              uint64
@@ -102,20 +102,6 @@ func (rt *RuntimeFoundation) Run() chan struct{} {
 			parentCtx.GetWaitGroup().Add(1)
 		}
 
-		invokeLifecycleFunc := func(fun func(entityLifecycle EntityLifecycleCaller)) {
-			if fun == nil {
-				return
-			}
-
-			rt.entityList.UnsafeTraversal(func(e *list.Element) bool {
-				if e.Escape() || e.GetMark(0) {
-					return true
-				}
-				fun(e.Value.(EntityLifecycleCaller))
-				return true
-			})
-		}
-
 		startChan := make(chan struct{}, 1)
 
 		notifyStart := func() {
@@ -139,6 +125,20 @@ func (rt *RuntimeFoundation) Run() chan struct{} {
 				CallOuter(rt.autoRecover, rt.GetReportError(), e.Value.(EntityLifecycleCaller).CallStart)
 			}
 			rt.entityStartList = rt.entityStartList[count:]
+		}
+
+		invokeLifecycleFunc := func(fun func(entityLifecycle EntityLifecycleCaller)) {
+			if fun == nil {
+				return
+			}
+
+			rt.entityList.UnsafeTraversal(func(e *list.Element) bool {
+				if e.Escape() || e.GetMark(0) {
+					return true
+				}
+				fun(e.Value.(EntityLifecycleCaller))
+				return true
+			})
 		}
 
 		invokeSafeCallFun := func(callBundle *SafeCallBundle) (ret SafeRet) {

@@ -4,7 +4,7 @@ import (
 	"errors"
 )
 
-func BindEvent(hook, eventSrc interface{}, priority ...int) (ret error) {
+func BindEvent(hook, eventSrc interface{}, _priority ...int32) (ret error) {
 	if hook == nil {
 		return errors.New("nil hook")
 	}
@@ -26,7 +26,12 @@ func BindEvent(hook, eventSrc interface{}, priority ...int) (ret error) {
 		}
 	}()
 
-	if err := s.addHook(h, priority...); err != nil {
+	priority := int32(0)
+	if len(_priority) > 0 {
+		priority = _priority[0]
+	}
+
+	if err := s.addHook(h, priority); err != nil {
 		return err
 	}
 
@@ -61,18 +66,18 @@ func UnbindAllHook(eventSrc interface{}) {
 		return
 	}
 
-	eventSrc.(EventSource).rangeHooks(func(hook Hook, priority int) bool {
+	eventSrc.(EventSource).rangeHooks(func(hook interface{}, priority int32) bool {
 		UnbindEvent(hook, eventSrc)
 		return true
 	})
 }
 
-func SendEvent(eventSrc interface{}, fun func(hook Hook) bool) {
+func SendEvent(eventSrc interface{}, fun func(hook interface{}) bool) {
 	if eventSrc == nil || fun == nil {
 		return
 	}
 
-	eventSrc.(EventSource).rangeHooks(func(hook Hook, priority int) bool {
+	eventSrc.(EventSource).rangeHooks(func(hook interface{}, priority int32) bool {
 		return fun(hook)
 	})
 }

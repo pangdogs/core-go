@@ -7,19 +7,19 @@ type Runnable interface {
 	Stop()
 }
 
-type _Runnable struct {
+type RunnableFoundation struct {
 	shutChan    chan struct{}
 	runningFlag int32
 }
 
-func (r *_Runnable) initRunnable() {
+func (r *RunnableFoundation) initRunnable() {
 	r.shutChan = make(chan struct{}, 1)
 }
 
-func (r *_Runnable) markRunning() bool {
+func (r *RunnableFoundation) markRunning() bool {
 	return atomic.CompareAndSwapInt32(&r.runningFlag, 0, 1)
 }
 
-func (r *_Runnable) markShutdown() bool {
+func (r *RunnableFoundation) markShutdown() bool {
 	return atomic.CompareAndSwapInt32(&r.runningFlag, 1, 0)
 }

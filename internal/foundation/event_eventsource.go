@@ -6,34 +6,12 @@ import (
 )
 
 type EventSource interface {
-	GC
 	InitEventSource(rt Runtime)
 	GetEventSourceID() uint64
 	getRuntime() Runtime
-	addHook(hook Hook, priority ...int) error
+	addHook(hook Hook, priority int32) error
 	removeHook(hookID uint64)
-	rangeHooks(fun func(hook Hook, priority int) bool)
-}
-
-func NewHookBundle(hook Hook, _priority ...int) (*HookBundle, error) {
-	if hook == nil {
-		return nil, errors.New("nil hook")
-	}
-
-	priority := 0
-	if len(_priority) > 0 {
-		priority = _priority[0]
-	}
-
-	return &HookBundle{
-		Hook:     hook,
-		Priority: priority,
-	}, nil
-}
-
-type HookBundle struct {
-	Hook     Hook
-	Priority int
+	rangeHooks(fun func(hook interface{}, priority int32) bool)
 }
 
 type EventSourceFoundation struct {
@@ -70,7 +48,7 @@ func (es *EventSourceFoundation) getRuntime() Runtime {
 	return es.runtime
 }
 
-func (es *EventSourceFoundation) addHook(hook Hook, priority ...int) error {
+func (es *EventSourceFoundation) addHook(hook Hook, priority int32) error {
 	if hook == nil {
 		return errors.New("nil hook")
 	}
@@ -79,19 +57,18 @@ func (es *EventSourceFoundation) addHook(hook Hook, priority ...int) error {
 		return errors.New("hook id already exists")
 	}
 
-	hb, err := NewHookBundle(hook, priority...)
-	if err != nil {
-		return err
-	}
-
 	for e := es.hookList.Front(); e != nil; e = e.Next() {
-		if hb.Priority < e.Value.(*HookBundle).Priority {
-			es.hookMap[hook.GetHookID()] = es.hookList.InsertBefore(hb, e)
+		if priority < int32(e.Mark>>32) {
+			ne := es.hookList.InsertBefore(hook, e)
+			ne.Mark |= uint64(priority) << 32
+			es.hookMap[hook.GetHookID()] = ne
 			return nil
 		}
 	}
 
-	es.hookMap[hook.GetHookID()] = es.hookList.PushBack(hb)
+	ne := es.hookList.PushBack(hook)
+	ne.Mark |= uint64(priority) << 32
+	es.hookMap[hook.GetHookID()] = ne
 
 	return nil
 }
@@ -105,7 +82,7 @@ func (es *EventSourceFoundation) removeHook(hookID uint64) {
 	}
 }
 
-func (es *EventSourceFoundation) rangeHooks(fun func(hook Hook, priority int) bool) {
+func (es *EventSourceFoundation) rangeHooks(fun func(hook interface{}, priority int32) bool) {
 	if fun == nil {
 		return
 	}
@@ -114,6 +91,6 @@ func (es *EventSourceFoundation) rangeHooks(fun func(hook Hook, priority int) bo
 		if e.Escape() || e.GetMark(0) {
 			return true
 		}
-		return fun(e.Value.(*HookBundle).Hook, e.Value.(*HookBundle).Priority)
+		return fun(e.Value, int32(e.Mark>>32))
 	})
 }
