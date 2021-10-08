@@ -19,6 +19,7 @@ type NewAppOptions struct{}
 func (*NewAppOptions) Default() NewAppOptionFunc {
 	return func(o *AppOptions) {
 		o.inheritor = nil
+		o.autoRecover = false
 	}
 }
 

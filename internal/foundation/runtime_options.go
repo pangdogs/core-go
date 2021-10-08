@@ -22,9 +22,8 @@ type NewRuntimeOptions struct{}
 func (*NewRuntimeOptions) Default() NewRuntimeOptionFunc {
 	return func(o *RuntimeOptions) {
 		o.autoRun = false
-		o.autoRecover = true
+		o.autoRecover = false
 		o.safeCallCacheSize = 100
-		o.frameCreatorFunc = nil
 	}
 }
 
