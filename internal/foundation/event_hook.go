@@ -7,7 +7,7 @@ import (
 type Hook interface {
 	InitHook(rt Runtime)
 	GetHookID() uint64
-	getRuntime() Runtime
+	GetHookRuntime() Runtime
 	attachEventSource(eventSrc EventSource) error
 	detachEventSource(eventSrcID uint64)
 	rangeEventSources(fun func(eventSrc EventSource) bool)
@@ -28,7 +28,7 @@ func (h *HookFoundation) GetHookID() uint64 {
 	return h.id
 }
 
-func (h *HookFoundation) getRuntime() Runtime {
+func (h *HookFoundation) GetHookRuntime() Runtime {
 	return h.runtime
 }
 

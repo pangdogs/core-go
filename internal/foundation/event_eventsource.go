@@ -8,7 +8,7 @@ import (
 type EventSource interface {
 	InitEventSource(rt Runtime)
 	GetEventSourceID() uint64
-	getRuntime() Runtime
+	GetEventSourceRuntime() Runtime
 	addHook(hook Hook, priority int32) error
 	removeHook(hookID uint64)
 	rangeHooks(fun func(hook interface{}, priority int32) bool)
@@ -44,7 +44,7 @@ func (es *EventSourceFoundation) GetEventSourceID() uint64 {
 	return es.id
 }
 
-func (es *EventSourceFoundation) getRuntime() Runtime {
+func (es *EventSourceFoundation) GetEventSourceRuntime() Runtime {
 	return es.runtime
 }
 
