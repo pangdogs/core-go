@@ -14,16 +14,23 @@ type App interface {
 	makeUID() uint64
 	addEntity(entity Entity)
 	removeEntity(entID uint64)
+	getAppFoundation() *AppFoundation
 }
 
 func NewApp(ctx Context, optFuncs ...NewAppOptionFunc) App {
-	app := &AppFoundation{}
-
 	opts := &AppOptions{}
 	NewAppOption.Default()(opts)
 
 	for _, optFun := range optFuncs {
 		optFun(opts)
+	}
+
+	var app *AppFoundation
+
+	if opts.inheritor != nil {
+		app = opts.inheritor.getAppFoundation()
+	} else {
+		app = &AppFoundation{}
 	}
 
 	app.initApp(ctx, opts)
@@ -148,4 +155,8 @@ func (app *AppFoundation) addEntity(entity Entity) {
 
 func (app *AppFoundation) removeEntity(entID uint64) {
 	app.entityMap.Delete(entID)
+}
+
+func (app *AppFoundation) getAppFoundation() *AppFoundation {
+	return app
 }

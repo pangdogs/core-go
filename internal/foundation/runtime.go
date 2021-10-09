@@ -19,16 +19,23 @@ type Runtime interface {
 	addEntity(entity Entity)
 	removeEntity(entID uint64)
 	pushSafeCall(callBundle *SafeCallBundle)
+	getRuntimeFoundation() *RuntimeFoundation
 }
 
 func NewRuntime(ctx Context, app App, optFuncs ...NewRuntimeOptionFunc) Runtime {
-	rt := &RuntimeFoundation{}
-
 	opts := &RuntimeOptions{}
 	NewRuntimeOption.Default()(opts)
 
 	for _, optFun := range optFuncs {
 		optFun(opts)
+	}
+
+	var rt *RuntimeFoundation
+
+	if opts.inheritor != nil {
+		rt = opts.inheritor.getRuntimeFoundation()
+	} else {
+		rt = &RuntimeFoundation{}
 	}
 
 	rt.initRuntime(ctx, app, opts)
@@ -435,4 +442,8 @@ func (rt *RuntimeFoundation) pushSafeCall(callBundle *SafeCallBundle) {
 	}
 
 	rt.safeCallList <- callBundle
+}
+
+func (rt *RuntimeFoundation) getRuntimeFoundation() *RuntimeFoundation {
+	return rt
 }

@@ -16,16 +16,23 @@ type Entity interface {
 	GetComponent(name string) Component
 	GetComponents(name string) []Component
 	RangeComponents(fun func(component Component) bool)
+	getEntityFoundation() *EntityFoundation
 }
 
 func NewEntity(rt Runtime, optFuncs ...NewEntityOptionFunc) Entity {
-	e := &EntityFoundation{}
-
 	opts := &EntityOptions{}
 	NewEntityOption.Default()(opts)
 
 	for _, optFun := range optFuncs {
 		optFun(opts)
+	}
+
+	var e *EntityFoundation
+
+	if opts.inheritor != nil {
+		e = opts.inheritor.getEntityFoundation()
+	} else {
+		e = &EntityFoundation{}
 	}
 
 	e.initEntity(rt, opts)
@@ -212,4 +219,8 @@ func (e *EntityFoundation) RangeComponents(fun func(component Component) bool) {
 		}
 		return fun(e.Value.(Component))
 	})
+}
+
+func (e *EntityFoundation) getEntityFoundation() *EntityFoundation {
+	return e
 }
