@@ -11,11 +11,11 @@ type Runtime interface {
 	GCRoot
 	GC
 	GetRuntimeID() uint64
+	GetInheritor() Runtime
 	GetApp() App
 	GetFrame() Frame
 	GetEntity(entID uint64) Entity
 	RangeEntities(fun func(entity Entity) bool)
-	GetInheritor() Runtime
 	addEntity(entity Entity)
 	removeEntity(entID uint64)
 	pushSafeCall(callBundle *SafeCallBundle)
@@ -376,6 +376,10 @@ func (rt *RuntimeFoundation) GetRuntimeID() uint64 {
 	return rt.id
 }
 
+func (rt *RuntimeFoundation) GetInheritor() Runtime {
+	return rt.inheritor
+}
+
 func (rt *RuntimeFoundation) GetApp() App {
 	return rt.app
 }
@@ -408,10 +412,6 @@ func (rt *RuntimeFoundation) RangeEntities(fun func(entity Entity) bool) {
 		}
 		return fun(e.Value.(Entity))
 	})
-}
-
-func (rt *RuntimeFoundation) GetInheritor() Runtime {
-	return rt.inheritor
 }
 
 func (rt *RuntimeFoundation) addEntity(entity Entity) {
