@@ -184,8 +184,6 @@ func (rt *RuntimeFoundation) Run() chan struct{} {
 					default:
 						return
 					}
-
-					rt.RunGC()
 				}
 			}()
 
@@ -204,9 +202,9 @@ func (rt *RuntimeFoundation) Run() chan struct{} {
 			})
 		}()
 
-		rt.gcExists = nil
-		rt.gcList = nil
-		rt.gcLastRunTime = time.Now()
+		if rt.gcLastRunTime.IsZero() {
+			rt.gcLastRunTime = time.Now()
+		}
 		rt.frame = nil
 
 		if rt.frameCreatorFunc == nil {
@@ -377,9 +375,13 @@ func (rt *RuntimeFoundation) PushGC(gc GC) {
 }
 
 func (rt *RuntimeFoundation) RunGC() {
+	if !rt.gcEnable {
+		return
+	}
+
 	var gcFlag bool
 
-	if rt.gcItemNum > 0 {
+	if !gcFlag && rt.gcItemNum > 0 {
 		if len(rt.gcList) < rt.gcItemNum {
 			return
 		} else {
@@ -387,7 +389,7 @@ func (rt *RuntimeFoundation) RunGC() {
 		}
 	}
 
-	if rt.gcTimeInterval > 0 {
+	if !gcFlag && rt.gcTimeInterval > 0 {
 		if time.Now().Sub(rt.gcLastRunTime) < rt.gcTimeInterval {
 			return
 		} else {
