@@ -174,8 +174,6 @@ func (e *EntityFoundation) RemoveComponent(name string) {
 			elements = append(elements, t)
 		}
 
-		e.componentGCList = append(e.componentGCList, elements...)
-
 		for i := 0; i < len(elements); i++ {
 			if cl, ok := elements[i].Value.(ComponentHalt); ok {
 				cl.Halt()
@@ -186,7 +184,10 @@ func (e *EntityFoundation) RemoveComponent(name string) {
 		}
 
 		if !e.destroyed {
-			e.runtime.PushGC(e)
+			if e.runtime.GCEnabled() {
+				e.componentGCList = append(e.componentGCList, elements...)
+				e.runtime.PushGC(e)
+			}
 		}
 	}
 }

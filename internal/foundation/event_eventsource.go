@@ -82,8 +82,10 @@ func (es *EventSourceFoundation) removeHook(hookID uint64) {
 	if e, ok := es.hookMap[hookID]; ok {
 		delete(es.hookMap, hookID)
 		e.SetMark(0, true)
-		es.hookGCList = append(es.hookGCList, e)
-		es.runtime.PushGC(es)
+		if es.runtime.GCEnabled() {
+			es.hookGCList = append(es.hookGCList, e)
+			es.runtime.PushGC(es)
+		}
 	}
 }
 

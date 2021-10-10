@@ -421,6 +421,10 @@ func (rt *RuntimeFoundation) GCHandle() uintptr {
 	return uintptr(unsafe.Pointer(rt))
 }
 
+func (rt *RuntimeFoundation) GCEnabled() bool {
+	return rt.gcEnable
+}
+
 func (rt *RuntimeFoundation) GetRuntimeID() uint64 {
 	return rt.id
 }
@@ -481,8 +485,10 @@ func (rt *RuntimeFoundation) removeEntity(entID uint64) {
 	if e, ok := rt.entityMap[entID]; ok {
 		delete(rt.entityMap, entID)
 		e.SetMark(0, true)
-		rt.entityGCList = append(rt.entityGCList, e)
-		rt.PushGC(rt)
+		if rt.GCEnabled() {
+			rt.entityGCList = append(rt.entityGCList, e)
+			rt.PushGC(rt)
+		}
 	}
 }
 
