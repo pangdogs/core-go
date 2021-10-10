@@ -1,5 +1,7 @@
 package foundation
 
+import "time"
+
 var NewRuntimeOption = &NewRuntimeOptions{}
 
 type RuntimeOptions struct {
@@ -11,6 +13,9 @@ type RuntimeOptions struct {
 	autoRecover       bool
 	safeCallCacheSize int
 	frameCreatorFunc  func(rt Runtime) Frame
+	gcEnable          bool
+	gcTimeInterval    time.Duration
+	gcItemNum         int
 }
 
 type NewRuntimeOptionFunc func(o *RuntimeOptions)
@@ -27,6 +32,9 @@ func (*NewRuntimeOptions) Default() NewRuntimeOptionFunc {
 		o.autoRecover = false
 		o.safeCallCacheSize = 100
 		o.frameCreatorFunc = nil
+		o.gcEnable = true
+		o.gcTimeInterval = 10 * time.Second
+		o.gcItemNum = 1000
 	}
 }
 
@@ -75,5 +83,23 @@ func (*NewRuntimeOptions) SafeCallCacheSize(v int) NewRuntimeOptionFunc {
 func (*NewRuntimeOptions) FrameCreatorFunc(v func(rt Runtime) Frame) NewRuntimeOptionFunc {
 	return func(o *RuntimeOptions) {
 		o.frameCreatorFunc = v
+	}
+}
+
+func (*NewRuntimeOptions) GCEnable(v bool) NewRuntimeOptionFunc {
+	return func(o *RuntimeOptions) {
+		o.gcEnable = v
+	}
+}
+
+func (*NewRuntimeOptions) GCTimeInterval(v time.Duration) NewRuntimeOptionFunc {
+	return func(o *RuntimeOptions) {
+		o.gcTimeInterval = v
+	}
+}
+
+func (*NewRuntimeOptions) GCItemNum(v int) NewRuntimeOptionFunc {
+	return func(o *RuntimeOptions) {
+		o.gcItemNum = v
 	}
 }

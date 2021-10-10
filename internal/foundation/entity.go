@@ -3,6 +3,7 @@ package foundation
 import (
 	"errors"
 	"github.com/pangdogs/core/internal/list"
+	"unsafe"
 )
 
 type Entity interface {
@@ -85,6 +86,10 @@ func (e *EntityFoundation) GC() {
 		e.componentList.Remove(e.componentGCList[i])
 	}
 	e.componentGCList = e.componentGCList[:0]
+}
+
+func (e *EntityFoundation) GCHandle() uintptr {
+	return uintptr(unsafe.Pointer(e))
 }
 
 func (e *EntityFoundation) Destroy() {

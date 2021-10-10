@@ -3,6 +3,7 @@ package foundation
 import (
 	"errors"
 	"github.com/pangdogs/core/internal/list"
+	"unsafe"
 )
 
 type EventSource interface {
@@ -27,6 +28,10 @@ func (es *EventSourceFoundation) GC() {
 		es.hookList.Remove(es.hookGCList[i])
 	}
 	es.hookGCList = es.hookGCList[:0]
+}
+
+func (es *EventSourceFoundation) GCHandle() uintptr {
+	return uintptr(unsafe.Pointer(es))
 }
 
 func (es *EventSourceFoundation) InitEventSource(rt Runtime) {

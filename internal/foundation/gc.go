@@ -2,6 +2,7 @@ package foundation
 
 type GC interface {
 	GC()
+	GCHandle() uintptr
 }
 
 type GCRoot interface {

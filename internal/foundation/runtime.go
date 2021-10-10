@@ -3,6 +3,7 @@ package foundation
 import (
 	"github.com/pangdogs/core/internal/list"
 	"time"
+	"unsafe"
 )
 
 type Runtime interface {
@@ -53,8 +54,10 @@ type RuntimeFoundation struct {
 	entityList      list.List
 	entityStartList []*list.Element
 	entityGCList    []*list.Element
-	gcList          []GC
 	frame           Frame
+	gcExists        map[uintptr]struct{}
+	gcList          []GC
+	gcLastRunTime   time.Time
 }
 
 func (rt *RuntimeFoundation) initRuntime(ctx Context, app App, opts *RuntimeOptions) {
@@ -201,6 +204,9 @@ func (rt *RuntimeFoundation) Run() chan struct{} {
 			})
 		}()
 
+		rt.gcExists = nil
+		rt.gcList = nil
+		rt.gcLastRunTime = time.Now()
 		rt.frame = nil
 
 		if rt.frameCreatorFunc == nil {
@@ -354,16 +360,52 @@ func (rt *RuntimeFoundation) Stop() {
 }
 
 func (rt *RuntimeFoundation) PushGC(gc GC) {
-	if gc != nil {
-		rt.gcList = append(rt.gcList, gc)
+	if !rt.gcEnable || gc == nil {
+		return
 	}
+
+	if rt.gcExists == nil {
+		rt.gcExists = map[uintptr]struct{}{}
+	} else {
+		if _, ok := rt.gcExists[gc.GCHandle()]; ok {
+			return
+		}
+	}
+
+	rt.gcExists[gc.GCHandle()] = struct{}{}
+	rt.gcList = append(rt.gcList, gc)
 }
 
 func (rt *RuntimeFoundation) RunGC() {
+	var gcFlag bool
+
+	if rt.gcItemNum > 0 {
+		if len(rt.gcList) < rt.gcItemNum {
+			return
+		} else {
+			gcFlag = true
+		}
+	}
+
+	if rt.gcTimeInterval > 0 {
+		if time.Now().Sub(rt.gcLastRunTime) < rt.gcTimeInterval {
+			return
+		} else {
+			gcFlag = true
+		}
+	}
+
+	if !gcFlag {
+		return
+	}
+
 	for i := 0; i < len(rt.gcList); i++ {
 		rt.gcList[i].GC()
 	}
+
+	rt.gcExists = nil
 	rt.gcList = rt.gcList[:0]
+	rt.gcLastRunTime = time.Now()
 }
 
 func (rt *RuntimeFoundation) GC() {
@@ -371,6 +413,10 @@ func (rt *RuntimeFoundation) GC() {
 		rt.entityList.Remove(rt.entityGCList[i])
 	}
 	rt.entityGCList = rt.entityGCList[:0]
+}
+
+func (rt *RuntimeFoundation) GCHandle() uintptr {
+	return uintptr(unsafe.Pointer(rt))
 }
 
 func (rt *RuntimeFoundation) GetRuntimeID() uint64 {
