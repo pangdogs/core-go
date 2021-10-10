@@ -9,7 +9,6 @@ type Runtime interface {
 	Runnable
 	Context
 	GCRoot
-	GC
 	GetRuntimeID() uint64
 	GetInheritor() Runtime
 	GetApp() App
@@ -183,7 +182,7 @@ func (rt *RuntimeFoundation) Run() chan struct{} {
 						return
 					}
 
-					rt.GC()
+					rt.RunGC()
 				}
 			}()
 
@@ -228,7 +227,7 @@ func (rt *RuntimeFoundation) Run() chan struct{} {
 					return
 				}
 
-				rt.GC()
+				rt.RunGC()
 			}
 
 		} else {
@@ -294,7 +293,7 @@ func (rt *RuntimeFoundation) Run() chan struct{} {
 							return false
 						}
 
-						rt.GC()
+						rt.RunGC()
 					}
 
 				} else {
@@ -325,7 +324,7 @@ func (rt *RuntimeFoundation) Run() chan struct{} {
 							uptEntityFun()
 						}
 
-						rt.GC()
+						rt.RunGC()
 					}
 				}
 			}
@@ -360,16 +359,18 @@ func (rt *RuntimeFoundation) PushGC(gc GC) {
 	}
 }
 
+func (rt *RuntimeFoundation) RunGC() {
+	for i := 0; i < len(rt.gcList); i++ {
+		rt.gcList[i].GC()
+	}
+	rt.gcList = rt.gcList[:0]
+}
+
 func (rt *RuntimeFoundation) GC() {
 	for i := 0; i < len(rt.entityGCList); i++ {
 		rt.entityList.Remove(rt.entityGCList[i])
 	}
 	rt.entityGCList = rt.entityGCList[:0]
-
-	for i := 0; i < len(rt.gcList); i++ {
-		rt.gcList[i].GC()
-	}
-	rt.gcList = rt.gcList[:0]
 }
 
 func (rt *RuntimeFoundation) GetRuntimeID() uint64 {
@@ -433,6 +434,7 @@ func (rt *RuntimeFoundation) removeEntity(entID uint64) {
 		delete(rt.entityMap, entID)
 		e.SetMark(0, true)
 		rt.entityGCList = append(rt.entityGCList, e)
+		rt.PushGC(rt)
 	}
 }
 

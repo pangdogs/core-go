@@ -6,4 +6,5 @@ type GC interface {
 
 type GCRoot interface {
 	PushGC(gc GC)
+	RunGC()
 }
