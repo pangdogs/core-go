@@ -58,6 +58,10 @@ func (es *EventSourceFoundation) addHook(hook Hook, priority int32) error {
 		return errors.New("nil hook")
 	}
 
+	if es.runtime == nil {
+		return errors.New("nil runtime")
+	}
+
 	if _, ok := es.hookMap[hook.GetHookID()]; ok {
 		return errors.New("hook id already exists")
 	}

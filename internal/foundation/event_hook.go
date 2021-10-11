@@ -37,6 +37,10 @@ func (h *HookFoundation) attachEventSource(eventSrc EventSource) error {
 		return errors.New("nil eventSrc")
 	}
 
+	if h.runtime == nil {
+		return errors.New("nil runtime")
+	}
+
 	for i := 0; i < len(h.eventSrcList); i++ {
 		if eventSrc.GetEventSourceID() == h.eventSrcList[i].GetEventSourceID() {
 			return errors.New("event source id already exists")

@@ -4,7 +4,7 @@ import (
 	"errors"
 )
 
-func BindEvent(hook, eventSrc interface{}, _priority ...int32) (ret error) {
+func BindEvent(hook, eventSrc interface{}, _priority ...int32) error {
 	if hook == nil {
 		return errors.New("nil hook")
 	}
@@ -20,18 +20,13 @@ func BindEvent(hook, eventSrc interface{}, _priority ...int32) (ret error) {
 		return err
 	}
 
-	defer func() {
-		if ret != nil {
-			h.detachEventSource(s.GetEventSourceID())
-		}
-	}()
-
 	priority := int32(0)
 	if len(_priority) > 0 {
 		priority = _priority[0]
 	}
 
 	if err := s.addHook(h, priority); err != nil {
+		h.detachEventSource(s.GetEventSourceID())
 		return err
 	}
 
