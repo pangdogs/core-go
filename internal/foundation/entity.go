@@ -145,6 +145,9 @@ func (e *EntityFoundation) AddComponent(name string, _component interface{}) err
 	if ele, ok := e.componentMap[name]; ok {
 		old := ele
 		for t := ele; t != nil && t.Value.(Component).GetName() == name; t = t.Next() {
+			if t.Escape() || t.GetMark(EntityComponentsMark_Removed) {
+				continue
+			}
 			old = t
 		}
 		e.componentList.InsertAfter(_component, old)
@@ -205,6 +208,9 @@ func (e *EntityFoundation) GetComponents(name string) []Component {
 		var components []Component
 
 		for t := ele; t != nil && t.Value.(Component).GetName() == name; t = t.Next() {
+			if t.Escape() || t.GetMark(EntityComponentsMark_Removed) {
+				continue
+			}
 			components = append(components, t.Value.(Component))
 		}
 
