@@ -2,6 +2,7 @@ package foundation
 
 import (
 	"errors"
+	"unsafe"
 )
 
 func BindEvent(hook, eventSrc interface{}, _priority ...int32) error {
@@ -67,12 +68,18 @@ func UnbindAllHook(eventSrc interface{}) {
 	})
 }
 
-func SendEvent(eventSrc interface{}, fun func(hook interface{}) bool) {
+type EventRet int32
+
+const (
+	EventRet_Continue EventRet = 1 << iota
+	EventRet_Break
+	EventRet_Unsubscribe
+)
+
+func SendEvent(eventSrc interface{}, fun func(hook interface{}) EventRet) {
 	if eventSrc == nil || fun == nil {
 		return
 	}
 
-	eventSrc.(EventSource).rangeHooks(func(hook interface{}, priority int32) bool {
-		return fun(hook)
-	})
+	eventSrc.(EventSource).sendEvent(fun, **(**uintptr)(unsafe.Pointer(&fun)))
 }
