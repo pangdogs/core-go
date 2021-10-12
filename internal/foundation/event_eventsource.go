@@ -70,16 +70,16 @@ func (es *EventSourceFoundation) addHook(hook Hook, priority int32) error {
 	}
 
 	for e := es.hookList.Front(); e != nil; e = e.Next() {
-		if priority < int32(e.Mark>>32) {
+		if priority < int32(e.Mark[0]>>32) {
 			ne := es.hookList.InsertBefore(hook, e)
-			ne.Mark |= uint64(priority) << 32
+			ne.Mark[0] |= uint64(priority) << 32
 			es.hookMap[hook.GetHookID()] = ne
 			return nil
 		}
 	}
 
 	ne := es.hookList.PushBack(hook)
-	ne.Mark |= uint64(priority) << 32
+	ne.Mark[0] |= uint64(priority) << 32
 	es.hookMap[hook.GetHookID()] = ne
 
 	return nil
@@ -105,7 +105,7 @@ func (es *EventSourceFoundation) rangeHooks(fun func(hook interface{}, priority 
 		if e.Escape() || e.GetMark(0) {
 			return true
 		}
-		return fun(e.Value, int32(e.Mark>>32))
+		return fun(e.Value, int32(e.Mark[0]>>32))
 	})
 }
 
@@ -116,7 +116,7 @@ func (es *EventSourceFoundation) sendEvent(fun func(hook interface{}) EventRet, 
 
 	bit, ok := es.eventBits[eventID]
 	if !ok {
-		bit = len(es.eventBits) + 1
+		bit = len(es.eventBits) + 64
 		es.eventBits[eventID] = bit
 	}
 

@@ -27,7 +27,7 @@ type Element struct {
 	Value interface{}
 
 	// 标记
-	Mark uint64
+	Mark [3]uint64
 }
 
 // Next returns the next list element or nil.
@@ -52,15 +52,17 @@ func (e *Element) Escape() bool {
 }
 
 func (e *Element) SetMark(bit int, v bool) {
+	idx := bit / 64
 	if v {
-		e.Mark |= 1 << bit
+		e.Mark[idx] |= 1 << bit
 	} else {
-		e.Mark &= ^(1 << bit)
+		e.Mark[idx] &= ^(1 << bit)
 	}
 }
 
 func (e *Element) GetMark(bit int) bool {
-	return (e.Mark>>bit)&uint64(1) == 1
+	idx := bit / 64
+	return (e.Mark[idx]>>bit)&uint64(1) == 1
 }
 
 // List represents a doubly linked list.
