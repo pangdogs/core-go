@@ -11,7 +11,7 @@ type Context interface {
 	GetReportError() chan error
 	GetOrSetValue(key string, value interface{}) (actual interface{}, got bool)
 	SetValue(key string, value interface{})
-	GetValue(key string) interface{}
+	GetValue(key string) (interface{}, bool)
 	GetWaitGroup() *sync.WaitGroup
 	GetCancelFunc() context.CancelFunc
 }
@@ -61,9 +61,8 @@ func (ctx *ContextFoundation) SetValue(key string, value interface{}) {
 	ctx.valueMap.Store(key, value)
 }
 
-func (ctx *ContextFoundation) GetValue(key string) interface{} {
-	value, _ := ctx.valueMap.Load(key)
-	return value
+func (ctx *ContextFoundation) GetValue(key string) (interface{}, bool) {
+	return ctx.valueMap.Load(key)
 }
 
 func (ctx *ContextFoundation) GetWaitGroup() *sync.WaitGroup {
