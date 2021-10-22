@@ -1,6 +1,9 @@
 package foundation
 
-import "time"
+import (
+	"github.com/pangdogs/core/internal/list"
+	"time"
+)
 
 var NewRuntimeOption = &NewRuntimeOptions{}
 
@@ -16,6 +19,7 @@ type RuntimeOptions struct {
 	gcEnable          bool
 	gcTimeInterval    time.Duration
 	gcItemNum         int
+	cache             *list.Cache
 }
 
 type NewRuntimeOptionFunc func(o *RuntimeOptions)
@@ -35,6 +39,7 @@ func (*NewRuntimeOptions) Default() NewRuntimeOptionFunc {
 		o.gcEnable = true
 		o.gcTimeInterval = 10 * time.Second
 		o.gcItemNum = 1000
+		o.cache = nil
 	}
 }
 
@@ -101,5 +106,11 @@ func (*NewRuntimeOptions) GCTimeInterval(v time.Duration) NewRuntimeOptionFunc {
 func (*NewRuntimeOptions) GCItemNum(v int) NewRuntimeOptionFunc {
 	return func(o *RuntimeOptions) {
 		o.gcItemNum = v
+	}
+}
+
+func (*NewRuntimeOptions) Cache(v *list.Cache) NewRuntimeOptionFunc {
+	return func(o *RuntimeOptions) {
+		o.cache = v
 	}
 }

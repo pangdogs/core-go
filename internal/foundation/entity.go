@@ -68,7 +68,7 @@ func (e *EntityFoundation) initEntity(rt Runtime, opts *EntityOptions) {
 	}
 
 	e.runtime = rt
-	e.componentList.Init()
+	e.componentList.Init(rt.GetCache())
 	e.componentMap = map[string]*list.Element{}
 
 	rt.GetApp().addEntity(e.inheritor)

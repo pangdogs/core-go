@@ -16,6 +16,7 @@ type Runtime interface {
 	GetFrame() Frame
 	GetEntity(entID uint64) Entity
 	RangeEntities(fun func(entity Entity) bool)
+	GetCache() *list.Cache
 	addEntity(entity Entity)
 	removeEntity(entID uint64)
 	pushSafeCall(callBundle *SafeCallBundle)
@@ -85,7 +86,7 @@ func (rt *RuntimeFoundation) initRuntime(ctx Context, app App, opts *RuntimeOpti
 	rt.app = app
 	rt.safeCallList = make(chan *SafeCallBundle)
 	close(rt.safeCallList)
-	rt.entityList.Init()
+	rt.entityList.Init(rt.cache)
 	rt.entityMap = map[uint64]*list.Element{}
 
 	CallOuter(rt.autoRecover, rt.GetReportError(), func() {
@@ -465,6 +466,10 @@ func (rt *RuntimeFoundation) RangeEntities(fun func(entity Entity) bool) {
 		}
 		return fun(e.Value.(Entity))
 	})
+}
+
+func (rt *RuntimeFoundation) GetCache() *list.Cache {
+	return rt.cache
 }
 
 func (rt *RuntimeFoundation) addEntity(entity Entity) {

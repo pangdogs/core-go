@@ -98,3 +98,5 @@ var UnsafeCall = foundation.UnsafeCall
 type List = list.List
 
 type Element = list.Element
+
+type Cache = list.Cache

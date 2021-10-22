@@ -66,12 +66,14 @@ func (e *Element) GetMark(bit int) bool {
 // List represents a doubly linked list.
 // The zero value for List is an empty list ready to use.
 type List struct {
-	root Element // sentinel list element, only &root, root.prev, and root.next are used
-	len  int     // current list length excluding (this) sentinel element
+	cache *Cache  // 元素分配缓存，用于减轻GC压力
+	root  Element // sentinel list element, only &root, root.prev, and root.next are used
+	len   int     // current list length excluding (this) sentinel element
 }
 
 // Init initializes or clears list l.
-func (l *List) Init() *List {
+func (l *List) Init(cache *Cache) *List {
+	l.cache = cache
 	l.root.next = &l.root
 	l.root.prev = &l.root
 	l.len = 0
@@ -79,7 +81,7 @@ func (l *List) Init() *List {
 }
 
 // New returns an initialized list.
-func New() *List { return new(List).Init() }
+func New(cache *Cache) *List { return new(List).Init(cache) }
 
 // Len returns the number of elements of list l.
 // The complexity is O(1).
@@ -104,7 +106,7 @@ func (l *List) Back() *Element {
 // lazyInit lazily initializes a zero List value.
 func (l *List) lazyInit() {
 	if l.root.next == nil {
-		l.Init()
+		l.Init(nil)
 	}
 }
 
@@ -121,7 +123,9 @@ func (l *List) insert(e, at *Element) *Element {
 
 // insertValue is a convenience wrapper for insert(&Element{Value: v}, at).
 func (l *List) insertValue(v interface{}, at *Element) *Element {
-	return l.insert(&Element{Value: v}, at)
+	e := l.cache.Alloc()
+	e.Value = v
+	return l.insert(e, at)
 }
 
 // remove removes e from its list, decrements l.len, and returns e.

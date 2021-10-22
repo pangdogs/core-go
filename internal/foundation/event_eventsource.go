@@ -43,7 +43,7 @@ func (es *EventSourceFoundation) InitEventSource(rt Runtime) {
 
 	es.id = rt.GetApp().makeUID()
 	es.runtime = rt
-	es.hookList.Init()
+	es.hookList.Init(rt.GetCache())
 	es.hookMap = map[uint64]*list.Element{}
 	es.eventBits = map[uintptr]int{}
 }
