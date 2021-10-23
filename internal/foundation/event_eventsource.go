@@ -13,7 +13,7 @@ type EventSource interface {
 	addHook(hook Hook, priority int32) error
 	removeHook(hookID uint64)
 	rangeHooks(fun func(hook interface{}, priority int32) bool)
-	sendEvent(fun func(hook interface{}) EventRet, eventID uintptr)
+	sendEvent(fun func(hook interface{}) EventRet, eventHandle uintptr)
 }
 
 type EventSourceFoundation struct {
@@ -22,7 +22,6 @@ type EventSourceFoundation struct {
 	hookList   list.List
 	hookMap    map[uint64]*list.Element
 	hookGCList []*list.Element
-	eventBits  map[uintptr]int
 }
 
 func (es *EventSourceFoundation) GC() {
@@ -45,7 +44,6 @@ func (es *EventSourceFoundation) InitEventSource(rt Runtime) {
 	es.runtime = rt
 	es.hookList.Init(rt.GetCache())
 	es.hookMap = map[uint64]*list.Element{}
-	es.eventBits = map[uintptr]int{}
 }
 
 func (es *EventSourceFoundation) GetEventSourceID() uint64 {
@@ -109,16 +107,12 @@ func (es *EventSourceFoundation) rangeHooks(fun func(hook interface{}, priority 
 	})
 }
 
-func (es *EventSourceFoundation) sendEvent(fun func(hook interface{}) EventRet, eventID uintptr) {
+func (es *EventSourceFoundation) sendEvent(fun func(hook interface{}) EventRet, eventHandle uintptr) {
 	if fun == nil {
 		return
 	}
 
-	bit, ok := es.eventBits[eventID]
-	if !ok {
-		bit = len(es.eventBits) + 64
-		es.eventBits[eventID] = bit
-	}
+	bit := es.runtime.eventHandleToBit(eventHandle)
 
 	es.hookList.UnsafeTraversal(func(e *list.Element) bool {
 		if e.Escape() || e.GetMark(0) || e.GetMark(bit) {

@@ -20,6 +20,7 @@ type Runtime interface {
 	addEntity(entity Entity)
 	removeEntity(entID uint64)
 	pushSafeCall(callBundle *SafeCallBundle)
+	eventHandleToBit(handle uintptr) int
 	getRuntimeFoundation() *RuntimeFoundation
 }
 
@@ -56,6 +57,7 @@ type RuntimeFoundation struct {
 	entityStartList []*list.Element
 	entityGCList    []*list.Element
 	frame           Frame
+	eventHandleBits map[uintptr]int
 	gcExists        map[uintptr]struct{}
 	gcList          []GC
 	gcLastRunTime   time.Time
@@ -88,6 +90,7 @@ func (rt *RuntimeFoundation) initRuntime(ctx Context, app App, opts *RuntimeOpti
 	close(rt.safeCallList)
 	rt.entityList.Init(rt.cache)
 	rt.entityMap = map[uint64]*list.Element{}
+	rt.eventHandleBits = map[uintptr]int{}
 
 	CallOuter(rt.autoRecover, rt.GetReportError(), func() {
 		if rt.initFunc != nil {
@@ -503,6 +506,15 @@ func (rt *RuntimeFoundation) pushSafeCall(callBundle *SafeCallBundle) {
 	}
 
 	rt.safeCallList <- callBundle
+}
+
+func (rt *RuntimeFoundation) eventHandleToBit(handle uintptr) int {
+	bit, ok := rt.eventHandleBits[handle]
+	if !ok {
+		bit = len(rt.eventHandleBits) + 64
+		rt.eventHandleBits[handle] = bit
+	}
+	return bit
 }
 
 func (rt *RuntimeFoundation) getRuntimeFoundation() *RuntimeFoundation {
