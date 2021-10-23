@@ -1,5 +1,11 @@
 package list
 
+func NewCache(size int) *Cache {
+	cache := &Cache{}
+	cache.Init(size)
+	return cache
+}
+
 type Cache struct {
 	heap  []Element
 	index int

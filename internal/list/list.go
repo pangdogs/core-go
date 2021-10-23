@@ -27,7 +27,7 @@ type Element struct {
 	Value interface{}
 
 	// 标记
-	Mark [3]uint64
+	Mark [4]uint64
 }
 
 // Next returns the next list element or nil.
@@ -80,8 +80,8 @@ func (l *List) Init(cache *Cache) *List {
 	return l
 }
 
-// New returns an initialized list.
-func New(cache *Cache) *List { return new(List).Init(cache) }
+// NewList returns an initialized list.
+func NewList(cache *Cache) *List { return new(List).Init(cache) }
 
 // Len returns the number of elements of list l.
 // The complexity is O(1).

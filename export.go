@@ -100,3 +100,7 @@ type List = list.List
 type Element = list.Element
 
 type Cache = list.Cache
+
+var NewList = list.NewList
+
+var NewCache = list.NewCache
