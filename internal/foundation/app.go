@@ -8,13 +8,13 @@ import (
 type App interface {
 	Runnable
 	Context
+	initApp(ctx Context, opts *AppOptions)
 	GetInheritor() App
 	GetEntity(entID uint64) Entity
 	RangeEntities(func(entity Entity) bool)
 	makeUID() uint64
 	addEntity(entity Entity)
 	removeEntity(entID uint64)
-	getAppFoundation() *AppFoundation
 }
 
 func NewApp(ctx Context, optFuncs ...NewAppOptionFunc) App {
@@ -25,14 +25,12 @@ func NewApp(ctx Context, optFuncs ...NewAppOptionFunc) App {
 		optFun(opts)
 	}
 
-	var app *AppFoundation
-
 	if opts.inheritor != nil {
-		app = opts.inheritor.getAppFoundation()
-	} else {
-		app = &AppFoundation{}
+		opts.inheritor.initApp(ctx, opts)
+		return opts.inheritor
 	}
 
+	app := &AppFoundation{}
 	app.initApp(ctx, opts)
 
 	return app.inheritor
@@ -155,8 +153,4 @@ func (app *AppFoundation) addEntity(entity Entity) {
 
 func (app *AppFoundation) removeEntity(entID uint64) {
 	app.entityMap.Delete(entID)
-}
-
-func (app *AppFoundation) getAppFoundation() *AppFoundation {
-	return app
 }

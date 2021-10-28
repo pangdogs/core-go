@@ -7,6 +7,7 @@ import (
 )
 
 type Entity interface {
+	initEntity(rt Runtime, opts *EntityOptions)
 	Destroy()
 	GetEntityID() uint64
 	GetInheritor() Entity
@@ -17,7 +18,6 @@ type Entity interface {
 	GetComponent(name string) Component
 	GetComponents(name string) []Component
 	RangeComponents(fun func(component Component) bool)
-	getEntityFoundation() *EntityFoundation
 }
 
 func NewEntity(rt Runtime, optFuncs ...NewEntityOptionFunc) Entity {
@@ -28,14 +28,12 @@ func NewEntity(rt Runtime, optFuncs ...NewEntityOptionFunc) Entity {
 		optFun(opts)
 	}
 
-	var e *EntityFoundation
-
 	if opts.inheritor != nil {
-		e = opts.inheritor.getEntityFoundation()
-	} else {
-		e = &EntityFoundation{}
+		opts.inheritor.initEntity(rt, opts)
+		return opts.inheritor
 	}
 
+	e := &EntityFoundation{}
 	e.initEntity(rt, opts)
 
 	return e.inheritor

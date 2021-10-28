@@ -10,6 +10,7 @@ type Runtime interface {
 	Runnable
 	Context
 	GCRoot
+	initRuntime(ctx Context, app App, opts *RuntimeOptions)
 	GetRuntimeID() uint64
 	GetInheritor() Runtime
 	GetApp() App
@@ -21,7 +22,6 @@ type Runtime interface {
 	removeEntity(entID uint64)
 	pushSafeCall(callBundle *SafeCallBundle)
 	eventHandleToBit(handle uintptr) int
-	getRuntimeFoundation() *RuntimeFoundation
 }
 
 func NewRuntime(ctx Context, app App, optFuncs ...NewRuntimeOptionFunc) Runtime {
@@ -35,11 +35,11 @@ func NewRuntime(ctx Context, app App, optFuncs ...NewRuntimeOptionFunc) Runtime 
 	var rt *RuntimeFoundation
 
 	if opts.inheritor != nil {
-		rt = opts.inheritor.getRuntimeFoundation()
-	} else {
-		rt = &RuntimeFoundation{}
+		opts.inheritor.initRuntime(ctx, app, opts)
+		return opts.inheritor
 	}
 
+	rt = &RuntimeFoundation{}
 	rt.initRuntime(ctx, app, opts)
 
 	return rt.inheritor
