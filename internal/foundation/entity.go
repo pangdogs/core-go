@@ -230,7 +230,3 @@ func (e *EntityFoundation) RangeComponents(fun func(component Component) bool) {
 		return fun(e.Value.(Component))
 	})
 }
-
-func (e *EntityFoundation) getEntityFoundation() *EntityFoundation {
-	return e
-}

@@ -516,7 +516,3 @@ func (rt *RuntimeFoundation) eventHandleToBit(handle uintptr) int {
 	}
 	return bit
 }
-
-func (rt *RuntimeFoundation) getRuntimeFoundation() *RuntimeFoundation {
-	return rt
-}
