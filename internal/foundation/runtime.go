@@ -1,7 +1,7 @@
 package foundation
 
 import (
-	"github.com/pangdogs/core/internal/list"
+	"github.com/pangdogs/core/internal/misc"
 	"time"
 	"unsafe"
 )
@@ -17,7 +17,7 @@ type Runtime interface {
 	GetFrame() Frame
 	GetEntity(entID uint64) Entity
 	RangeEntities(fun func(entity Entity) bool)
-	GetCache() *list.Cache
+	GetCache() *misc.Cache
 	addEntity(entity Entity)
 	removeEntity(entID uint64)
 	pushSafeCall(callBundle *SafeCallBundle)
@@ -52,10 +52,10 @@ type RuntimeFoundation struct {
 	id              uint64
 	app             App
 	safeCallList    chan *SafeCallBundle
-	entityMap       map[uint64]*list.Element
-	entityList      list.List
-	entityStartList []*list.Element
-	entityGCList    []*list.Element
+	entityMap       map[uint64]*misc.Element
+	entityList      misc.List
+	entityStartList []*misc.Element
+	entityGCList    []*misc.Element
 	frame           Frame
 	eventHandleBits map[uintptr]int
 	gcExists        map[uintptr]struct{}
@@ -89,7 +89,7 @@ func (rt *RuntimeFoundation) initRuntime(ctx Context, app App, opts *RuntimeOpti
 	rt.safeCallList = make(chan *SafeCallBundle)
 	close(rt.safeCallList)
 	rt.entityList.Init(rt.cache)
-	rt.entityMap = map[uint64]*list.Element{}
+	rt.entityMap = map[uint64]*misc.Element{}
 	rt.eventHandleBits = map[uintptr]int{}
 
 	CallOuter(rt.autoRecover, rt.GetReportError(), func() {
@@ -145,7 +145,7 @@ func (rt *RuntimeFoundation) Run() chan struct{} {
 				return
 			}
 
-			rt.entityList.UnsafeTraversal(func(e *list.Element) bool {
+			rt.entityList.UnsafeTraversal(func(e *misc.Element) bool {
 				if e.Escape() || e.GetMark(0) {
 					return true
 				}
@@ -463,7 +463,7 @@ func (rt *RuntimeFoundation) RangeEntities(fun func(entity Entity) bool) {
 		return
 	}
 
-	rt.entityList.UnsafeTraversal(func(e *list.Element) bool {
+	rt.entityList.UnsafeTraversal(func(e *misc.Element) bool {
 		if e.Escape() || e.GetMark(0) {
 			return true
 		}
@@ -471,7 +471,7 @@ func (rt *RuntimeFoundation) RangeEntities(fun func(entity Entity) bool) {
 	})
 }
 
-func (rt *RuntimeFoundation) GetCache() *list.Cache {
+func (rt *RuntimeFoundation) GetCache() *misc.Cache {
 	return rt.cache
 }
 

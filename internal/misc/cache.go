@@ -1,4 +1,4 @@
-package list
+package misc
 
 func NewCache(size int) *Cache {
 	cache := &Cache{}

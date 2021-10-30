@@ -1,7 +1,7 @@
 package foundation
 
 import (
-	"github.com/pangdogs/core/internal/list"
+	"github.com/pangdogs/core/internal/misc"
 	"time"
 )
 
@@ -19,7 +19,7 @@ type RuntimeOptions struct {
 	gcEnable          bool
 	gcTimeInterval    time.Duration
 	gcItemNum         int
-	cache             *list.Cache
+	cache             *misc.Cache
 }
 
 type NewRuntimeOptionFunc func(o *RuntimeOptions)
@@ -109,7 +109,7 @@ func (*NewRuntimeOptions) GCItemNum(v int) NewRuntimeOptionFunc {
 	}
 }
 
-func (*NewRuntimeOptions) Cache(v *list.Cache) NewRuntimeOptionFunc {
+func (*NewRuntimeOptions) Cache(v *misc.Cache) NewRuntimeOptionFunc {
 	return func(o *RuntimeOptions) {
 		o.cache = v
 	}

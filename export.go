@@ -2,7 +2,7 @@ package core
 
 import (
 	"github.com/pangdogs/core/internal/foundation"
-	"github.com/pangdogs/core/internal/list"
+	"github.com/pangdogs/core/internal/misc"
 )
 
 type Context = foundation.Context
@@ -95,12 +95,12 @@ type SafeRet = foundation.SafeRet
 
 var UnsafeCall = foundation.UnsafeCall
 
-type List = list.List
+type List = misc.List
 
-type Element = list.Element
+type Element = misc.Element
 
-type Cache = list.Cache
+type Cache = misc.Cache
 
-var NewList = list.NewList
+var NewList = misc.NewList
 
-var NewCache = list.NewCache
+var NewCache = misc.NewCache

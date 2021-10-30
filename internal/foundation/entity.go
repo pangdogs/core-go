@@ -2,7 +2,7 @@ package foundation
 
 import (
 	"errors"
-	"github.com/pangdogs/core/internal/list"
+	"github.com/pangdogs/core/internal/misc"
 	"unsafe"
 )
 
@@ -44,9 +44,9 @@ type EntityFoundation struct {
 	id              uint64
 	runtime         Runtime
 	destroyed       bool
-	componentMap    map[string]*list.Element
-	componentList   list.List
-	componentGCList []*list.Element
+	componentMap    map[string]*misc.Element
+	componentList   misc.List
+	componentGCList []*misc.Element
 }
 
 func (e *EntityFoundation) initEntity(rt Runtime, opts *EntityOptions) {
@@ -67,7 +67,7 @@ func (e *EntityFoundation) initEntity(rt Runtime, opts *EntityOptions) {
 
 	e.runtime = rt
 	e.componentList.Init(rt.GetCache())
-	e.componentMap = map[string]*list.Element{}
+	e.componentMap = map[string]*misc.Element{}
 
 	rt.GetApp().addEntity(e.inheritor)
 	rt.addEntity(e.inheritor)
@@ -168,7 +168,7 @@ func (e *EntityFoundation) RemoveComponent(name string) {
 	if ele, ok := e.componentMap[name]; ok {
 		delete(e.componentMap, name)
 
-		var elements []*list.Element
+		var elements []*misc.Element
 
 		for t := ele; t != nil && t.Value.(Component).GetName() == name; t = t.Next() {
 			t.SetMark(EntityComponentsMark_Removed, true)
@@ -223,7 +223,7 @@ func (e *EntityFoundation) RangeComponents(fun func(component Component) bool) {
 		return
 	}
 
-	e.componentList.UnsafeTraversal(func(e *list.Element) bool {
+	e.componentList.UnsafeTraversal(func(e *misc.Element) bool {
 		if e.Escape() || e.GetMark(EntityComponentsMark_Removed) {
 			return true
 		}

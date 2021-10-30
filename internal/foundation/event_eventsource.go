@@ -2,7 +2,7 @@ package foundation
 
 import (
 	"errors"
-	"github.com/pangdogs/core/internal/list"
+	"github.com/pangdogs/core/internal/misc"
 	"unsafe"
 )
 
@@ -19,9 +19,9 @@ type EventSource interface {
 type EventSourceFoundation struct {
 	id         uint64
 	runtime    Runtime
-	hookList   list.List
-	hookMap    map[uint64]*list.Element
-	hookGCList []*list.Element
+	hookList   misc.List
+	hookMap    map[uint64]*misc.Element
+	hookGCList []*misc.Element
 }
 
 func (es *EventSourceFoundation) GC() {
@@ -43,7 +43,7 @@ func (es *EventSourceFoundation) InitEventSource(rt Runtime) {
 	es.id = rt.GetApp().makeUID()
 	es.runtime = rt
 	es.hookList.Init(rt.GetCache())
-	es.hookMap = map[uint64]*list.Element{}
+	es.hookMap = map[uint64]*misc.Element{}
 }
 
 func (es *EventSourceFoundation) GetEventSourceID() uint64 {
@@ -99,7 +99,7 @@ func (es *EventSourceFoundation) rangeHooks(fun func(hook interface{}, priority 
 		return
 	}
 
-	es.hookList.UnsafeTraversal(func(e *list.Element) bool {
+	es.hookList.UnsafeTraversal(func(e *misc.Element) bool {
 		if e.Escape() || e.GetMark(0) {
 			return true
 		}
@@ -114,7 +114,7 @@ func (es *EventSourceFoundation) sendEvent(fun func(hook interface{}) EventRet, 
 
 	bit := es.runtime.eventHandleToBit(eventHandle)
 
-	es.hookList.UnsafeTraversal(func(e *list.Element) bool {
+	es.hookList.UnsafeTraversal(func(e *misc.Element) bool {
 		if e.Escape() || e.GetMark(0) || e.GetMark(bit) {
 			return true
 		}

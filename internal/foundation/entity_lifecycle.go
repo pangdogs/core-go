@@ -1,6 +1,6 @@
 package foundation
 
-import "github.com/pangdogs/core/internal/list"
+import "github.com/pangdogs/core/internal/misc"
 
 type EntityLifecycleCaller interface {
 	CallEntityInit()
@@ -23,7 +23,7 @@ func (e *EntityFoundation) CallEntityInit() {
 		return
 	}
 
-	e.componentList.UnsafeTraversal(func(e *list.Element) bool {
+	e.componentList.UnsafeTraversal(func(e *misc.Element) bool {
 		if e.Escape() || e.GetMark(EntityComponentsMark_Removed) {
 			return true
 		}
@@ -43,7 +43,7 @@ func (e *EntityFoundation) CallStart() {
 		return
 	}
 
-	e.componentList.UnsafeTraversal(func(e *list.Element) bool {
+	e.componentList.UnsafeTraversal(func(e *misc.Element) bool {
 		if e.Escape() || e.GetMark(EntityComponentsMark_Removed) {
 			return true
 		}
@@ -63,7 +63,7 @@ func (e *EntityFoundation) CallUpdate() {
 		return
 	}
 
-	e.componentList.UnsafeTraversal(func(e *list.Element) bool {
+	e.componentList.UnsafeTraversal(func(e *misc.Element) bool {
 		if e.Escape() || e.GetMark(EntityComponentsMark_Removed) || e.GetMark(EntityComponentsMark_NoUpdate) {
 			return true
 		}
@@ -83,7 +83,7 @@ func (e *EntityFoundation) CallLateUpdate() {
 		return
 	}
 
-	e.componentList.UnsafeTraversal(func(e *list.Element) bool {
+	e.componentList.UnsafeTraversal(func(e *misc.Element) bool {
 		if e.Escape() || e.GetMark(EntityComponentsMark_Removed) || e.GetMark(EntityComponentsMark_NoLateUpdate) {
 			return true
 		}
@@ -99,7 +99,7 @@ func (e *EntityFoundation) CallLateUpdate() {
 }
 
 func (e *EntityFoundation) CallEntityShut() {
-	e.componentList.UnsafeTraversal(func(e *list.Element) bool {
+	e.componentList.UnsafeTraversal(func(e *misc.Element) bool {
 		if e.Escape() || e.GetMark(EntityComponentsMark_Removed) {
 			return true
 		}
