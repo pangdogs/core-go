@@ -56,21 +56,22 @@ func UnbindEvent(hook, eventSrc interface{}) {
 		return
 	}
 
-	h := hook.(Hook)
-	es := eventSrc.(EventSource)
+	unbindEvent(hook.(Hook), eventSrc.(EventSource))
+}
 
-	rt := es.GetEventSourceRuntime()
+func unbindEvent(hook Hook, eventSrc EventSource) {
+	rt := eventSrc.GetEventSourceRuntime()
 	if rt == nil {
 		return
 	}
 
-	hookEle, eventSrcEle, ok := rt.unbindEvent(h.GetHookID(), es.GetEventSourceID())
+	hookEle, eventSrcEle, ok := rt.unbindEvent(hook.GetHookID(), eventSrc.GetEventSourceID())
 	if !ok {
 		return
 	}
 
-	es.removeHook(hookEle)
-	h.removeEventSource(eventSrcEle)
+	eventSrc.removeHook(hookEle)
+	hook.removeEventSource(eventSrcEle)
 }
 
 func UnbindAllEventSource(hook interface{}) {
@@ -78,8 +79,10 @@ func UnbindAllEventSource(hook interface{}) {
 		return
 	}
 
-	hook.(Hook).rangeEventSources(func(eventSrc EventSource) bool {
-		UnbindEvent(hook, eventSrc)
+	h := hook.(Hook)
+
+	h.rangeEventSources(func(eventSrc interface{}) bool {
+		unbindEvent(h, eventSrc.(EventSource))
 		return true
 	})
 }
@@ -89,8 +92,10 @@ func UnbindAllHook(eventSrc interface{}) {
 		return
 	}
 
-	eventSrc.(EventSource).rangeHooks(func(hook interface{}, priority int32) bool {
-		UnbindEvent(hook, eventSrc)
+	es := eventSrc.(EventSource)
+
+	es.rangeHooks(func(hook interface{}, priority int32) bool {
+		unbindEvent(hook.(Hook), es)
 		return true
 	})
 }

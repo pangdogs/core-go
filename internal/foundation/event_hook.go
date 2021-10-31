@@ -12,7 +12,7 @@ type Hook interface {
 	GetHookRuntime() Runtime
 	addEventSource(eventSrc EventSource) (*misc.Element, error)
 	removeEventSource(eventSrcEle *misc.Element)
-	rangeEventSources(fun func(eventSrc EventSource) bool)
+	rangeEventSources(fun func(eventSrc interface{}) bool)
 }
 
 type HookFoundation struct {
@@ -73,7 +73,7 @@ func (h *HookFoundation) removeEventSource(eventSrcEle *misc.Element) {
 	}
 }
 
-func (h *HookFoundation) rangeEventSources(fun func(eventSrc EventSource) bool) {
+func (h *HookFoundation) rangeEventSources(fun func(eventSrc interface{}) bool) {
 	if fun == nil {
 		return
 	}
@@ -82,6 +82,6 @@ func (h *HookFoundation) rangeEventSources(fun func(eventSrc EventSource) bool) 
 		if ele.Escape() || ele.GetMark(0) {
 			return true
 		}
-		return fun(ele.Value.(EventSource))
+		return fun(ele.Value)
 	})
 }
