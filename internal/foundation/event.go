@@ -15,10 +15,15 @@ func BindEvent(hook, eventSrc interface{}, _priority ...int32) error {
 	}
 
 	h := hook.(Hook)
-	s := eventSrc.(EventSource)
+	es := eventSrc.(EventSource)
 
-	if err := h.attachEventSource(s); err != nil {
-		return err
+	rt := es.GetEventSourceRuntime()
+	if rt == nil {
+		return errors.New("nil runtime")
+	}
+
+	if rt.eventIsBound(h.GetHookID(), es.GetEventSourceID()) {
+		return errors.New("already bound")
 	}
 
 	priority := int32(0)
@@ -26,8 +31,20 @@ func BindEvent(hook, eventSrc interface{}, _priority ...int32) error {
 		priority = _priority[0]
 	}
 
-	if err := s.addHook(h, priority); err != nil {
-		h.detachEventSource(s.GetEventSourceID())
+	hookEle, err := es.addHook(h, priority)
+	if err != nil {
+		return err
+	}
+
+	eventSrcEle, err := h.addEventSource(es)
+	if err != nil {
+		es.removeHook(hookEle)
+		return err
+	}
+
+	if err := rt.bindEvent(h.GetHookID(), es.GetEventSourceID(), hookEle, eventSrcEle); err != nil {
+		es.removeHook(hookEle)
+		h.removeEventSource(eventSrcEle)
 		return err
 	}
 
@@ -40,10 +57,20 @@ func UnbindEvent(hook, eventSrc interface{}) {
 	}
 
 	h := hook.(Hook)
-	s := eventSrc.(EventSource)
+	es := eventSrc.(EventSource)
 
-	s.removeHook(h.GetHookID())
-	h.detachEventSource(s.GetEventSourceID())
+	rt := es.GetEventSourceRuntime()
+	if rt == nil {
+		return
+	}
+
+	hookEle, eventSrcEle, ok := rt.unbindEvent(h.GetHookID(), es.GetEventSourceID())
+	if !ok {
+		return
+	}
+
+	es.removeHook(hookEle)
+	h.removeEventSource(eventSrcEle)
 }
 
 func UnbindAllEventSource(hook interface{}) {

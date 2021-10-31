@@ -1,6 +1,7 @@
 package foundation
 
 import (
+	"errors"
 	"github.com/pangdogs/core/internal/misc"
 	"time"
 	"unsafe"
@@ -21,6 +22,9 @@ type Runtime interface {
 	addEntity(entity Entity)
 	removeEntity(entID uint64)
 	pushSafeCall(callBundle *SafeCallBundle)
+	bindEvent(hookID, eventSrcID uint64, hookEle, eventSrcEle *misc.Element) error
+	unbindEvent(hookID, eventSrcID uint64) (hookEle, eventSrcEle *misc.Element, ok bool)
+	eventIsBound(hookID, eventSrcID uint64) bool
 	eventHandleToBit(handle uintptr) int
 }
 
@@ -45,6 +49,14 @@ func NewRuntime(ctx Context, app App, optFuncs ...NewRuntimeOptionFunc) Runtime 
 	return rt.inheritor
 }
 
+type EventBinderKey struct {
+	HookID, EventSrcID uint64
+}
+
+type EventBinderValue struct {
+	HookEle, EventSrcEle *misc.Element
+}
+
 type RuntimeFoundation struct {
 	RunnableFoundation
 	Context
@@ -57,6 +69,7 @@ type RuntimeFoundation struct {
 	entityStartList []*misc.Element
 	entityGCList    []*misc.Element
 	frame           Frame
+	eventBinderMap  map[EventBinderKey]EventBinderValue
 	eventHandleBits map[uintptr]int
 	gcExists        map[uintptr]struct{}
 	gcList          []GC
@@ -90,6 +103,7 @@ func (rt *RuntimeFoundation) initRuntime(ctx Context, app App, opts *RuntimeOpti
 	close(rt.safeCallList)
 	rt.entityList.Init(rt.cache)
 	rt.entityMap = map[uint64]*misc.Element{}
+	rt.eventBinderMap = map[EventBinderKey]EventBinderValue{}
 	rt.eventHandleBits = map[uintptr]int{}
 
 	CallOuter(rt.autoRecover, rt.GetReportError(), func() {
@@ -506,6 +520,50 @@ func (rt *RuntimeFoundation) pushSafeCall(callBundle *SafeCallBundle) {
 	}
 
 	rt.safeCallList <- callBundle
+}
+
+func (rt *RuntimeFoundation) bindEvent(hookID, eventSrcID uint64, hookEle, eventSrcEle *misc.Element) error {
+	if hookEle == nil {
+		return errors.New("nil hookEle")
+	}
+
+	if eventSrcEle == nil {
+		return errors.New("nil eventSrcEle")
+	}
+
+	rt.eventBinderMap[EventBinderKey{
+		HookID:     hookID,
+		EventSrcID: eventSrcID,
+	}] = EventBinderValue{
+		HookEle:     hookEle,
+		EventSrcEle: eventSrcEle,
+	}
+
+	return nil
+}
+
+func (rt *RuntimeFoundation) unbindEvent(hookID, eventSrcID uint64) (hookEle, eventSrcEle *misc.Element, ok bool) {
+	k := EventBinderKey{
+		HookID:     hookID,
+		EventSrcID: eventSrcID,
+	}
+
+	v, ok := rt.eventBinderMap[k]
+	if !ok {
+		return nil, nil, false
+	}
+
+	delete(rt.eventBinderMap, k)
+
+	return v.HookEle, v.EventSrcEle, true
+}
+
+func (rt *RuntimeFoundation) eventIsBound(hookID, eventSrcID uint64) bool {
+	_, ok := rt.eventBinderMap[EventBinderKey{
+		HookID:     hookID,
+		EventSrcID: eventSrcID,
+	}]
+	return ok
 }
 
 func (rt *RuntimeFoundation) eventHandleToBit(handle uintptr) int {

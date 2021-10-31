@@ -10,8 +10,8 @@ type EventSource interface {
 	InitEventSource(rt Runtime)
 	GetEventSourceID() uint64
 	GetEventSourceRuntime() Runtime
-	addHook(hook Hook, priority int32) error
-	removeHook(hookID uint64)
+	addHook(hook Hook, priority int32) (*misc.Element, error)
+	removeHook(he *misc.Element)
 	rangeHooks(fun func(hook interface{}, priority int32) bool)
 	sendEvent(fun func(hook interface{}) EventRet, eventHandle uintptr)
 }
@@ -20,7 +20,6 @@ type EventSourceFoundation struct {
 	id         uint64
 	runtime    Runtime
 	hookList   misc.List
-	hookMap    map[uint64]*misc.Element
 	hookGCList []*misc.Element
 }
 
@@ -43,7 +42,6 @@ func (es *EventSourceFoundation) InitEventSource(rt Runtime) {
 	es.id = rt.GetApp().makeUID()
 	es.runtime = rt
 	es.hookList.Init(rt.GetCache())
-	es.hookMap = map[uint64]*misc.Element{}
 }
 
 func (es *EventSourceFoundation) GetEventSourceID() uint64 {
@@ -54,43 +52,38 @@ func (es *EventSourceFoundation) GetEventSourceRuntime() Runtime {
 	return es.runtime
 }
 
-func (es *EventSourceFoundation) addHook(hook Hook, priority int32) error {
+func (es *EventSourceFoundation) addHook(hook Hook, priority int32) (*misc.Element, error) {
 	if hook == nil {
-		return errors.New("nil hook")
+		return nil, errors.New("nil hook")
 	}
 
 	if es.runtime == nil {
-		return errors.New("nil runtime")
+		return nil, errors.New("nil runtime")
 	}
 
-	if _, ok := es.hookMap[hook.GetHookID()]; ok {
-		return errors.New("hook id already exists")
-	}
-
-	for e := es.hookList.Front(); e != nil; e = e.Next() {
-		if priority < int32(e.Mark[0]>>32) {
-			ne := es.hookList.InsertBefore(hook, e)
-			ne.Mark[0] |= uint64(priority) << 32
-			es.hookMap[hook.GetHookID()] = ne
-			return nil
+	for ele := es.hookList.Front(); ele != nil; ele = ele.Next() {
+		if priority < int32(ele.Mark[0]>>32) {
+			hookEle := es.hookList.InsertBefore(hook, ele)
+			hookEle.Mark[0] |= uint64(priority) << 32
+			return hookEle, nil
 		}
 	}
 
-	ne := es.hookList.PushBack(hook)
-	ne.Mark[0] |= uint64(priority) << 32
-	es.hookMap[hook.GetHookID()] = ne
-
-	return nil
+	hookEle := es.hookList.PushBack(hook)
+	hookEle.Mark[0] |= uint64(priority) << 32
+	return hookEle, nil
 }
 
-func (es *EventSourceFoundation) removeHook(hookID uint64) {
-	if e, ok := es.hookMap[hookID]; ok {
-		delete(es.hookMap, hookID)
-		e.SetMark(0, true)
-		if es.runtime.GCEnabled() {
-			es.hookGCList = append(es.hookGCList, e)
-			es.runtime.PushGC(es)
-		}
+func (es *EventSourceFoundation) removeHook(hookEle *misc.Element) {
+	if hookEle == nil {
+		return
+	}
+
+	hookEle.SetMark(0, true)
+
+	if es.runtime.GCEnabled() {
+		es.hookGCList = append(es.hookGCList, hookEle)
+		es.runtime.PushGC(es)
 	}
 }
 
@@ -99,11 +92,11 @@ func (es *EventSourceFoundation) rangeHooks(fun func(hook interface{}, priority 
 		return
 	}
 
-	es.hookList.UnsafeTraversal(func(e *misc.Element) bool {
-		if e.Escape() || e.GetMark(0) {
+	es.hookList.UnsafeTraversal(func(ele *misc.Element) bool {
+		if ele.Escape() || ele.GetMark(0) {
 			return true
 		}
-		return fun(e.Value, int32(e.Mark[0]>>32))
+		return fun(ele.Value, int32(ele.Mark[0]>>32))
 	})
 }
 
@@ -114,15 +107,15 @@ func (es *EventSourceFoundation) sendEvent(fun func(hook interface{}) EventRet, 
 
 	bit := es.runtime.eventHandleToBit(eventHandle)
 
-	es.hookList.UnsafeTraversal(func(e *misc.Element) bool {
-		if e.Escape() || e.GetMark(0) || e.GetMark(bit) {
+	es.hookList.UnsafeTraversal(func(ele *misc.Element) bool {
+		if ele.Escape() || ele.GetMark(0) || ele.GetMark(bit) {
 			return true
 		}
 
-		ret := fun(e.Value)
+		ret := fun(ele.Value)
 
 		if ret&EventRet_Unsubscribe != 0 {
-			e.SetMark(bit, true)
+			ele.SetMark(bit, true)
 		}
 
 		return ret&EventRet_Break == 0
