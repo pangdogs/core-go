@@ -11,7 +11,7 @@ type EventSource interface {
 	GetEventSourceID() uint64
 	GetEventSourceRuntime() Runtime
 	addHook(hook Hook, priority int32) (*misc.Element, error)
-	removeHook(he *misc.Element)
+	removeHook(hookEle *misc.Element)
 	rangeHooks(fun func(hook interface{}, priority int32) bool)
 	sendEvent(fun func(hook interface{}) EventRet, eventHandle uintptr)
 }
