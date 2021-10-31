@@ -34,6 +34,10 @@ func (h *HookFoundation) GCHandle() uintptr {
 }
 
 func (h *HookFoundation) InitHook(rt Runtime) {
+	if rt == nil {
+		panic("nil runtime")
+	}
+
 	h.id = rt.GetApp().makeUID()
 	h.runtime = rt
 	h.eventSrcList.Init(rt.GetCache())
