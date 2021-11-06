@@ -104,3 +104,5 @@ type Cache = misc.Cache
 var NewList = misc.NewList
 
 var NewCache = misc.NewCache
+
+type AspectJointPointTab = foundation.AspectJointPointTab
