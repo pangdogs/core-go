@@ -12,7 +12,15 @@ type Hook interface {
 	GetHookRuntime() Runtime
 	addEventSource(eventSrc EventSource) (*misc.Element, error)
 	removeEventSource(eventSrcEle *misc.Element)
-	rangeEventSources(fun func(eventSrc interface{}) bool)
+	rangeEventSources(fun func(eventSrc EventSource) bool)
+}
+
+func IFace2Hook(p unsafe.Pointer) Hook {
+	return *(*Hook)(p)
+}
+
+func Hook2IFace(h Hook) misc.IFace {
+	return *(*misc.IFace)(unsafe.Pointer(&h))
 }
 
 type HookFoundation struct {
@@ -60,7 +68,7 @@ func (h *HookFoundation) addEventSource(eventSrc EventSource) (*misc.Element, er
 		return nil, errors.New("nil runtime")
 	}
 
-	eventSrcEle := h.eventSrcList.PushBack(eventSrc)
+	eventSrcEle := h.eventSrcList.PushIFaceBack(EventSource2IFace(eventSrc))
 	return eventSrcEle, nil
 }
 
@@ -77,7 +85,7 @@ func (h *HookFoundation) removeEventSource(eventSrcEle *misc.Element) {
 	}
 }
 
-func (h *HookFoundation) rangeEventSources(fun func(eventSrc interface{}) bool) {
+func (h *HookFoundation) rangeEventSources(fun func(eventSrc EventSource) bool) {
 	if fun == nil {
 		return
 	}
@@ -86,6 +94,6 @@ func (h *HookFoundation) rangeEventSources(fun func(eventSrc interface{}) bool) 
 		if ele.Escape() || ele.GetMark(0) {
 			return true
 		}
-		return fun(ele.GetValue(0))
+		return fun(IFace2EventSource(ele.GetIFace(0)))
 	})
 }

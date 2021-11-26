@@ -5,24 +5,22 @@ import (
 	"unsafe"
 )
 
-func BindEvent(hook, eventSrc interface{}, _priority ...int32) error {
+func BindEvent(hook Hook, _eventSrc interface{}, _priority ...int32) error {
 	if hook == nil {
 		return errors.New("nil hook")
 	}
 
-	if eventSrc == nil {
-		return errors.New("nil eventSrc")
+	eventSrc, ok := _eventSrc.(EventSource)
+	if !ok {
+		return errors.New("eventSrc invalid")
 	}
 
-	h := hook.(Hook)
-	es := eventSrc.(EventSource)
-
-	rt := es.GetEventSourceRuntime()
+	rt := eventSrc.GetEventSourceRuntime()
 	if rt == nil {
 		return errors.New("nil runtime")
 	}
 
-	if rt.eventIsBound(h.GetHookID(), es.GetEventSourceID()) {
+	if rt.eventIsBound(hook.GetHookID(), eventSrc.GetEventSourceID()) {
 		return errors.New("already bound")
 	}
 
@@ -31,32 +29,37 @@ func BindEvent(hook, eventSrc interface{}, _priority ...int32) error {
 		priority = _priority[0]
 	}
 
-	hookEle, err := es.addHook(h, priority)
+	hookEle, err := eventSrc.addHook(hook, priority)
 	if err != nil {
 		return err
 	}
 
-	eventSrcEle, err := h.addEventSource(es)
+	eventSrcEle, err := hook.addEventSource(eventSrc)
 	if err != nil {
-		es.removeHook(hookEle)
+		eventSrc.removeHook(hookEle)
 		return err
 	}
 
-	if err := rt.bindEvent(h.GetHookID(), es.GetEventSourceID(), hookEle, eventSrcEle); err != nil {
-		es.removeHook(hookEle)
-		h.removeEventSource(eventSrcEle)
+	if err := rt.bindEvent(hook.GetHookID(), eventSrc.GetEventSourceID(), hookEle, eventSrcEle); err != nil {
+		eventSrc.removeHook(hookEle)
+		hook.removeEventSource(eventSrcEle)
 		return err
 	}
 
 	return nil
 }
 
-func UnbindEvent(hook, eventSrc interface{}) {
-	if hook == nil || eventSrc == nil {
+func UnbindEvent(hook Hook, _eventSrc interface{}) {
+	if hook == nil {
 		return
 	}
 
-	unbindEvent(hook.(Hook), eventSrc.(EventSource))
+	eventSrc, ok := _eventSrc.(EventSource)
+	if !ok {
+		return
+	}
+
+	unbindEvent(hook, eventSrc)
 }
 
 func unbindEvent(hook Hook, eventSrc EventSource) {
@@ -74,28 +77,24 @@ func unbindEvent(hook Hook, eventSrc EventSource) {
 	hook.removeEventSource(eventSrcEle)
 }
 
-func UnbindAllEventSource(hook interface{}) {
+func UnbindAllEventSource(hook Hook) {
 	if hook == nil {
 		return
 	}
 
-	h := hook.(Hook)
-
-	h.rangeEventSources(func(eventSrc interface{}) bool {
-		unbindEvent(h, eventSrc.(EventSource))
+	hook.rangeEventSources(func(eventSrc EventSource) bool {
+		unbindEvent(hook, eventSrc)
 		return true
 	})
 }
 
-func UnbindAllHook(eventSrc interface{}) {
+func UnbindAllHook(eventSrc EventSource) {
 	if eventSrc == nil {
 		return
 	}
 
-	es := eventSrc.(EventSource)
-
-	es.rangeHooks(func(hook interface{}, priority int32) bool {
-		unbindEvent(hook.(Hook), es)
+	eventSrc.rangeHooks(func(hook Hook, priority int32) bool {
+		unbindEvent(hook, eventSrc)
 		return true
 	})
 }
@@ -108,10 +107,15 @@ const (
 	EventRet_Unsubscribe
 )
 
-func SendEvent(eventSrc interface{}, fun func(hook interface{}) EventRet) {
-	if eventSrc == nil || fun == nil {
+func SendEvent(_eventSrc interface{}, fun func(hook Hook) EventRet) {
+	if fun == nil {
 		return
 	}
 
-	eventSrc.(EventSource).sendEvent(fun, **(**uintptr)(unsafe.Pointer(&fun)))
+	eventSrc, ok := _eventSrc.(EventSource)
+	if !ok {
+		return
+	}
+
+	eventSrc.sendEvent(fun, **(**uintptr)(unsafe.Pointer(&fun)))
 }

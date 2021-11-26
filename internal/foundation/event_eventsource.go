@@ -12,8 +12,16 @@ type EventSource interface {
 	GetEventSourceRuntime() Runtime
 	addHook(hook Hook, priority int32) (*misc.Element, error)
 	removeHook(hookEle *misc.Element)
-	rangeHooks(fun func(hook interface{}, priority int32) bool)
-	sendEvent(fun func(hook interface{}) EventRet, eventHandle uintptr)
+	rangeHooks(fun func(hook Hook, priority int32) bool)
+	sendEvent(fun func(hook Hook) EventRet, eventHandle uintptr)
+}
+
+func IFace2EventSource(p unsafe.Pointer) EventSource {
+	return *(*EventSource)(p)
+}
+
+func EventSource2IFace(es EventSource) misc.IFace {
+	return *(*misc.IFace)(unsafe.Pointer(&es))
 }
 
 type EventSourceFoundation struct {
@@ -63,13 +71,13 @@ func (es *EventSourceFoundation) addHook(hook Hook, priority int32) (*misc.Eleme
 
 	for ele := es.hookList.Front(); ele != nil; ele = ele.Next() {
 		if priority < int32(ele.Mark[0]>>32) {
-			hookEle := es.hookList.InsertBefore(hook, ele)
+			hookEle := es.hookList.InsertIFaceAfter(Hook2IFace(hook), ele)
 			hookEle.Mark[0] |= uint64(priority) << 32
 			return hookEle, nil
 		}
 	}
 
-	hookEle := es.hookList.PushBack(hook)
+	hookEle := es.hookList.PushIFaceBack(Hook2IFace(hook))
 	hookEle.Mark[0] |= uint64(priority) << 32
 	return hookEle, nil
 }
@@ -87,7 +95,7 @@ func (es *EventSourceFoundation) removeHook(hookEle *misc.Element) {
 	}
 }
 
-func (es *EventSourceFoundation) rangeHooks(fun func(hook interface{}, priority int32) bool) {
+func (es *EventSourceFoundation) rangeHooks(fun func(hook Hook, priority int32) bool) {
 	if fun == nil {
 		return
 	}
@@ -96,11 +104,11 @@ func (es *EventSourceFoundation) rangeHooks(fun func(hook interface{}, priority 
 		if ele.Escape() || ele.GetMark(0) {
 			return true
 		}
-		return fun(ele.GetValue(0), int32(ele.Mark[0]>>32))
+		return fun(IFace2Hook(ele.GetIFace(0)), int32(ele.Mark[0]>>32))
 	})
 }
 
-func (es *EventSourceFoundation) sendEvent(fun func(hook interface{}) EventRet, eventHandle uintptr) {
+func (es *EventSourceFoundation) sendEvent(fun func(hook Hook) EventRet, eventHandle uintptr) {
 	if fun == nil {
 		return
 	}
@@ -112,7 +120,7 @@ func (es *EventSourceFoundation) sendEvent(fun func(hook interface{}) EventRet, 
 			return true
 		}
 
-		ret := fun(ele.GetValue(0))
+		ret := fun(IFace2Hook(ele.GetIFace(0)))
 
 		if ret&EventRet_Unsubscribe != 0 {
 			ele.SetMark(bit, true)
