@@ -99,6 +99,8 @@ type List = misc.List
 
 type Element = misc.Element
 
+type IFace = misc.IFace
+
 type Cache = misc.Cache
 
 var NewList = misc.NewList
