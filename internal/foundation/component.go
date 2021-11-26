@@ -1,9 +1,21 @@
 package foundation
 
+import (
+	"unsafe"
+)
+
 type Component interface {
 	GetEntity() Entity
 	GetName() string
 	initComponent(name string, entity Entity)
+}
+
+func IFace2Component(p unsafe.Pointer) Component {
+	return *(*Component)(p)
+}
+
+func Component2IFace(c Component) unsafe.Pointer {
+	return unsafe.Pointer(&c)
 }
 
 type ComponentFoundation struct {

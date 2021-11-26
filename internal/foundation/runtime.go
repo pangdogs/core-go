@@ -49,6 +49,11 @@ func NewRuntime(ctx Context, app App, optFuncs ...NewRuntimeOptionFunc) Runtime 
 	return rt.inheritor
 }
 
+const (
+	RuntimeEntitiesIFace_Entity int = iota
+	RuntimeEntitiesIFace_EntityLifecycleCaller
+)
+
 type EventBinderKey struct {
 	HookID, EventSrcID uint64
 }
@@ -149,7 +154,7 @@ func (rt *RuntimeFoundation) Run() chan struct{} {
 				if e.Escape() || e.GetMark(0) {
 					continue
 				}
-				CallOuter(rt.autoRecover, rt.GetReportError(), e.Value.(EntityLifecycleCaller).CallStart)
+				CallOuter(rt.autoRecover, rt.GetReportError(), IFace2EntityLifecycleCaller(e.GetIFace(RuntimeEntitiesIFace_EntityLifecycleCaller)).CallStart)
 			}
 			rt.entityStartList = rt.entityStartList[count:]
 		}
@@ -163,7 +168,7 @@ func (rt *RuntimeFoundation) Run() chan struct{} {
 				if e.Escape() || e.GetMark(0) {
 					return true
 				}
-				fun(e.Value.(EntityLifecycleCaller))
+				fun(IFace2EntityLifecycleCaller(e.GetIFace(RuntimeEntitiesIFace_EntityLifecycleCaller)))
 				return true
 			})
 		}
@@ -469,7 +474,7 @@ func (rt *RuntimeFoundation) GetEntity(entID uint64) Entity {
 		return nil
 	}
 
-	return e.Value.(Entity)
+	return IFace2Entity(e.GetIFace(RuntimeEntitiesIFace_Entity))
 }
 
 func (rt *RuntimeFoundation) RangeEntities(fun func(entity Entity) bool) {
@@ -481,7 +486,7 @@ func (rt *RuntimeFoundation) RangeEntities(fun func(entity Entity) bool) {
 		if e.Escape() || e.GetMark(0) {
 			return true
 		}
-		return fun(e.Value.(Entity))
+		return fun(IFace2Entity(e.GetIFace(RuntimeEntitiesIFace_Entity)))
 	})
 }
 
@@ -498,9 +503,11 @@ func (rt *RuntimeFoundation) addEntity(entity Entity) {
 		panic("entity id already exists")
 	}
 
-	ele := rt.entityList.PushBack(entity)
+	ele := rt.entityList.PushIFaceBack(Entity2IFace(entity))
+	ele.SetIFace(RuntimeEntitiesIFace_EntityLifecycleCaller, EntityLifecycleCaller2IFace(entity.(EntityLifecycleCaller)))
 	rt.entityMap[entity.GetEntityID()] = ele
 	rt.entityStartList = append(rt.entityStartList, ele)
+
 }
 
 func (rt *RuntimeFoundation) removeEntity(entID uint64) {

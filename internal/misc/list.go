@@ -11,6 +11,10 @@
 //
 package misc
 
+import "unsafe"
+
+type iface [2]unsafe.Pointer
+
 // Element is an element of a linked misc.
 type Element struct {
 	// Next and previous pointers in the doubly-linked list of elements.
@@ -24,9 +28,9 @@ type Element struct {
 	list *List
 
 	// The value stored with this element.
-	Value interface{}
+	Value [4]iface
 
-	// 标记
+	// Mark 标记
 	Mark [4]uint64
 }
 
@@ -51,6 +55,7 @@ func (e *Element) Escape() bool {
 	return e.list == nil
 }
 
+// SetMark 设置标记
 func (e *Element) SetMark(bit int, v bool) {
 	if v {
 		e.Mark[bit/64] |= 1 << bit
@@ -59,8 +64,29 @@ func (e *Element) SetMark(bit int, v bool) {
 	}
 }
 
+// GetMark 获取标记
 func (e *Element) GetMark(bit int) bool {
 	return (e.Mark[bit/64]>>bit)&uint64(1) == 1
+}
+
+// SetValue 设置数据
+func (e *Element) SetValue(index int, v interface{}) {
+	e.Value[index] = *(*iface)(unsafe.Pointer(&v))
+}
+
+// GetValue 获取数据
+func (e *Element) GetValue(index int) interface{} {
+	return *(*interface{})(unsafe.Pointer(&e.Value[index]))
+}
+
+// SetIFace 设置接口指针，用于提高接口转换效率
+func (e *Element) SetIFace(index int, p unsafe.Pointer) {
+	e.Value[index] = *(*iface)(p)
+}
+
+// GetIFace 获取接口指针，用于提高接口转换效率
+func (e *Element) GetIFace(index int) unsafe.Pointer {
+	return unsafe.Pointer(&e.Value[index])
 }
 
 // List represents a doubly linked misc.
@@ -124,7 +150,14 @@ func (l *List) insert(e, at *Element) *Element {
 // insertValue is a convenience wrapper for insert(&Element{Value: v}, at).
 func (l *List) insertValue(v interface{}, at *Element) *Element {
 	e := l.cache.Alloc()
-	e.Value = v
+	e.SetValue(0, v)
+	return l.insert(e, at)
+}
+
+// insertIFace is a convenience wrapper for insert(&Element{Value: v}, at).
+func (l *List) insertIFace(p unsafe.Pointer, at *Element) *Element {
+	e := l.cache.Alloc()
+	e.SetIFace(0, p)
 	return l.insert(e, at)
 }
 
@@ -199,6 +232,40 @@ func (l *List) InsertAfter(v interface{}, mark *Element) *Element {
 	}
 	// see comment in List.Remove about initialization of l
 	return l.insertValue(v, mark)
+}
+
+// PushIFaceFront inserts a new element e with value v at the front of misc l and returns e.
+func (l *List) PushIFaceFront(p unsafe.Pointer) *Element {
+	l.lazyInit()
+	return l.insertIFace(p, &l.root)
+}
+
+// PushIFaceBack inserts a new element e with value v at the back of misc l and returns e.
+func (l *List) PushIFaceBack(p unsafe.Pointer) *Element {
+	l.lazyInit()
+	return l.insertIFace(p, l.root.prev)
+}
+
+// InsertIFaceBefore inserts a new element e with value v immediately before Mark and returns e.
+// If Mark is not an element of l, the misc is not modified.
+// The Mark must not be nil.
+func (l *List) InsertIFaceBefore(p unsafe.Pointer, mark *Element) *Element {
+	if mark.list != l {
+		return nil
+	}
+	// see comment in List.Remove about initialization of l
+	return l.insertIFace(p, mark.prev)
+}
+
+// InsertIFaceAfter inserts a new element e with value v immediately after Mark and returns e.
+// If Mark is not an element of l, the misc is not modified.
+// The Mark must not be nil.
+func (l *List) InsertIFaceAfter(p unsafe.Pointer, mark *Element) *Element {
+	if mark.list != l {
+		return nil
+	}
+	// see comment in List.Remove about initialization of l
+	return l.insertIFace(p, mark)
 }
 
 // MoveToFront moves element e to the front of misc l.
