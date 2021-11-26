@@ -17,8 +17,8 @@ func IFace2EntityLifecycleCaller(p unsafe.Pointer) EntityLifecycleCaller {
 	return *(*EntityLifecycleCaller)(p)
 }
 
-func EntityLifecycleCaller2IFace(elc EntityLifecycleCaller) unsafe.Pointer {
-	return unsafe.Pointer(&elc)
+func EntityLifecycleCaller2IFace(elc EntityLifecycleCaller) misc.IFace {
+	return *(*misc.IFace)(unsafe.Pointer(&elc))
 }
 
 const (

@@ -24,8 +24,8 @@ func IFace2Entity(p unsafe.Pointer) Entity {
 	return *(*Entity)(p)
 }
 
-func Entity2IFace(e Entity) unsafe.Pointer {
-	return unsafe.Pointer(&e)
+func Entity2IFace(e Entity) misc.IFace {
+	return *(*misc.IFace)(unsafe.Pointer(&e))
 }
 
 func NewEntity(rt Runtime, optFuncs ...NewEntityOptionFunc) Entity {

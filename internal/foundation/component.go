@@ -1,6 +1,7 @@
 package foundation
 
 import (
+	"github.com/pangdogs/core/internal/misc"
 	"unsafe"
 )
 
@@ -14,8 +15,8 @@ func IFace2Component(p unsafe.Pointer) Component {
 	return *(*Component)(p)
 }
 
-func Component2IFace(c Component) unsafe.Pointer {
-	return unsafe.Pointer(&c)
+func Component2IFace(c Component) misc.IFace {
+	return *(*misc.IFace)(unsafe.Pointer(&c))
 }
 
 type ComponentFoundation struct {

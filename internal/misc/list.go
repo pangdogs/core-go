@@ -13,7 +13,7 @@ package misc
 
 import "unsafe"
 
-type iface [2]unsafe.Pointer
+type IFace [2]unsafe.Pointer
 
 // Element is an element of a linked misc.
 type Element struct {
@@ -28,7 +28,7 @@ type Element struct {
 	list *List
 
 	// The value stored with this element.
-	Value [4]iface
+	Value [4]IFace
 
 	// Mark 标记
 	Mark [4]uint64
@@ -71,7 +71,7 @@ func (e *Element) GetMark(bit int) bool {
 
 // SetValue 设置数据
 func (e *Element) SetValue(index int, v interface{}) {
-	e.Value[index] = *(*iface)(unsafe.Pointer(&v))
+	e.Value[index] = *(*IFace)(unsafe.Pointer(&v))
 }
 
 // GetValue 获取数据
@@ -80,8 +80,8 @@ func (e *Element) GetValue(index int) interface{} {
 }
 
 // SetIFace 设置接口指针，用于提高接口转换效率
-func (e *Element) SetIFace(index int, p unsafe.Pointer) {
-	e.Value[index] = *(*iface)(p)
+func (e *Element) SetIFace(index int, f IFace) {
+	e.Value[index] = f
 }
 
 // GetIFace 获取接口指针，用于提高接口转换效率
@@ -155,9 +155,9 @@ func (l *List) insertValue(v interface{}, at *Element) *Element {
 }
 
 // insertIFace is a convenience wrapper for insert(&Element{Value: v}, at).
-func (l *List) insertIFace(p unsafe.Pointer, at *Element) *Element {
+func (l *List) insertIFace(f IFace, at *Element) *Element {
 	e := l.cache.Alloc()
-	e.SetIFace(0, p)
+	e.SetIFace(0, f)
 	return l.insert(e, at)
 }
 
@@ -235,37 +235,37 @@ func (l *List) InsertAfter(v interface{}, mark *Element) *Element {
 }
 
 // PushIFaceFront inserts a new element e with value v at the front of misc l and returns e.
-func (l *List) PushIFaceFront(p unsafe.Pointer) *Element {
+func (l *List) PushIFaceFront(f IFace) *Element {
 	l.lazyInit()
-	return l.insertIFace(p, &l.root)
+	return l.insertIFace(f, &l.root)
 }
 
 // PushIFaceBack inserts a new element e with value v at the back of misc l and returns e.
-func (l *List) PushIFaceBack(p unsafe.Pointer) *Element {
+func (l *List) PushIFaceBack(f IFace) *Element {
 	l.lazyInit()
-	return l.insertIFace(p, l.root.prev)
+	return l.insertIFace(f, l.root.prev)
 }
 
 // InsertIFaceBefore inserts a new element e with value v immediately before Mark and returns e.
 // If Mark is not an element of l, the misc is not modified.
 // The Mark must not be nil.
-func (l *List) InsertIFaceBefore(p unsafe.Pointer, mark *Element) *Element {
+func (l *List) InsertIFaceBefore(f IFace, mark *Element) *Element {
 	if mark.list != l {
 		return nil
 	}
 	// see comment in List.Remove about initialization of l
-	return l.insertIFace(p, mark.prev)
+	return l.insertIFace(f, mark.prev)
 }
 
 // InsertIFaceAfter inserts a new element e with value v immediately after Mark and returns e.
 // If Mark is not an element of l, the misc is not modified.
 // The Mark must not be nil.
-func (l *List) InsertIFaceAfter(p unsafe.Pointer, mark *Element) *Element {
+func (l *List) InsertIFaceAfter(f IFace, mark *Element) *Element {
 	if mark.list != l {
 		return nil
 	}
 	// see comment in List.Remove about initialization of l
-	return l.insertIFace(p, mark)
+	return l.insertIFace(f, mark)
 }
 
 // MoveToFront moves element e to the front of misc l.
