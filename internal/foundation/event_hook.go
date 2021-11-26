@@ -86,6 +86,6 @@ func (h *HookFoundation) rangeEventSources(fun func(eventSrc interface{}) bool) 
 		if ele.Escape() || ele.GetMark(0) {
 			return true
 		}
-		return fun(ele.Value)
+		return fun(ele.GetValue(0))
 	})
 }
