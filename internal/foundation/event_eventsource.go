@@ -71,7 +71,7 @@ func (es *EventSourceFoundation) addHook(hook Hook, priority int32) (*misc.Eleme
 
 	for ele := es.hookList.Front(); ele != nil; ele = ele.Next() {
 		if priority < int32(ele.Mark[0]>>32) {
-			hookEle := es.hookList.InsertIFaceAfter(Hook2IFace(hook), ele)
+			hookEle := es.hookList.InsertIFaceBefore(Hook2IFace(hook), ele)
 			hookEle.Mark[0] |= uint64(priority) << 32
 			return hookEle, nil
 		}
