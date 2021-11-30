@@ -63,7 +63,11 @@ type ComponentShut = foundation.ComponentShut
 
 type Hook = foundation.Hook
 
+type FastHook = foundation.FastHook
+
 type HookFoundation = foundation.HookFoundation
+
+type FastHookFoundation = foundation.FastHookFoundation
 
 type EventSource = foundation.EventSource
 

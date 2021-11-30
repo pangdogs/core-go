@@ -10,6 +10,7 @@ type Hook interface {
 	InitHook(rt Runtime)
 	GetHookID() uint64
 	GetHookRuntime() Runtime
+	Conv2FastHook() FastHook
 	addEventSource(eventSrc EventSource) (*misc.Element, error)
 	removeEventSource(eventSrcEle *misc.Element)
 	rangeEventSources(fun func(eventSrc EventSource) bool)
@@ -57,6 +58,10 @@ func (h *HookFoundation) GetHookID() uint64 {
 
 func (h *HookFoundation) GetHookRuntime() Runtime {
 	return h.runtime
+}
+
+func (h *HookFoundation) Conv2FastHook() FastHook {
+	return nil
 }
 
 func (h *HookFoundation) addEventSource(eventSrc EventSource) (*misc.Element, error) {
