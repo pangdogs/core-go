@@ -10,7 +10,8 @@ type Hook interface {
 	InitHook(rt Runtime)
 	GetHookID() uint64
 	GetHookRuntime() Runtime
-	Conv2FastHook() FastHook
+	SubscribeEvent(eventID int32, event misc.IFace)
+	GetEvent(eventID int32) misc.IFace
 	addEventSource(eventSrc EventSource) (*misc.Element, error)
 	removeEventSource(eventSrcEle *misc.Element)
 	rangeEventSources(fun func(eventSrc EventSource) bool)
@@ -60,8 +61,12 @@ func (h *HookFoundation) GetHookRuntime() Runtime {
 	return h.runtime
 }
 
-func (h *HookFoundation) Conv2FastHook() FastHook {
-	return nil
+func (h *HookFoundation) SubscribeEvent(eventID int32, event misc.IFace) {
+	return
+}
+
+func (h *HookFoundation) GetEvent(eventID int32) misc.IFace {
+	return misc.NilIFace
 }
 
 func (h *HookFoundation) addEventSource(eventSrc EventSource) (*misc.Element, error) {

@@ -1,37 +1,27 @@
 package foundation
 
 import (
-	"github.com/pangdogs/core"
+	"github.com/pangdogs/core/internal/misc"
 )
 
-type FastHook interface {
-	Hook
-	SubscribeEvent(eventID int32, event core.IFace)
-	GetEvent(eventID int32) core.IFace
-}
-
 type FastHookFoundation struct {
-	core.HookFoundation
-	events [64 * 3]core.IFace
+	HookFoundation
+	events [64 * 3]misc.IFace
 }
 
-func (h *FastHookFoundation) Conv2FastHook() FastHook {
-	return h
-}
-
-func (h *FastHookFoundation) SubscribeEvent(eventID int32, event core.IFace) {
+func (h *FastHookFoundation) SubscribeEvent(eventID int32, event misc.IFace) {
 	if eventID < 0 || eventID >= int32(len(h.events)) {
 		panic("eventID invalid")
 	}
 
-	if event == core.NilIFace {
+	if event == misc.NilIFace {
 		panic("nil event")
 	}
 
 	h.events[eventID] = event
 }
 
-func (h *FastHookFoundation) GetEvent(eventID int32) core.IFace {
+func (h *FastHookFoundation) GetEvent(eventID int32) misc.IFace {
 	if eventID < 0 || eventID >= int32(len(h.events)) {
 		panic("eventID invalid")
 	}

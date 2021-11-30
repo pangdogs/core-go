@@ -63,8 +63,6 @@ type ComponentShut = foundation.ComponentShut
 
 type Hook = foundation.Hook
 
-type FastHook = foundation.FastHook
-
 type HookFoundation = foundation.HookFoundation
 
 type FastHookFoundation = foundation.FastHookFoundation
@@ -105,7 +103,7 @@ type Element = misc.Element
 
 type IFace = misc.IFace
 
-var NilIFace = misc.IFace{}
+var NilIFace = misc.NilIFace
 
 type Cache = misc.Cache
 

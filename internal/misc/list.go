@@ -13,6 +13,8 @@ package misc
 
 import "unsafe"
 
+var NilIFace IFace
+
 type IFace [2]unsafe.Pointer
 
 // Element is an element of a linked misc.
