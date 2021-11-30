@@ -5,14 +5,13 @@ import (
 	"unsafe"
 )
 
-func BindEvent(hook Hook, _eventSrc interface{}, _priority ...int32) error {
+func BindEvent(hook Hook, eventSrc EventSource, _priority ...int32) error {
 	if hook == nil {
 		return errors.New("nil hook")
 	}
 
-	eventSrc, ok := _eventSrc.(EventSource)
-	if !ok {
-		return errors.New("eventSrc invalid")
+	if eventSrc == nil {
+		return errors.New("nil eventSrc")
 	}
 
 	rt := eventSrc.GetEventSourceRuntime()
@@ -49,13 +48,8 @@ func BindEvent(hook Hook, _eventSrc interface{}, _priority ...int32) error {
 	return nil
 }
 
-func UnbindEvent(hook Hook, _eventSrc interface{}) {
-	if hook == nil {
-		return
-	}
-
-	eventSrc, ok := _eventSrc.(EventSource)
-	if !ok {
+func UnbindEvent(hook Hook, eventSrc EventSource) {
+	if hook == nil || eventSrc == nil {
 		return
 	}
 
@@ -107,13 +101,8 @@ const (
 	EventRet_Unsubscribe
 )
 
-func SendEvent(_eventSrc interface{}, fun func(hook Hook) EventRet) {
-	if fun == nil {
-		return
-	}
-
-	eventSrc, ok := _eventSrc.(EventSource)
-	if !ok {
+func SendEvent(eventSrc EventSource, fun func(hook Hook) EventRet) {
+	if eventSrc == nil || fun == nil {
 		return
 	}
 
