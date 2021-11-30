@@ -25,8 +25,8 @@ type ComponentUpdate interface {
 	Update()
 }
 
-func IFace2ComponentUpdate(p unsafe.Pointer) ComponentUpdate {
-	return *(*ComponentUpdate)(p)
+func IFace2ComponentUpdate(f misc.IFace) ComponentUpdate {
+	return *(*ComponentUpdate)(unsafe.Pointer(&f))
 }
 
 func ComponentUpdate2IFace(cu ComponentUpdate) misc.IFace {
@@ -37,8 +37,8 @@ type ComponentLateUpdate interface {
 	LateUpdate()
 }
 
-func IFace2ComponentLateUpdate(p unsafe.Pointer) ComponentLateUpdate {
-	return *(*ComponentLateUpdate)(p)
+func IFace2ComponentLateUpdate(f misc.IFace) ComponentLateUpdate {
+	return *(*ComponentLateUpdate)(unsafe.Pointer(&f))
 }
 
 func ComponentLateUpdate2IFace(clu ComponentLateUpdate) misc.IFace {

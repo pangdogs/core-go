@@ -17,8 +17,8 @@ type Hook interface {
 	rangeEventSources(fun func(eventSrc EventSource) bool)
 }
 
-func IFace2Hook(p unsafe.Pointer) Hook {
-	return *(*Hook)(p)
+func IFace2Hook(f misc.IFace) Hook {
+	return *(*Hook)(unsafe.Pointer(&f))
 }
 
 func Hook2IFace(h Hook) misc.IFace {

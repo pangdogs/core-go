@@ -3,7 +3,6 @@ package foundation
 import (
 	"errors"
 	"github.com/pangdogs/core/internal/misc"
-	"unsafe"
 )
 
 var eventID = int32(-1)
@@ -22,12 +21,11 @@ const eventsLimit = int32(64 * 3)
 
 type FastHookFoundation struct {
 	HookFoundation
-	eventsType [eventsLimit]unsafe.Pointer
-	eventsData unsafe.Pointer
+	events [eventsLimit]misc.IFace
 }
 
 func (h *FastHookFoundation) SubscribeEvent(eventID int32, event misc.IFace) error {
-	if eventID < 0 || eventID >= int32(len(h.eventsType)) {
+	if eventID < 0 || eventID >= int32(len(h.events)) {
 		return errors.New("eventID invalid")
 	}
 
@@ -35,16 +33,15 @@ func (h *FastHookFoundation) SubscribeEvent(eventID int32, event misc.IFace) err
 		return errors.New("nil event")
 	}
 
-	h.eventsType[eventID] = event[0]
-	h.eventsData = event[1]
+	h.events[eventID] = event
 
 	return nil
 }
 
 func (h *FastHookFoundation) GetEvent(eventID int32) misc.IFace {
-	if eventID < 0 || eventID >= int32(len(h.eventsType)) {
+	if eventID < 0 || eventID >= int32(len(h.events)) {
 		panic("eventID invalid")
 	}
 
-	return misc.IFace{h.eventsType[eventID], h.eventsData}
+	return h.events[eventID]
 }

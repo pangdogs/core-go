@@ -13,8 +13,8 @@ type EntityLifecycleCaller interface {
 	CallEntityShut()
 }
 
-func IFace2EntityLifecycleCaller(p unsafe.Pointer) EntityLifecycleCaller {
-	return *(*EntityLifecycleCaller)(p)
+func IFace2EntityLifecycleCaller(f misc.IFace) EntityLifecycleCaller {
+	return *(*EntityLifecycleCaller)(unsafe.Pointer(&f))
 }
 
 func EntityLifecycleCaller2IFace(elc EntityLifecycleCaller) misc.IFace {

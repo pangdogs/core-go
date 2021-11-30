@@ -20,8 +20,8 @@ type Entity interface {
 	RangeComponents(fun func(component Component) bool)
 }
 
-func IFace2Entity(p unsafe.Pointer) Entity {
-	return *(*Entity)(p)
+func IFace2Entity(f misc.IFace) Entity {
+	return *(*Entity)(unsafe.Pointer(&f))
 }
 
 func Entity2IFace(e Entity) misc.IFace {

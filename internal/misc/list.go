@@ -87,8 +87,8 @@ func (e *Element) SetIFace(index int, f IFace) {
 }
 
 // GetIFace 获取接口指针，用于提高接口转换效率
-func (e *Element) GetIFace(index int) unsafe.Pointer {
-	return unsafe.Pointer(&e.Value[index])
+func (e *Element) GetIFace(index int) IFace {
+	return e.Value[index]
 }
 
 // List represents a doubly linked misc.

@@ -11,8 +11,8 @@ type Component interface {
 	initComponent(name string, entity Entity)
 }
 
-func IFace2Component(p unsafe.Pointer) Component {
-	return *(*Component)(p)
+func IFace2Component(f misc.IFace) Component {
+	return *(*Component)(unsafe.Pointer(&f))
 }
 
 func Component2IFace(c Component) misc.IFace {

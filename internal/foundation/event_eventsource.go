@@ -16,8 +16,8 @@ type EventSource interface {
 	sendEvent(fun func(hook Hook) EventRet, eventHandle uintptr)
 }
 
-func IFace2EventSource(p unsafe.Pointer) EventSource {
-	return *(*EventSource)(p)
+func IFace2EventSource(f misc.IFace) EventSource {
+	return *(*EventSource)(unsafe.Pointer(&f))
 }
 
 func EventSource2IFace(es EventSource) misc.IFace {
