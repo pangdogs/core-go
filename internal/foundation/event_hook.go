@@ -10,7 +10,7 @@ type Hook interface {
 	InitHook(rt Runtime)
 	GetHookID() uint64
 	GetHookRuntime() Runtime
-	SubscribeEvent(eventID int32, event misc.IFace)
+	SubscribeEvent(eventID int32, event misc.IFace) error
 	GetEvent(eventID int32) misc.IFace
 	addEventSource(eventSrc EventSource) (*misc.Element, error)
 	removeEventSource(eventSrcEle *misc.Element)
@@ -61,8 +61,8 @@ func (h *HookFoundation) GetHookRuntime() Runtime {
 	return h.runtime
 }
 
-func (h *HookFoundation) SubscribeEvent(eventID int32, event misc.IFace) {
-	return
+func (h *HookFoundation) SubscribeEvent(eventID int32, event misc.IFace) error {
+	return nil
 }
 
 func (h *HookFoundation) GetEvent(eventID int32) misc.IFace {
