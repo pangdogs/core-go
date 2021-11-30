@@ -101,6 +101,8 @@ type Element = misc.Element
 
 type IFace = misc.IFace
 
+var NilIFace = misc.IFace{}
+
 type Cache = misc.Cache
 
 var NewList = misc.NewList
