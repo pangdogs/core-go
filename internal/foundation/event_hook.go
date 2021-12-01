@@ -2,7 +2,6 @@ package foundation
 
 import (
 	"errors"
-	"github.com/pangdogs/core"
 	"github.com/pangdogs/core/internal/misc"
 	"unsafe"
 )
@@ -119,7 +118,7 @@ func (h *HookFoundation) GetEvent(eventID int32) misc.IFace {
 	}
 
 	if h.eventMap == nil {
-		return core.NilIFace
+		return misc.NilIFace
 	}
 
 	return h.eventMap[eventID]
