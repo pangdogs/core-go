@@ -67,8 +67,6 @@ type HookFoundation = foundation.HookFoundation
 
 var AllocEventID = foundation.AllocEventID
 
-type FastHookFoundation = foundation.FastHookFoundation
-
 type EventSource = foundation.EventSource
 
 type EventSourceFoundation = foundation.EventSourceFoundation
