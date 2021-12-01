@@ -2,6 +2,7 @@ package foundation
 
 import (
 	"errors"
+	"github.com/pangdogs/core"
 	"github.com/pangdogs/core/internal/misc"
 	"unsafe"
 )
@@ -46,7 +47,7 @@ type HookFoundation struct {
 	runtime        Runtime
 	eventSrcList   misc.List
 	eventSrcGCList []*misc.Element
-	eventList      misc.List
+	eventMap       map[int32]misc.IFace
 }
 
 func (h *HookFoundation) GC() {
@@ -68,7 +69,6 @@ func (h *HookFoundation) InitHook(rt Runtime) {
 	h.id = rt.GetApp().makeUID()
 	h.runtime = rt
 	h.eventSrcList.Init(rt.GetCache())
-	h.eventList.Init(rt.GetCache())
 }
 
 func (h *HookFoundation) GetHookID() uint64 {
@@ -88,13 +88,11 @@ func (h *HookFoundation) SubscribeEvent(eventID int32, event misc.IFace) error {
 		return errors.New("nil event")
 	}
 
-	if h.runtime == nil {
-		return errors.New("nil runtime")
+	if h.eventMap == nil {
+		h.eventMap = map[int32]misc.IFace{}
 	}
 
-	e := h.eventList.PushBack(nil)
-	e.Mark[1] = uint64(eventID)
-	h.runtime.subscribeEvent(h.id, eventID, event)
+	h.eventMap[eventID] = event
 
 	return nil
 }
@@ -104,26 +102,15 @@ func (h *HookFoundation) UnsubscribeEvent(eventID int32) {
 		return
 	}
 
-	if h.runtime == nil {
+	if h.eventMap == nil {
 		return
 	}
 
-	h.runtime.unsubscribeEvent(h.id, eventID)
-	h.eventList.UnsafeTraversal(func(e *misc.Element) bool {
-		if e.Mark[1] == uint64(eventID) {
-			h.eventList.Remove(e)
-			return false
-		}
-		return true
-	})
+	delete(h.eventMap, eventID)
 }
 
 func (h *HookFoundation) UnsubscribeAllEvent() {
-	h.eventList.UnsafeTraversal(func(e *misc.Element) bool {
-		h.runtime.unsubscribeEvent(h.id, int32(e.Mark[1]))
-		return true
-	})
-	h.eventList.Init(h.runtime.GetCache())
+	h.eventMap = nil
 }
 
 func (h *HookFoundation) GetEvent(eventID int32) misc.IFace {
@@ -131,12 +118,11 @@ func (h *HookFoundation) GetEvent(eventID int32) misc.IFace {
 		panic("eventID invalid")
 	}
 
-	if h.runtime == nil {
-		panic("nil runtime")
+	if h.eventMap == nil {
+		return core.NilIFace
 	}
 
-	event, _ := h.runtime.getEvent(h.id, eventID)
-	return event
+	return h.eventMap[eventID]
 }
 
 func (h *HookFoundation) addEventSource(eventSrc EventSource) (*misc.Element, error) {

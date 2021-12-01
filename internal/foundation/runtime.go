@@ -26,9 +26,6 @@ type Runtime interface {
 	unbindEvent(hookID, eventSrcID uint64) (hookEle, eventSrcEle *misc.Element, ok bool)
 	eventIsBound(hookID, eventSrcID uint64) bool
 	eventHandleToBit(handle uintptr) int
-	subscribeEvent(hookID uint64, eventID int32, event misc.IFace)
-	unsubscribeEvent(hookID uint64, eventID int32)
-	getEvent(hookID uint64, eventID int32) (misc.IFace, bool)
 }
 
 func NewRuntime(ctx Context, app App, optFuncs ...NewRuntimeOptionFunc) Runtime {
@@ -74,20 +71,19 @@ type RuntimeFoundation struct {
 	RunnableFoundation
 	Context
 	RuntimeOptions
-	id                 uint64
-	app                App
-	safeCallList       chan *SafeCallBundle
-	entityMap          map[uint64]*misc.Element
-	entityList         misc.List
-	entityStartList    []*misc.Element
-	entityGCList       []*misc.Element
-	frame              Frame
-	eventBinderMap     map[EventBinderKey]EventBinderValue
-	eventHandleBits    map[uintptr]int
-	eventSubscriberMap map[EventSubscriberKey]misc.IFace
-	gcExists           map[uintptr]struct{}
-	gcList             []GC
-	gcLastRunTime      time.Time
+	id              uint64
+	app             App
+	safeCallList    chan *SafeCallBundle
+	entityMap       map[uint64]*misc.Element
+	entityList      misc.List
+	entityStartList []*misc.Element
+	entityGCList    []*misc.Element
+	frame           Frame
+	eventBinderMap  map[EventBinderKey]EventBinderValue
+	eventHandleBits map[uintptr]int
+	gcExists        map[uintptr]struct{}
+	gcList          []GC
+	gcLastRunTime   time.Time
 }
 
 func (rt *RuntimeFoundation) initRuntime(ctx Context, app App, opts *RuntimeOptions) {
@@ -119,7 +115,6 @@ func (rt *RuntimeFoundation) initRuntime(ctx Context, app App, opts *RuntimeOpti
 	rt.entityMap = map[uint64]*misc.Element{}
 	rt.eventBinderMap = map[EventBinderKey]EventBinderValue{}
 	rt.eventHandleBits = map[uintptr]int{}
-	rt.eventSubscriberMap = map[EventSubscriberKey]misc.IFace{}
 
 	CallOuter(rt.autoRecover, rt.GetReportError(), func() {
 		if rt.initFunc != nil {
@@ -590,26 +585,4 @@ func (rt *RuntimeFoundation) eventHandleToBit(handle uintptr) int {
 		rt.eventHandleBits[handle] = bit
 	}
 	return bit
-}
-
-func (rt *RuntimeFoundation) subscribeEvent(hookID uint64, eventID int32, event misc.IFace) {
-	rt.eventSubscriberMap[EventSubscriberKey{
-		HookID:  hookID,
-		EventID: eventID,
-	}] = event
-}
-
-func (rt *RuntimeFoundation) unsubscribeEvent(hookID uint64, eventID int32) {
-	delete(rt.eventSubscriberMap, EventSubscriberKey{
-		HookID:  hookID,
-		EventID: eventID,
-	})
-}
-
-func (rt *RuntimeFoundation) getEvent(hookID uint64, eventID int32) (misc.IFace, bool) {
-	event, ok := rt.eventSubscriberMap[EventSubscriberKey{
-		HookID:  hookID,
-		EventID: eventID,
-	}]
-	return event, ok
 }
