@@ -49,11 +49,6 @@ func NewRuntime(ctx Context, app App, optFuncs ...NewRuntimeOptionFunc) Runtime 
 	return rt.inheritor
 }
 
-const (
-	RuntimeEntitiesIFace_Entity int = iota
-	RuntimeEntitiesIFace_EntityLifecycleCaller
-)
-
 type EventBinderKey struct {
 	HookID, EventSrcID uint64
 }
@@ -159,12 +154,12 @@ func (rt *RuntimeFoundation) Run() chan struct{} {
 				if e.Escape() || e.GetMark(0) {
 					continue
 				}
-				CallOuter(rt.autoRecover, rt.GetReportError(), IFace2EntityLifecycleCaller(e.GetIFace(RuntimeEntitiesIFace_EntityLifecycleCaller)).CallStart)
+				CallOuter(rt.autoRecover, rt.GetReportError(), IFace2Entity(e.GetIFace()).callStart)
 			}
 			rt.entityStartList = rt.entityStartList[count:]
 		}
 
-		invokeLifecycleFunc := func(fun func(entityLifecycle EntityLifecycleCaller)) {
+		invokeLifecycleFunc := func(fun func(entity Entity)) {
 			if fun == nil {
 				return
 			}
@@ -173,7 +168,7 @@ func (rt *RuntimeFoundation) Run() chan struct{} {
 				if e.Escape() || e.GetMark(0) {
 					return true
 				}
-				fun(IFace2EntityLifecycleCaller(e.GetIFace(RuntimeEntitiesIFace_EntityLifecycleCaller)))
+				fun(IFace2Entity(e.GetIFace()))
 				return true
 			})
 		}
@@ -278,12 +273,12 @@ func (rt *RuntimeFoundation) Run() chan struct{} {
 				rt.frame.updateBegin()
 				defer rt.frame.updateEnd()
 
-				invokeLifecycleFunc(func(entityLifecycle EntityLifecycleCaller) {
-					entityLifecycle.CallUpdate()
+				invokeLifecycleFunc(func(entity Entity) {
+					entity.callUpdate()
 				})
 
-				invokeLifecycleFunc(func(entityLifecycle EntityLifecycleCaller) {
-					entityLifecycle.CallLateUpdate()
+				invokeLifecycleFunc(func(entity Entity) {
+					entity.callLateUpdate()
 				})
 			}
 
@@ -479,7 +474,7 @@ func (rt *RuntimeFoundation) GetEntity(entID uint64) Entity {
 		return nil
 	}
 
-	return IFace2Entity(e.GetIFace(RuntimeEntitiesIFace_Entity))
+	return IFace2Entity(e.GetIFace())
 }
 
 func (rt *RuntimeFoundation) RangeEntities(fun func(entity Entity) bool) {
@@ -491,7 +486,7 @@ func (rt *RuntimeFoundation) RangeEntities(fun func(entity Entity) bool) {
 		if e.Escape() || e.GetMark(0) {
 			return true
 		}
-		return fun(IFace2Entity(e.GetIFace(RuntimeEntitiesIFace_Entity)))
+		return fun(IFace2Entity(e.GetIFace()))
 	})
 }
 
@@ -509,7 +504,6 @@ func (rt *RuntimeFoundation) addEntity(entity Entity) {
 	}
 
 	ele := rt.entityList.PushIFaceBack(Entity2IFace(entity))
-	ele.SetIFace(RuntimeEntitiesIFace_EntityLifecycleCaller, EntityLifecycleCaller2IFace(entity.(EntityLifecycleCaller)))
 	rt.entityMap[entity.GetEntityID()] = ele
 	rt.entityStartList = append(rt.entityStartList, ele)
 

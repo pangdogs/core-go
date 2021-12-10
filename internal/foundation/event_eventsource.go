@@ -104,7 +104,7 @@ func (es *EventSourceFoundation) rangeHooks(fun func(hook Hook, priority int32) 
 		if ele.Escape() || ele.GetMark(0) {
 			return true
 		}
-		return fun(IFace2Hook(ele.GetIFace(0)), int32(ele.Mark[0]>>32))
+		return fun(IFace2Hook(ele.GetIFace()), int32(ele.Mark[0]>>32))
 	})
 }
 
@@ -120,7 +120,7 @@ func (es *EventSourceFoundation) sendEvent(fun func(hook Hook) EventRet, eventHa
 			return true
 		}
 
-		ret := fun(IFace2Hook(ele.GetIFace(0)))
+		ret := fun(IFace2Hook(ele.GetIFace()))
 
 		if ret&EventRet_Unsubscribe != 0 {
 			ele.SetMark(bit, true)

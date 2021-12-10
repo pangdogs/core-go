@@ -6,7 +6,7 @@
 //
 // To iterate over a misc (where l is a *List):
 //	for e := l.Front(); e != nil; e = e.Next() {
-//		// do something with e.Value
+//		// do something with e.value
 //	}
 //
 package misc
@@ -30,7 +30,7 @@ type Element struct {
 	list *List
 
 	// The value stored with this element.
-	Value [4]IFace
+	value IFace
 
 	// Mark 标记
 	Mark [4]uint64
@@ -71,24 +71,14 @@ func (e *Element) GetMark(bit int) bool {
 	return (e.Mark[bit/64]>>bit)&uint64(1) == 1
 }
 
-// SetValue 设置数据
-func (e *Element) SetValue(index int, v interface{}) {
-	e.Value[index] = *(*IFace)(unsafe.Pointer(&v))
-}
-
-// GetValue 获取数据
-func (e *Element) GetValue(index int) interface{} {
-	return *(*interface{})(unsafe.Pointer(&e.Value[index]))
-}
-
 // SetIFace 设置接口指针，用于提高接口转换效率
-func (e *Element) SetIFace(index int, f IFace) {
-	e.Value[index] = f
+func (e *Element) SetIFace(f IFace) {
+	e.value = f
 }
 
 // GetIFace 获取接口指针，用于提高接口转换效率
-func (e *Element) GetIFace(index int) IFace {
-	return e.Value[index]
+func (e *Element) GetIFace() IFace {
+	return e.value
 }
 
 // List represents a doubly linked misc.
@@ -149,17 +139,10 @@ func (l *List) insert(e, at *Element) *Element {
 	return e
 }
 
-// insertValue is a convenience wrapper for insert(&Element{Value: v}, at).
-func (l *List) insertValue(v interface{}, at *Element) *Element {
-	e := l.cache.Alloc()
-	e.SetValue(0, v)
-	return l.insert(e, at)
-}
-
-// insertIFace is a convenience wrapper for insert(&Element{Value: v}, at).
+// insertIFace is a convenience wrapper for insert(&Element{value: v}, at).
 func (l *List) insertIFace(f IFace, at *Element) *Element {
 	e := l.cache.Alloc()
-	e.SetIFace(0, f)
+	e.SetIFace(f)
 	return l.insert(e, at)
 }
 
@@ -191,7 +174,7 @@ func (l *List) move(e, at *Element) *Element {
 }
 
 // Remove removes e from l if e is an element of misc l.
-// It returns the element value e.Value.
+// It returns the element value e.value.
 // The element must not be nil.
 func (l *List) Remove(e *Element) interface{} {
 	if e.list == l {
@@ -199,41 +182,7 @@ func (l *List) Remove(e *Element) interface{} {
 		// in l or l == nil (e is a zero Element) and l.remove will crash
 		l.remove(e)
 	}
-	return e.Value
-}
-
-// PushFront inserts a new element e with value v at the front of misc l and returns e.
-func (l *List) PushFront(v interface{}) *Element {
-	l.lazyInit()
-	return l.insertValue(v, &l.root)
-}
-
-// PushBack inserts a new element e with value v at the back of misc l and returns e.
-func (l *List) PushBack(v interface{}) *Element {
-	l.lazyInit()
-	return l.insertValue(v, l.root.prev)
-}
-
-// InsertBefore inserts a new element e with value v immediately before Mark and returns e.
-// If Mark is not an element of l, the misc is not modified.
-// The Mark must not be nil.
-func (l *List) InsertBefore(v interface{}, mark *Element) *Element {
-	if mark.list != l {
-		return nil
-	}
-	// see comment in List.Remove about initialization of l
-	return l.insertValue(v, mark.prev)
-}
-
-// InsertAfter inserts a new element e with value v immediately after Mark and returns e.
-// If Mark is not an element of l, the misc is not modified.
-// The Mark must not be nil.
-func (l *List) InsertAfter(v interface{}, mark *Element) *Element {
-	if mark.list != l {
-		return nil
-	}
-	// see comment in List.Remove about initialization of l
-	return l.insertValue(v, mark)
+	return e.value
 }
 
 // PushIFaceFront inserts a new element e with value v at the front of misc l and returns e.
@@ -317,7 +266,7 @@ func (l *List) MoveAfter(e, mark *Element) {
 func (l *List) PushBackList(other *List) {
 	l.lazyInit()
 	for i, e := other.Len(), other.Front(); i > 0; i, e = i-1, e.Next() {
-		l.insertValue(e.Value, l.root.prev)
+		l.insertIFace(e.value, l.root.prev)
 	}
 }
 
@@ -326,7 +275,7 @@ func (l *List) PushBackList(other *List) {
 func (l *List) PushFrontList(other *List) {
 	l.lazyInit()
 	for i, e := other.Len(), other.Back(); i > 0; i, e = i-1, e.Prev() {
-		l.insertValue(e.Value, &l.root)
+		l.insertIFace(e.value, &l.root)
 	}
 }
 

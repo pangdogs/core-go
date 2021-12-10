@@ -2,24 +2,7 @@ package foundation
 
 import (
 	"github.com/pangdogs/core/internal/misc"
-	"unsafe"
 )
-
-type EntityLifecycleCaller interface {
-	CallEntityInit()
-	CallStart()
-	CallUpdate()
-	CallLateUpdate()
-	CallEntityShut()
-}
-
-func IFace2EntityLifecycleCaller(f misc.IFace) EntityLifecycleCaller {
-	return *(*EntityLifecycleCaller)(unsafe.Pointer(&f))
-}
-
-func EntityLifecycleCaller2IFace(elc EntityLifecycleCaller) misc.IFace {
-	return *(*misc.IFace)(unsafe.Pointer(&elc))
-}
 
 const (
 	EntityComponentsMark_Removed int = iota
@@ -27,13 +10,7 @@ const (
 	EntityComponentsMark_Started
 )
 
-const (
-	EntityComponentsIFace_Component int = iota
-	EntityComponentsIFace_ComponentUpdate
-	EntityComponentsIFace_ComponentLateUpdate
-)
-
-func (e *EntityFoundation) CallEntityInit() {
+func (e *EntityFoundation) callEntityInit() {
 	if e.destroyed {
 		return
 	}
@@ -45,15 +22,15 @@ func (e *EntityFoundation) CallEntityInit() {
 		if !e.GetMark(EntityComponentsMark_Inited) {
 			e.SetMark(EntityComponentsMark_Inited, true)
 
-			if cl, ok := IFace2Component(e.GetIFace(EntityComponentsIFace_Component)).(ComponentEntityInit); ok {
-				cl.EntityInit()
+			if cei := IFace2Component(e.GetIFace()).getLifecycleComponentEntityInit(); cei != nil {
+				cei.EntityInit()
 			}
 		}
 		return true
 	})
 }
 
-func (e *EntityFoundation) CallStart() {
+func (e *EntityFoundation) callStart() {
 	if e.destroyed {
 		return
 	}
@@ -65,23 +42,15 @@ func (e *EntityFoundation) CallStart() {
 		if !e.GetMark(EntityComponentsMark_Started) {
 			e.SetMark(EntityComponentsMark_Started, true)
 
-			if cl, ok := IFace2Component(e.GetIFace(EntityComponentsIFace_Component)).(ComponentStart); ok {
-				cl.Start()
-			}
-
-			if cu, ok := IFace2Component(e.GetIFace(EntityComponentsIFace_Component)).(ComponentUpdate); ok {
-				e.SetIFace(EntityComponentsIFace_ComponentUpdate, ComponentUpdate2IFace(cu))
-			}
-
-			if clu, ok := IFace2Component(e.GetIFace(EntityComponentsIFace_Component)).(ComponentLateUpdate); ok {
-				e.SetIFace(EntityComponentsIFace_ComponentLateUpdate, ComponentLateUpdate2IFace(clu))
+			if cs := IFace2Component(e.GetIFace()).getLifecycleComponentStart(); cs != nil {
+				cs.Start()
 			}
 		}
 		return true
 	})
 }
 
-func (e *EntityFoundation) CallUpdate() {
+func (e *EntityFoundation) callUpdate() {
 	if e.destroyed {
 		return
 	}
@@ -90,14 +59,14 @@ func (e *EntityFoundation) CallUpdate() {
 		if e.Escape() || e.GetMark(EntityComponentsMark_Removed) || !e.GetMark(EntityComponentsMark_Started) {
 			return true
 		}
-		if cu := IFace2ComponentUpdate(e.GetIFace(EntityComponentsIFace_ComponentUpdate)); cu != nil {
+		if cu := IFace2Component(e.GetIFace()).getLifecycleComponentUpdate(); cu != nil {
 			cu.Update()
 		}
 		return true
 	})
 }
 
-func (e *EntityFoundation) CallLateUpdate() {
+func (e *EntityFoundation) callLateUpdate() {
 	if e.destroyed {
 		return
 	}
@@ -106,20 +75,20 @@ func (e *EntityFoundation) CallLateUpdate() {
 		if e.Escape() || e.GetMark(EntityComponentsMark_Removed) || !e.GetMark(EntityComponentsMark_Started) {
 			return true
 		}
-		if clu := IFace2ComponentLateUpdate(e.GetIFace(EntityComponentsIFace_ComponentLateUpdate)); clu != nil {
+		if clu := IFace2Component(e.GetIFace()).getLifecycleComponentLateUpdate(); clu != nil {
 			clu.LateUpdate()
 		}
 		return true
 	})
 }
 
-func (e *EntityFoundation) CallEntityShut() {
+func (e *EntityFoundation) callEntityShut() {
 	e.componentList.UnsafeTraversal(func(e *misc.Element) bool {
 		if e.Escape() || e.GetMark(EntityComponentsMark_Removed) || !e.GetMark(EntityComponentsMark_Inited) {
 			return true
 		}
-		if cl, ok := IFace2Component(e.GetIFace(EntityComponentsIFace_Component)).(ComponentEntityShut); ok {
-			cl.EntityShut()
+		if cs := IFace2Component(e.GetIFace()).getLifecycleComponentEntityShut(); cs != nil {
+			cs.EntityShut()
 		}
 		return true
 	})

@@ -18,6 +18,11 @@ type Entity interface {
 	GetComponent(name string) Component
 	GetComponents(name string) []Component
 	RangeComponents(fun func(component Component) bool)
+	callEntityInit()
+	callStart()
+	callUpdate()
+	callLateUpdate()
+	callEntityShut()
 }
 
 func IFace2Entity(f misc.IFace) Entity {
@@ -84,7 +89,7 @@ func (e *EntityFoundation) initEntity(rt Runtime, opts *EntityOptions) {
 		e.initFunc(e)
 	}
 
-	e.CallEntityInit()
+	e.callEntityInit()
 }
 
 func (e *EntityFoundation) GC() {
@@ -108,7 +113,7 @@ func (e *EntityFoundation) Destroy() {
 	e.GetRuntime().GetApp().removeEntity(e.id)
 	e.GetRuntime().removeEntity(e.id)
 
-	e.CallEntityShut()
+	e.callEntityShut()
 
 	e.RangeComponents(func(component Component) bool {
 		e.RemoveComponent(component.GetName())
@@ -146,11 +151,11 @@ func (e *EntityFoundation) AddComponent(name string, _component interface{}) err
 	}
 
 	component := _component.(Component)
-	component.initComponent(name, e.inheritor)
+	component.initComponent(name, e.inheritor, component)
 
 	if ele, ok := e.componentMap[name]; ok {
 		old := ele
-		for t := ele; t != nil && IFace2Component(t.GetIFace(EntityComponentsIFace_Component)).GetName() == name; t = t.Next() {
+		for t := ele; t != nil && IFace2Component(t.GetIFace()).GetName() == name; t = t.Next() {
 			if t.Escape() || t.GetMark(EntityComponentsMark_Removed) {
 				continue
 			}
@@ -161,12 +166,12 @@ func (e *EntityFoundation) AddComponent(name string, _component interface{}) err
 		e.componentMap[name] = e.componentList.PushIFaceBack(Component2IFace(component))
 	}
 
-	if cl, ok := _component.(ComponentInit); ok {
-		cl.Init(component)
+	if ci := component.getLifecycleComponentInit(); ci != nil {
+		ci.Init()
 	}
 
-	if cl, ok := _component.(ComponentAwake); ok {
-		cl.Awake()
+	if ca := component.getLifecycleComponentAwake(); ca != nil {
+		ca.Awake()
 	}
 
 	return nil
@@ -178,18 +183,20 @@ func (e *EntityFoundation) RemoveComponent(name string) {
 
 		var elements []*misc.Element
 
-		for t := ele; t != nil && IFace2Component(t.GetIFace(EntityComponentsIFace_Component)).GetName() == name; t = t.Next() {
+		for t := ele; t != nil && IFace2Component(t.GetIFace()).GetName() == name; t = t.Next() {
 			t.SetMark(EntityComponentsMark_Removed, true)
 			elements = append(elements, t)
 		}
 
 		for i := 0; i < len(elements); i++ {
-			c := IFace2Component(elements[i].GetIFace(EntityComponentsIFace_Component))
-			if cl, ok := c.(ComponentHalt); ok {
-				cl.Halt()
+			c := IFace2Component(elements[i].GetIFace())
+
+			if ch := c.getLifecycleComponentHalt(); ch != nil {
+				ch.Halt()
 			}
-			if cl, ok := c.(ComponentShut); ok {
-				cl.Shut(c)
+
+			if cs := c.getLifecycleComponentShut(); cs != nil {
+				cs.Shut()
 			}
 		}
 
@@ -204,7 +211,7 @@ func (e *EntityFoundation) RemoveComponent(name string) {
 
 func (e *EntityFoundation) GetComponent(name string) Component {
 	if ele, ok := e.componentMap[name]; ok {
-		return IFace2Component(ele.GetIFace(EntityComponentsIFace_Component))
+		return IFace2Component(ele.GetIFace())
 	}
 
 	return nil
@@ -214,11 +221,11 @@ func (e *EntityFoundation) GetComponents(name string) []Component {
 	if ele, ok := e.componentMap[name]; ok {
 		var components []Component
 
-		for t := ele; t != nil && IFace2Component(t.GetIFace(EntityComponentsIFace_Component)).GetName() == name; t = t.Next() {
+		for t := ele; t != nil && IFace2Component(t.GetIFace()).GetName() == name; t = t.Next() {
 			if t.Escape() || t.GetMark(EntityComponentsMark_Removed) {
 				continue
 			}
-			components = append(components, IFace2Component(t.GetIFace(EntityComponentsIFace_Component)))
+			components = append(components, IFace2Component(t.GetIFace()))
 		}
 
 		return components
@@ -236,6 +243,6 @@ func (e *EntityFoundation) RangeComponents(fun func(component Component) bool) {
 		if e.Escape() || e.GetMark(EntityComponentsMark_Removed) {
 			return true
 		}
-		return fun(IFace2Component(e.GetIFace(EntityComponentsIFace_Component)))
+		return fun(IFace2Component(e.GetIFace()))
 	})
 }
