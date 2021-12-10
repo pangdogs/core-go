@@ -10,7 +10,7 @@ type Entity interface {
 	initEntity(rt Runtime, opts *EntityOptions)
 	Destroy()
 	GetEntityID() uint64
-	getInheritor() Entity
+	getEntityInheritor() Entity
 	GetRuntime() Runtime
 	IsDestroyed() bool
 	AddComponent(name string, component interface{}) error
@@ -44,7 +44,7 @@ func Entity2IFace(e Entity) misc.IFace {
 }
 
 func EntityGetInheritor(e Entity) Entity {
-	return e.getInheritor()
+	return e.getEntityInheritor()
 }
 
 func EntitySetLifecycleEntityInitFunc(e Entity, fun func()) {
@@ -188,7 +188,7 @@ func (e *EntityFoundation) GetEntityID() uint64 {
 	return e.id
 }
 
-func (e *EntityFoundation) getInheritor() Entity {
+func (e *EntityFoundation) getEntityInheritor() Entity {
 	return e.inheritor
 }
 

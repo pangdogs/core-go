@@ -9,7 +9,7 @@ type Component interface {
 	initComponent(name string, entity Entity, inheritor Component)
 	GetName() string
 	GetEntity() Entity
-	getInheritor() Component
+	getComponentInheritor() Component
 	setNotAnalysisLifecycle(v bool)
 	getNotAnalysisLifecycle() bool
 	setLifecycleComponentInit(ci ComponentInit)
@@ -41,7 +41,7 @@ func Component2IFace(c Component) misc.IFace {
 }
 
 func ComponentGetInheritor(c Component) Component {
-	return c.getInheritor()
+	return c.getComponentInheritor()
 }
 
 func ComponentSetNotAnalysisLifecycle(c Component, v bool) {
@@ -176,6 +176,6 @@ func (c *ComponentFoundation) GetEntity() Entity {
 	return c.entity
 }
 
-func (c *ComponentFoundation) getInheritor() Component {
+func (c *ComponentFoundation) getComponentInheritor() Component {
 	return c.inheritor
 }
