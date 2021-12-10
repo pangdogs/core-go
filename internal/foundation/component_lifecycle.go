@@ -128,6 +128,14 @@ const (
 	ComponentLifecycle_Count
 )
 
+func (c *ComponentFoundation) setNotAnalysisLifecycle(v bool) {
+	c.notAnalysisLifecycle = v
+}
+
+func (c *ComponentFoundation) getNotAnalysisLifecycle() bool {
+	return c.notAnalysisLifecycle
+}
+
 func (c *ComponentFoundation) setLifecycleIFace(lifecycle ComponentLifecycle, face misc.IFace) {
 	c.lifecycleTab[lifecycle] = face
 }
