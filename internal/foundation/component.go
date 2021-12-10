@@ -8,7 +8,7 @@ import (
 type Component interface {
 	GetName() string
 	GetEntity() Entity
-	GetInheritor() Component
+	GetComponentInheritor() Component
 	initComponent(name string, entity Entity, inheritor Component)
 	getLifecycleComponentInit() ComponentInit
 	getLifecycleComponentAwake() ComponentAwake
@@ -45,7 +45,7 @@ func (c *ComponentFoundation) GetEntity() Entity {
 	return c.entity
 }
 
-func (c *ComponentFoundation) GetInheritor() Component {
+func (c *ComponentFoundation) GetComponentInheritor() Component {
 	return c.inheritor
 }
 
