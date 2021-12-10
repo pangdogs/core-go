@@ -11,6 +11,8 @@ var NewContext = foundation.NewContext
 
 type App = foundation.App
 
+var AppGetInheritor = foundation.AppGetInheritor
+
 var NewApp = foundation.NewApp
 
 var NewAppOption = foundation.NewAppOption
@@ -18,6 +20,8 @@ var NewAppOption = foundation.NewAppOption
 type AppFoundation = foundation.AppFoundation
 
 type Runtime = foundation.Runtime
+
+var RuntimeGetInheritor = foundation.RuntimeGetInheritor
 
 var NewRuntime = foundation.NewRuntime
 
@@ -33,6 +37,28 @@ var NewFrame = foundation.NewFrame
 
 type Entity = foundation.Entity
 
+var EntityGetInheritor = foundation.EntityGetInheritor
+
+var EntitySetLifecycleEntityInitFunc = foundation.EntitySetLifecycleEntityInitFunc
+
+var EntitySetLifecycleStartFunc = foundation.EntitySetLifecycleStartFunc
+
+var EntitySetLifecycleUpdateFunc = foundation.EntitySetLifecycleUpdateFunc
+
+var EntitySetLifecycleLateUpdateFunc = foundation.EntitySetLifecycleLateUpdateFunc
+
+var EntitySetLifecycleEntityShutFunc = foundation.EntitySetLifecycleEntityShutFunc
+
+var EntityGetLifecycleEntityInitFunc = foundation.EntityGetLifecycleEntityInitFunc
+
+var EntityGetLifecycleStartFunc = foundation.EntityGetLifecycleStartFunc
+
+var EntityGetLifecycleUpdateFunc = foundation.EntityGetLifecycleUpdateFunc
+
+var EntityGetLifecycleLateUpdateFunc = foundation.EntityGetLifecycleLateUpdateFunc
+
+var EntityGetLifecycleEntityShutFunc = foundation.EntityGetLifecycleEntityShutFunc
+
 var NewEntity = foundation.NewEntity
 
 var NewEntityOption = foundation.NewEntityOption
@@ -40,6 +66,48 @@ var NewEntityOption = foundation.NewEntityOption
 type EntityFoundation = foundation.EntityFoundation
 
 type Component = foundation.Component
+
+var ComponentGetInheritor = foundation.ComponentGetInheritor
+
+var ComponentSetNotAnalysisLifecycle = foundation.ComponentSetNotAnalysisLifecycle
+
+var ComponentGetNotAnalysisLifecycle = foundation.ComponentGetNotAnalysisLifecycle
+
+var ComponentSetLifecycleComponentInit = foundation.ComponentSetLifecycleComponentInit
+
+var ComponentSetLifecycleComponentAwake = foundation.ComponentSetLifecycleComponentAwake
+
+var ComponentSetLifecycleComponentEntityInit = foundation.ComponentSetLifecycleComponentEntityInit
+
+var ComponentSetLifecycleComponentStart = foundation.ComponentSetLifecycleComponentStart
+
+var ComponentSetLifecycleComponentUpdate = foundation.ComponentSetLifecycleComponentUpdate
+
+var ComponentSetLifecycleComponentLateUpdate = foundation.ComponentSetLifecycleComponentLateUpdate
+
+var ComponentSetLifecycleComponentEntityShut = foundation.ComponentSetLifecycleComponentEntityShut
+
+var ComponentSetLifecycleComponentHalt = foundation.ComponentSetLifecycleComponentHalt
+
+var ComponentSetLifecycleComponentShut = foundation.ComponentSetLifecycleComponentShut
+
+var ComponentGetLifecycleComponentInit = foundation.ComponentGetLifecycleComponentInit
+
+var ComponentGetLifecycleComponentAwake = foundation.ComponentGetLifecycleComponentAwake
+
+var ComponentGetLifecycleComponentEntityInit = foundation.ComponentGetLifecycleComponentEntityInit
+
+var ComponentGetLifecycleComponentStart = foundation.ComponentGetLifecycleComponentStart
+
+var ComponentGetLifecycleComponentUpdate = foundation.ComponentGetLifecycleComponentUpdate
+
+var ComponentGetLifecycleComponentLateUpdate = foundation.ComponentGetLifecycleComponentLateUpdate
+
+var ComponentGetLifecycleComponentEntityShut = foundation.ComponentGetLifecycleComponentEntityShut
+
+var ComponentGetLifecycleComponentHalt = foundation.ComponentGetLifecycleComponentHalt
+
+var ComponentGetLifecycleComponentShut = foundation.ComponentGetLifecycleComponentShut
 
 type ComponentFoundation = foundation.ComponentFoundation
 

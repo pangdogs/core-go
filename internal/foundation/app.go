@@ -9,12 +9,16 @@ type App interface {
 	Runnable
 	Context
 	initApp(ctx Context, opts *AppOptions)
-	GetInheritor() App
+	getInheritor() App
 	GetEntity(entID uint64) Entity
 	RangeEntities(func(entity Entity) bool)
 	makeUID() uint64
 	addEntity(entity Entity)
 	removeEntity(entID uint64)
+}
+
+func AppGetInheritor(app App) App {
+	return app.getInheritor()
 }
 
 func NewApp(ctx Context, optFuncs ...NewAppOptionFunc) App {
@@ -114,7 +118,7 @@ func (app *AppFoundation) Stop() {
 	app.GetCancelFunc()()
 }
 
-func (app *AppFoundation) GetInheritor() App {
+func (app *AppFoundation) getInheritor() App {
 	return app.inheritor
 }
 

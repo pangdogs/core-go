@@ -10,7 +10,7 @@ type Entity interface {
 	initEntity(rt Runtime, opts *EntityOptions)
 	Destroy()
 	GetEntityID() uint64
-	GetInheritor() Entity
+	getInheritor() Entity
 	GetRuntime() Runtime
 	IsDestroyed() bool
 	AddComponent(name string, component interface{}) error
@@ -23,6 +23,16 @@ type Entity interface {
 	callUpdate()
 	callLateUpdate()
 	callEntityShut()
+	setLifecycleEntityInitFunc(fun func())
+	setLifecycleStartFunc(fun func())
+	setLifecycleUpdateFunc(fun func() bool)
+	setLifecycleLateUpdateFunc(fun func() bool)
+	setLifecycleEntityShutFunc(fun func())
+	getLifecycleEntityInitFunc() func()
+	getLifecycleStartFunc() func()
+	getLifecycleUpdateFunc() func() bool
+	getLifecycleLateUpdateFunc() func() bool
+	getLifecycleEntityShutFunc() func()
 }
 
 func IFace2Entity(f misc.IFace) Entity {
@@ -31,6 +41,50 @@ func IFace2Entity(f misc.IFace) Entity {
 
 func Entity2IFace(e Entity) misc.IFace {
 	return *(*misc.IFace)(unsafe.Pointer(&e))
+}
+
+func EntityGetInheritor(e Entity) Entity {
+	return e.getInheritor()
+}
+
+func EntitySetLifecycleEntityInitFunc(e Entity, fun func()) {
+	e.setLifecycleEntityInitFunc(fun)
+}
+
+func EntitySetLifecycleStartFunc(e Entity, fun func()) {
+	e.setLifecycleStartFunc(fun)
+}
+
+func EntitySetLifecycleUpdateFunc(e Entity, fun func() bool) {
+	e.setLifecycleUpdateFunc(fun)
+}
+
+func EntitySetLifecycleLateUpdateFunc(e Entity, fun func() bool) {
+	e.setLifecycleLateUpdateFunc(fun)
+}
+
+func EntitySetLifecycleEntityShutFunc(e Entity, fun func()) {
+	e.setLifecycleEntityShutFunc(fun)
+}
+
+func EntityGetLifecycleEntityInitFunc(e Entity) func() {
+	return e.getLifecycleEntityInitFunc()
+}
+
+func EntityGetLifecycleStartFunc(e Entity) func() {
+	return e.getLifecycleStartFunc()
+}
+
+func EntityGetLifecycleUpdateFunc(e Entity) func() bool {
+	return e.getLifecycleUpdateFunc()
+}
+
+func EntityGetLifecycleLateUpdateFunc(e Entity) func() bool {
+	return e.getLifecycleLateUpdateFunc()
+}
+
+func EntityGetLifecycleEntityShutFunc(e Entity) func() {
+	return e.getLifecycleEntityShutFunc()
 }
 
 func NewEntity(rt Runtime, optFuncs ...NewEntityOptionFunc) Entity {
@@ -54,12 +108,17 @@ func NewEntity(rt Runtime, optFuncs ...NewEntityOptionFunc) Entity {
 
 type EntityFoundation struct {
 	EntityOptions
-	id              uint64
-	runtime         Runtime
-	destroyed       bool
-	componentMap    map[string]*misc.Element
-	componentList   misc.List
-	componentGCList []*misc.Element
+	id                      uint64
+	runtime                 Runtime
+	destroyed               bool
+	componentMap            map[string]*misc.Element
+	componentList           misc.List
+	componentGCList         []*misc.Element
+	lifecycleEntityInitFunc func()
+	lifecycleStartFunc      func()
+	lifecycleUpdateFunc     func() bool
+	lifecycleLateUpdateFunc func() bool
+	lifecycleEntityShutFunc func()
 }
 
 func (e *EntityFoundation) initEntity(rt Runtime, opts *EntityOptions) {
@@ -129,7 +188,7 @@ func (e *EntityFoundation) GetEntityID() uint64 {
 	return e.id
 }
 
-func (e *EntityFoundation) GetInheritor() Entity {
+func (e *EntityFoundation) getInheritor() Entity {
 	return e.inheritor
 }
 

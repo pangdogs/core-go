@@ -13,7 +13,7 @@ type Runtime interface {
 	GCRoot
 	initRuntime(ctx Context, app App, opts *RuntimeOptions)
 	GetRuntimeID() uint64
-	GetInheritor() Runtime
+	getInheritor() Runtime
 	GetApp() App
 	GetFrame() Frame
 	GetEntity(entID uint64) Entity
@@ -26,6 +26,10 @@ type Runtime interface {
 	unbindEvent(hookID, eventSrcID uint64) (hookEle, eventSrcEle *misc.Element, ok bool)
 	eventIsBound(hookID, eventSrcID uint64) bool
 	eventHandleToBit(handle uintptr) int
+}
+
+func RuntimeGetInheritor(rt Runtime) Runtime {
+	return rt.getInheritor()
 }
 
 func NewRuntime(ctx Context, app App, optFuncs ...NewRuntimeOptionFunc) Runtime {
@@ -452,7 +456,7 @@ func (rt *RuntimeFoundation) GetRuntimeID() uint64 {
 	return rt.id
 }
 
-func (rt *RuntimeFoundation) GetInheritor() Runtime {
+func (rt *RuntimeFoundation) getInheritor() Runtime {
 	return rt.inheritor
 }
 

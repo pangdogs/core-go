@@ -136,39 +136,39 @@ func (c *ComponentFoundation) getLifecycleIFace(lifecycle ComponentLifecycle) mi
 	return c.lifecycleTab[lifecycle]
 }
 
-func (c *ComponentFoundation) SetLifecycleComponentInit(ci ComponentInit) {
+func (c *ComponentFoundation) setLifecycleComponentInit(ci ComponentInit) {
 	c.setLifecycleIFace(ComponentLifecycle_ComponentInit, ComponentInit2IFace(ci))
 }
 
-func (c *ComponentFoundation) SetLifecycleComponentAwake(ca ComponentAwake) {
+func (c *ComponentFoundation) setLifecycleComponentAwake(ca ComponentAwake) {
 	c.setLifecycleIFace(ComponentLifecycle_ComponentAwake, ComponentAwake2IFace(ca))
 }
 
-func (c *ComponentFoundation) SetLifecycleComponentEntityInit(cei ComponentEntityInit) {
+func (c *ComponentFoundation) setLifecycleComponentEntityInit(cei ComponentEntityInit) {
 	c.setLifecycleIFace(ComponentLifecycle_ComponentEntityInit, ComponentEntityInit2IFace(cei))
 }
 
-func (c *ComponentFoundation) SetLifecycleComponentStart(cs ComponentStart) {
+func (c *ComponentFoundation) setLifecycleComponentStart(cs ComponentStart) {
 	c.setLifecycleIFace(ComponentLifecycle_ComponentStart, ComponentStart2IFace(cs))
 }
 
-func (c *ComponentFoundation) SetLifecycleComponentUpdate(cu ComponentUpdate) {
+func (c *ComponentFoundation) setLifecycleComponentUpdate(cu ComponentUpdate) {
 	c.setLifecycleIFace(ComponentLifecycle_ComponentUpdate, ComponentUpdate2IFace(cu))
 }
 
-func (c *ComponentFoundation) SetLifecycleComponentLateUpdate(clu ComponentLateUpdate) {
+func (c *ComponentFoundation) setLifecycleComponentLateUpdate(clu ComponentLateUpdate) {
 	c.setLifecycleIFace(ComponentLifecycle_ComponentLateUpdate, ComponentLateUpdate2IFace(clu))
 }
 
-func (c *ComponentFoundation) SetLifecycleComponentEntityShut(ces ComponentEntityShut) {
+func (c *ComponentFoundation) setLifecycleComponentEntityShut(ces ComponentEntityShut) {
 	c.setLifecycleIFace(ComponentLifecycle_ComponentEntityShut, ComponentEntityShut2IFace(ces))
 }
 
-func (c *ComponentFoundation) SetLifecycleComponentHalt(ch ComponentHalt) {
+func (c *ComponentFoundation) setLifecycleComponentHalt(ch ComponentHalt) {
 	c.setLifecycleIFace(ComponentLifecycle_ComponentHalt, ComponentHalt2IFace(ch))
 }
 
-func (c *ComponentFoundation) SetLifecycleComponentShut(cs ComponentShut) {
+func (c *ComponentFoundation) setLifecycleComponentShut(cs ComponentShut) {
 	c.setLifecycleIFace(ComponentLifecycle_ComponentShut, ComponentShut2IFace(cs))
 }
 
