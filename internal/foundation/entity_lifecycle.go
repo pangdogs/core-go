@@ -93,3 +93,23 @@ func (e *EntityFoundation) callEntityShut() {
 		return true
 	})
 }
+
+func (e *EntityFoundation) CallEntityInit() {
+	e.callEntityInit()
+}
+
+func (e *EntityFoundation) CallStart() {
+	e.callStart()
+}
+
+func (e *EntityFoundation) CallUpdate() {
+	e.callUpdate()
+}
+
+func (e *EntityFoundation) CallLateUpdate() {
+	e.callLateUpdate()
+}
+
+func (e *EntityFoundation) CallEntityShut() {
+	e.callEntityShut()
+}
