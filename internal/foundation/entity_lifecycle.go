@@ -26,7 +26,7 @@ func (e *EntityFoundation) callEntityInit() {
 		if !e.GetMark(EntityComponentsMark_Inited) {
 			e.SetMark(EntityComponentsMark_Inited, true)
 
-			if cei := IFace2Component(e.GetIFace()).getLifecycleComponentEntityInit(); cei != nil {
+			if cei, ok := IFace2Component(e.GetIFace(EntityComponentsIFace_Component)).(ComponentEntityInit); ok {
 				cei.EntityInit()
 			}
 		}
@@ -50,8 +50,16 @@ func (e *EntityFoundation) callStart() {
 		if !e.GetMark(EntityComponentsMark_Started) {
 			e.SetMark(EntityComponentsMark_Started, true)
 
-			if cs := IFace2Component(e.GetIFace()).getLifecycleComponentStart(); cs != nil {
+			if cs, ok := IFace2Component(e.GetIFace(EntityComponentsIFace_Component)).(ComponentStart); ok {
 				cs.Start()
+			}
+
+			if cu, ok := IFace2Component(e.GetIFace(EntityComponentsIFace_Component)).(ComponentUpdate); ok {
+				e.SetIFace(EntityComponentsIFace_ComponentUpdate, ComponentUpdate2IFace(cu))
+			}
+
+			if clu, ok := IFace2Component(e.GetIFace(EntityComponentsIFace_Component)).(ComponentLateUpdate); ok {
+				e.SetIFace(EntityComponentsIFace_ComponentLateUpdate, ComponentLateUpdate2IFace(clu))
 			}
 		}
 		return true
@@ -73,7 +81,7 @@ func (e *EntityFoundation) callUpdate() {
 		if e.Escape() || e.GetMark(EntityComponentsMark_Removed) || !e.GetMark(EntityComponentsMark_Started) {
 			return true
 		}
-		if cu := IFace2Component(e.GetIFace()).getLifecycleComponentUpdate(); cu != nil {
+		if cu := IFace2ComponentUpdate(e.GetIFace(EntityComponentsIFace_ComponentUpdate)); cu != nil {
 			cu.Update()
 		}
 		return true
@@ -95,7 +103,7 @@ func (e *EntityFoundation) callLateUpdate() {
 		if e.Escape() || e.GetMark(EntityComponentsMark_Removed) || !e.GetMark(EntityComponentsMark_Started) {
 			return true
 		}
-		if clu := IFace2Component(e.GetIFace()).getLifecycleComponentLateUpdate(); clu != nil {
+		if clu := IFace2ComponentLateUpdate(e.GetIFace(EntityComponentsIFace_ComponentLateUpdate)); clu != nil {
 			clu.LateUpdate()
 		}
 		return true
@@ -111,7 +119,7 @@ func (e *EntityFoundation) callEntityShut() {
 		if e.Escape() || e.GetMark(EntityComponentsMark_Removed) || !e.GetMark(EntityComponentsMark_Inited) {
 			return true
 		}
-		if cs := IFace2Component(e.GetIFace()).getLifecycleComponentEntityShut(); cs != nil {
+		if cs, ok := IFace2Component(e.GetIFace(EntityComponentsIFace_Component)).(ComponentEntityShut); ok {
 			cs.EntityShut()
 		}
 		return true

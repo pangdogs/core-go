@@ -87,6 +87,12 @@ func EntityGetLifecycleEntityShutFunc(e Entity) func() {
 	return e.getLifecycleEntityShutFunc()
 }
 
+const (
+	EntityComponentsIFace_Component int = iota
+	EntityComponentsIFace_ComponentUpdate
+	EntityComponentsIFace_ComponentLateUpdate
+)
+
 func NewEntity(rt Runtime, optFuncs ...NewEntityOptionFunc) Entity {
 	opts := &EntityOptions{}
 	NewEntityOption.Default()(opts)
@@ -214,7 +220,7 @@ func (e *EntityFoundation) AddComponent(name string, _component interface{}) err
 
 	if ele, ok := e.componentMap[name]; ok {
 		old := ele
-		for t := ele; t != nil && IFace2Component(t.GetIFace()).GetName() == name; t = t.Next() {
+		for t := ele; t != nil && IFace2Component(t.GetIFace(EntityComponentsIFace_Component)).GetName() == name; t = t.Next() {
 			if t.Escape() || t.GetMark(EntityComponentsMark_Removed) {
 				continue
 			}
@@ -225,11 +231,11 @@ func (e *EntityFoundation) AddComponent(name string, _component interface{}) err
 		e.componentMap[name] = e.componentList.PushIFaceBack(Component2IFace(component))
 	}
 
-	if ci := component.getLifecycleComponentInit(); ci != nil {
+	if ci, ok := component.(ComponentInit); ok {
 		ci.Init()
 	}
 
-	if ca := component.getLifecycleComponentAwake(); ca != nil {
+	if ca, ok := component.(ComponentAwake); ok {
 		ca.Awake()
 	}
 
@@ -242,19 +248,19 @@ func (e *EntityFoundation) RemoveComponent(name string) {
 
 		var elements []*misc.Element
 
-		for t := ele; t != nil && IFace2Component(t.GetIFace()).GetName() == name; t = t.Next() {
+		for t := ele; t != nil && IFace2Component(t.GetIFace(EntityComponentsIFace_Component)).GetName() == name; t = t.Next() {
 			t.SetMark(EntityComponentsMark_Removed, true)
 			elements = append(elements, t)
 		}
 
 		for i := 0; i < len(elements); i++ {
-			c := IFace2Component(elements[i].GetIFace())
+			c := IFace2Component(elements[i].GetIFace(EntityComponentsIFace_Component))
 
-			if ch := c.getLifecycleComponentHalt(); ch != nil {
+			if ch, ok := c.(ComponentHalt); ok {
 				ch.Halt()
 			}
 
-			if cs := c.getLifecycleComponentShut(); cs != nil {
+			if cs, ok := c.(ComponentShut); ok {
 				cs.Shut()
 			}
 		}
@@ -270,7 +276,7 @@ func (e *EntityFoundation) RemoveComponent(name string) {
 
 func (e *EntityFoundation) GetComponent(name string) Component {
 	if ele, ok := e.componentMap[name]; ok {
-		return IFace2Component(ele.GetIFace())
+		return IFace2Component(ele.GetIFace(EntityComponentsIFace_Component))
 	}
 
 	return nil
@@ -280,11 +286,11 @@ func (e *EntityFoundation) GetComponents(name string) []Component {
 	if ele, ok := e.componentMap[name]; ok {
 		var components []Component
 
-		for t := ele; t != nil && IFace2Component(t.GetIFace()).GetName() == name; t = t.Next() {
+		for t := ele; t != nil && IFace2Component(t.GetIFace(EntityComponentsIFace_Component)).GetName() == name; t = t.Next() {
 			if t.Escape() || t.GetMark(EntityComponentsMark_Removed) {
 				continue
 			}
-			components = append(components, IFace2Component(t.GetIFace()))
+			components = append(components, IFace2Component(t.GetIFace(EntityComponentsIFace_Component)))
 		}
 
 		return components
@@ -302,6 +308,6 @@ func (e *EntityFoundation) RangeComponents(fun func(component Component) bool) {
 		if e.Escape() || e.GetMark(EntityComponentsMark_Removed) {
 			return true
 		}
-		return fun(IFace2Component(e.GetIFace()))
+		return fun(IFace2Component(e.GetIFace(EntityComponentsIFace_Component)))
 	})
 }

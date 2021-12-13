@@ -17,6 +17,10 @@ var NilIFace IFace
 
 type IFace [2]unsafe.Pointer
 
+const StoreIFaceLimit = 4
+
+const StoreMakeLimit = 4
+
 // Element is an element of a linked misc.
 type Element struct {
 	// Next and previous pointers in the doubly-linked list of elements.
@@ -30,10 +34,10 @@ type Element struct {
 	list *List
 
 	// The value stored with this element.
-	value IFace
+	value [StoreIFaceLimit]IFace
 
 	// Mark 标记
-	Mark [4]uint64
+	Mark [StoreMakeLimit]uint64
 }
 
 // Next returns the next misc element or nil.
@@ -72,13 +76,13 @@ func (e *Element) GetMark(bit int) bool {
 }
 
 // SetIFace 设置接口指针，用于提高接口转换效率
-func (e *Element) SetIFace(f IFace) {
-	e.value = f
+func (e *Element) SetIFace(index int, f IFace) {
+	e.value[index] = f
 }
 
 // GetIFace 获取接口指针，用于提高接口转换效率
-func (e *Element) GetIFace() IFace {
-	return e.value
+func (e *Element) GetIFace(index int) IFace {
+	return e.value[index]
 }
 
 // List represents a doubly linked misc.
@@ -142,7 +146,14 @@ func (l *List) insert(e, at *Element) *Element {
 // insertIFace is a convenience wrapper for insert(&Element{value: v}, at).
 func (l *List) insertIFace(f IFace, at *Element) *Element {
 	e := l.cache.Alloc()
-	e.SetIFace(f)
+	e.SetIFace(0, f)
+	return l.insert(e, at)
+}
+
+// insertIFace is a convenience wrapper for insert(&Element{value: v}, at).
+func (l *List) insertIFaces(fs *[StoreIFaceLimit]IFace, at *Element) *Element {
+	e := l.cache.Alloc()
+	e.value = *fs
 	return l.insert(e, at)
 }
 
@@ -266,7 +277,7 @@ func (l *List) MoveAfter(e, mark *Element) {
 func (l *List) PushBackList(other *List) {
 	l.lazyInit()
 	for i, e := other.Len(), other.Front(); i > 0; i, e = i-1, e.Next() {
-		l.insertIFace(e.value, l.root.prev)
+		l.insertIFaces(&e.value, l.root.prev)
 	}
 }
 
@@ -275,7 +286,7 @@ func (l *List) PushBackList(other *List) {
 func (l *List) PushFrontList(other *List) {
 	l.lazyInit()
 	for i, e := other.Len(), other.Back(); i > 0; i, e = i-1, e.Prev() {
-		l.insertIFace(e.value, &l.root)
+		l.insertIFaces(&e.value, &l.root)
 	}
 }
 

@@ -158,7 +158,7 @@ func (rt *RuntimeFoundation) Run() chan struct{} {
 				if e.Escape() || e.GetMark(0) {
 					continue
 				}
-				CallOuter(rt.autoRecover, rt.GetReportError(), IFace2Entity(e.GetIFace()).callStart)
+				CallOuter(rt.autoRecover, rt.GetReportError(), IFace2Entity(e.GetIFace(0)).callStart)
 			}
 			rt.entityStartList = rt.entityStartList[count:]
 		}
@@ -172,7 +172,7 @@ func (rt *RuntimeFoundation) Run() chan struct{} {
 				if e.Escape() || e.GetMark(0) {
 					return true
 				}
-				fun(IFace2Entity(e.GetIFace()))
+				fun(IFace2Entity(e.GetIFace(0)))
 				return true
 			})
 		}
@@ -478,7 +478,7 @@ func (rt *RuntimeFoundation) GetEntity(entID uint64) Entity {
 		return nil
 	}
 
-	return IFace2Entity(e.GetIFace())
+	return IFace2Entity(e.GetIFace(0))
 }
 
 func (rt *RuntimeFoundation) RangeEntities(fun func(entity Entity) bool) {
@@ -490,7 +490,7 @@ func (rt *RuntimeFoundation) RangeEntities(fun func(entity Entity) bool) {
 		if e.Escape() || e.GetMark(0) {
 			return true
 		}
-		return fun(IFace2Entity(e.GetIFace()))
+		return fun(IFace2Entity(e.GetIFace(0)))
 	})
 }
 
