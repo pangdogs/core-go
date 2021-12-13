@@ -125,11 +125,19 @@ func ComponentGetLifecycleComponentShut(c Component) ComponentShut {
 }
 
 type ComponentFoundation struct {
-	name                 string
-	entity               Entity
-	inheritor            Component
-	lifecycleTab         [ComponentLifecycle_Count]misc.IFace
-	notAnalysisLifecycle bool
+	name                         string
+	entity                       Entity
+	inheritor                    Component
+	notAnalysisLifecycle         bool
+	lifecycleComponentInit       ComponentInit
+	lifecycleComponentAwake      ComponentAwake
+	lifecycleComponentEntityInit ComponentEntityInit
+	lifecycleComponentStart      ComponentStart
+	lifecycleComponentUpdate     ComponentUpdate
+	lifecycleComponentLateUpdate ComponentLateUpdate
+	lifecycleComponentEntityShut ComponentEntityShut
+	lifecycleComponentHalt       ComponentHalt
+	lifecycleComponentShut       ComponentShut
 }
 
 func (c *ComponentFoundation) initComponent(name string, entity Entity, inheritor Component) {
