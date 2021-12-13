@@ -123,6 +123,10 @@ func (app *AppFoundation) getInheritor() App {
 }
 
 func (app *AppFoundation) GetEntity(entID uint64) Entity {
+	if !app.enableGetEntity {
+		return nil
+	}
+
 	entity, ok := app.entityMap.Load(entID)
 	if !ok {
 		return nil
@@ -132,7 +136,7 @@ func (app *AppFoundation) GetEntity(entID uint64) Entity {
 }
 
 func (app *AppFoundation) RangeEntities(fun func(entity Entity) bool) {
-	if fun == nil {
+	if fun == nil || !app.enableGetEntity {
 		return
 	}
 
@@ -146,6 +150,10 @@ func (app *AppFoundation) makeUID() uint64 {
 }
 
 func (app *AppFoundation) addEntity(entity Entity) {
+	if !app.enableGetEntity {
+		return
+	}
+
 	if entity == nil {
 		panic("nil entity")
 	}
@@ -156,5 +164,9 @@ func (app *AppFoundation) addEntity(entity Entity) {
 }
 
 func (app *AppFoundation) removeEntity(entID uint64) {
+	if !app.enableGetEntity {
+		return
+	}
+
 	app.entityMap.Delete(entID)
 }
