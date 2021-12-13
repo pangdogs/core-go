@@ -159,6 +159,6 @@ func (h *HookFoundation) rangeEventSources(fun func(eventSrc EventSource) bool) 
 		if ele.Escape() || ele.GetMark(0) {
 			return true
 		}
-		return fun(IFace2EventSource(ele.GetIFace()))
+		return fun(IFace2EventSource(ele.GetIFace(0)))
 	})
 }
