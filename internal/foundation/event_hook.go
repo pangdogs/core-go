@@ -27,26 +27,15 @@ func Hook2IFace(h Hook) misc.IFace {
 	return *(*misc.IFace)(unsafe.Pointer(&h))
 }
 
-var eventID = int32(-1)
-
-func AllocEventID() int32 {
-	eventID++
-
-	if eventID >= eventsLimit {
-		panic("eventID exceed limit")
-	}
-
-	return eventID
-}
-
-const eventsLimit = int32(64 * 3)
-
 type HookFoundation struct {
 	id             uint64
 	runtime        Runtime
 	eventSrcList   misc.List
 	eventSrcGCList []*misc.Element
-	eventMap       map[int32]misc.IFace
+	eventBits      [misc.StoreMakeLimit - 1]uint64
+	eventID        int32
+	eventData      unsafe.Pointer
+	eventDataMap   map[int32]unsafe.Pointer
 }
 
 func (h *HookFoundation) GC() {
@@ -87,11 +76,29 @@ func (h *HookFoundation) SubscribeEvent(eventID int32, event misc.IFace) error {
 		return errors.New("nil event")
 	}
 
-	if h.eventMap == nil {
-		h.eventMap = map[int32]misc.IFace{}
+	if h.runtime == nil {
+		return errors.New("nil runtime")
 	}
 
-	h.eventMap[eventID] = event
+	h.runtime.declareEventType(eventID, event[0])
+
+	h.setEventMark(eventID, true)
+
+	if h.eventData == nil {
+		h.eventID = eventID
+		h.eventData = event[1]
+
+	} else if h.eventData != event[0] {
+		if h.eventDataMap == nil {
+			h.eventDataMap = map[int32]unsafe.Pointer{}
+		}
+
+		h.eventDataMap[h.eventID] = h.eventData
+		h.eventDataMap[eventID] = event[1]
+
+		h.eventID = 0
+		h.eventData = nil
+	}
 
 	return nil
 }
@@ -101,15 +108,26 @@ func (h *HookFoundation) UnsubscribeEvent(eventID int32) {
 		return
 	}
 
-	if h.eventMap == nil {
+	h.setEventMark(eventID, false)
+
+	if h.eventDataMap == nil {
+		h.eventID = 0
+		h.eventData = nil
 		return
 	}
 
-	delete(h.eventMap, eventID)
+	delete(h.eventDataMap, eventID)
+
+	if len(h.eventDataMap) <= 0 {
+		h.eventDataMap = nil
+	}
 }
 
 func (h *HookFoundation) UnsubscribeAllEvent() {
-	h.eventMap = nil
+	h.eventBits = [misc.StoreMakeLimit - 1]uint64{}
+	h.eventID = 0
+	h.eventData = nil
+	h.eventDataMap = nil
 }
 
 func (h *HookFoundation) GetEvent(eventID int32) misc.IFace {
@@ -117,11 +135,38 @@ func (h *HookFoundation) GetEvent(eventID int32) misc.IFace {
 		panic("eventID invalid")
 	}
 
-	if h.eventMap == nil {
+	if h.runtime == nil {
+		panic("nil runtime")
+	}
+
+	if !h.getEventMark(eventID) {
 		return misc.NilIFace
 	}
 
-	return h.eventMap[eventID]
+	if h.eventData != nil {
+		return misc.IFace{h.runtime.obtainEventType(eventID), h.eventData}
+	}
+
+	if h.eventDataMap != nil {
+		eventData, ok := h.eventDataMap[eventID]
+		if ok {
+			return misc.IFace{h.runtime.obtainEventType(eventID), eventData}
+		}
+	}
+
+	panic("construct event failed")
+}
+
+func (h *HookFoundation) setEventMark(eventID int32, v bool) {
+	if v {
+		h.eventBits[eventID/64] |= 1 << eventID
+	} else {
+		h.eventBits[eventID/64] &= ^(1 << eventID)
+	}
+}
+
+func (h *HookFoundation) getEventMark(eventID int32) bool {
+	return (h.eventBits[eventID/64]>>eventID)&uint64(1) == 1
 }
 
 func (h *HookFoundation) addEventSource(eventSrc EventSource) (*misc.Element, error) {

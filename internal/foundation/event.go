@@ -2,8 +2,23 @@ package foundation
 
 import (
 	"errors"
+	"github.com/pangdogs/core/internal/misc"
 	"unsafe"
 )
+
+const eventsLimit = int32(64 * (misc.StoreMakeLimit - 1))
+
+var eventID = int32(-1)
+
+func AllocEventID() int32 {
+	eventID++
+
+	if eventID >= eventsLimit {
+		panic("eventID exceed limit")
+	}
+
+	return eventID
+}
 
 func BindEvent(hook Hook, eventSrc EventSource, _priority ...int32) error {
 	if hook == nil {

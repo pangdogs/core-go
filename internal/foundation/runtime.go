@@ -26,6 +26,8 @@ type Runtime interface {
 	unbindEvent(hookID, eventSrcID uint64) (hookEle, eventSrcEle *misc.Element, ok bool)
 	eventIsBound(hookID, eventSrcID uint64) bool
 	eventHandleToBit(handle uintptr) int
+	declareEventType(eventID int32, eventType unsafe.Pointer)
+	obtainEventType(eventID int32) unsafe.Pointer
 }
 
 func RuntimeGetInheritor(rt Runtime) Runtime {
@@ -80,6 +82,7 @@ type RuntimeFoundation struct {
 	frame           Frame
 	eventBinderMap  map[EventBinderKey]EventBinderValue
 	eventHandleBits map[uintptr]int
+	eventTypes      [eventsLimit]unsafe.Pointer
 	gcExists        map[uintptr]struct{}
 	gcList          []GC
 	gcLastRunTime   time.Time
@@ -583,4 +586,22 @@ func (rt *RuntimeFoundation) eventHandleToBit(handle uintptr) int {
 		rt.eventHandleBits[handle] = bit
 	}
 	return bit
+}
+
+func (rt *RuntimeFoundation) declareEventType(eventID int32, eventType unsafe.Pointer) {
+	if rt.eventTypes[eventID] != nil {
+		if rt.eventTypes[eventID] != eventType {
+			panic("inconsistent event type")
+		}
+	}
+
+	rt.eventTypes[eventID] = eventType
+}
+
+func (rt *RuntimeFoundation) obtainEventType(eventID int32) unsafe.Pointer {
+	if rt.eventTypes[eventID] == nil {
+		panic("undeclared event type")
+	}
+
+	return rt.eventTypes[eventID]
 }
