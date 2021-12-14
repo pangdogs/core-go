@@ -105,8 +105,15 @@ func (h *HookFoundation) UnsubscribeEvent(eventID int32) {
 	h.setEventMark(eventID, false)
 
 	if len(h.eventSubscriberMap) <= 0 {
+		for i := 0; i < len(h.eventBits); i++ {
+			if h.eventBits[i] != 0 {
+				return
+			}
+		}
+
 		h.eventID = 0
 		h.eventSubscriber = misc.NilIFace
+
 		return
 	}
 
