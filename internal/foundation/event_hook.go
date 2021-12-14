@@ -88,7 +88,7 @@ func (h *HookFoundation) SubscribeEvent(eventID int32, event misc.IFace) error {
 		h.eventID = eventID
 		h.eventData = event[1]
 
-	} else if h.eventData != event[0] {
+	} else if h.eventData != event[1] {
 		if h.eventDataMap == nil {
 			h.eventDataMap = map[int32]unsafe.Pointer{}
 		}
