@@ -6,7 +6,7 @@ import (
 	"unsafe"
 )
 
-const eventsLimit = int32(64 * (misc.StoreMakeLimit - 1))
+const eventsLimit = int32(64 * (misc.StoreMarkLimit - 1))
 
 var eventID = int32(-1)
 

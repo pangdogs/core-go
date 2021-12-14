@@ -3,12 +3,12 @@ package foundation
 var NewAppOption = &NewAppOptions{}
 
 type AppOptions struct {
-	inheritor       App
-	autoRecover     bool
-	enableGetEntity bool
+	inheritor App
 	initFunc,
 	startFunc,
 	stopFunc func(app App)
+	autoRecover     bool
+	enableGetEntity bool
 }
 
 type NewAppOptionFunc func(o *AppOptions)
@@ -18,11 +18,11 @@ type NewAppOptions struct{}
 func (*NewAppOptions) Default() NewAppOptionFunc {
 	return func(o *AppOptions) {
 		o.inheritor = nil
-		o.autoRecover = false
-		o.enableGetEntity = true
 		o.initFunc = nil
 		o.startFunc = nil
 		o.stopFunc = nil
+		o.autoRecover = false
+		o.enableGetEntity = true
 	}
 }
 

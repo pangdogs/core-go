@@ -10,10 +10,10 @@ type Hook interface {
 	InitHook(rt Runtime)
 	GetHookID() uint64
 	GetHookRuntime() Runtime
-	SubscribeEvent(eventID int32, event misc.IFace) error
+	SubscribeEvent(eventID int32, subscriber misc.IFace) error
 	UnsubscribeEvent(eventID int32)
 	UnsubscribeAllEvent()
-	GetEvent(eventID int32) misc.IFace
+	GetEventSubscriber(eventID int32) misc.IFace
 	addEventSource(eventSrc EventSource) (*misc.Element, error)
 	removeEventSource(eventSrcEle *misc.Element)
 	rangeEventSources(fun func(eventSrc EventSource) bool)
@@ -28,14 +28,14 @@ func Hook2IFace(h Hook) misc.IFace {
 }
 
 type HookFoundation struct {
-	id             uint64
-	runtime        Runtime
-	eventSrcList   misc.List
-	eventSrcGCList []*misc.Element
-	eventBits      [misc.StoreMakeLimit - 1]uint64
-	eventID        int32
-	eventData      unsafe.Pointer
-	eventDataMap   map[int32]unsafe.Pointer
+	id                 uint64
+	runtime            Runtime
+	eventSrcList       misc.List
+	eventSrcGCList     []*misc.Element
+	eventBits          [misc.StoreMarkLimit - 1]uint64
+	eventID            int32
+	eventSubscriber    misc.IFace
+	eventSubscriberMap map[int32]misc.IFace
 }
 
 func (h *HookFoundation) GC() {
@@ -67,37 +67,31 @@ func (h *HookFoundation) GetHookRuntime() Runtime {
 	return h.runtime
 }
 
-func (h *HookFoundation) SubscribeEvent(eventID int32, event misc.IFace) error {
+func (h *HookFoundation) SubscribeEvent(eventID int32, subscriber misc.IFace) error {
 	if eventID < 0 || eventID >= eventsLimit {
 		return errors.New("eventID invalid")
 	}
 
-	if event == misc.NilIFace {
+	if subscriber == misc.NilIFace {
 		return errors.New("nil event")
 	}
 
-	if h.runtime == nil {
-		return errors.New("nil runtime")
-	}
-
-	h.runtime.declareEventType(eventID, event[0])
-
 	h.setEventMark(eventID, true)
 
-	if h.eventData == nil {
+	if h.eventSubscriber == misc.NilIFace {
 		h.eventID = eventID
-		h.eventData = event[1]
+		h.eventSubscriber = subscriber
 
-	} else if h.eventData != event[1] {
-		if h.eventDataMap == nil {
-			h.eventDataMap = map[int32]unsafe.Pointer{}
+	} else if h.eventSubscriber != subscriber {
+		if h.eventSubscriberMap == nil {
+			h.eventSubscriberMap = map[int32]misc.IFace{}
 		}
 
-		h.eventDataMap[h.eventID] = h.eventData
-		h.eventDataMap[eventID] = event[1]
+		h.eventSubscriberMap[h.eventID] = h.eventSubscriber
+		h.eventSubscriberMap[eventID] = subscriber
 
 		h.eventID = 0
-		h.eventData = nil
+		h.eventSubscriber = misc.NilIFace
 	}
 
 	return nil
@@ -110,27 +104,25 @@ func (h *HookFoundation) UnsubscribeEvent(eventID int32) {
 
 	h.setEventMark(eventID, false)
 
-	if h.eventDataMap == nil {
+	if len(h.eventSubscriberMap) <= 0 {
 		h.eventID = 0
-		h.eventData = nil
+		h.eventSubscriber = misc.NilIFace
 		return
 	}
 
-	delete(h.eventDataMap, eventID)
-
-	if len(h.eventDataMap) <= 0 {
-		h.eventDataMap = nil
-	}
+	delete(h.eventSubscriberMap, eventID)
 }
 
 func (h *HookFoundation) UnsubscribeAllEvent() {
-	h.eventBits = [misc.StoreMakeLimit - 1]uint64{}
+	for i := 0; i < len(h.eventBits); i++ {
+		h.eventBits[i] = 0
+	}
 	h.eventID = 0
-	h.eventData = nil
-	h.eventDataMap = nil
+	h.eventSubscriber = misc.NilIFace
+	h.eventSubscriberMap = nil
 }
 
-func (h *HookFoundation) GetEvent(eventID int32) misc.IFace {
+func (h *HookFoundation) GetEventSubscriber(eventID int32) misc.IFace {
 	if eventID < 0 || eventID >= eventsLimit {
 		panic("eventID invalid")
 	}
@@ -143,14 +135,14 @@ func (h *HookFoundation) GetEvent(eventID int32) misc.IFace {
 		return misc.NilIFace
 	}
 
-	if h.eventData != nil {
-		return misc.IFace{h.runtime.obtainEventType(eventID), h.eventData}
+	if h.eventSubscriber != misc.NilIFace {
+		return h.eventSubscriber
 	}
 
-	if h.eventDataMap != nil {
-		eventData, ok := h.eventDataMap[eventID]
+	if h.eventSubscriberMap != nil {
+		subscriber, ok := h.eventSubscriberMap[eventID]
 		if ok {
-			return misc.IFace{h.runtime.obtainEventType(eventID), eventData}
+			return subscriber
 		}
 	}
 
@@ -204,6 +196,6 @@ func (h *HookFoundation) rangeEventSources(fun func(eventSrc EventSource) bool) 
 		if ele.Escape() || ele.GetMark(0) {
 			return true
 		}
-		return fun(IFace2EventSource(ele.GetIFace(0)))
+		return fun(IFace2EventSource(ele.GetIFace()))
 	})
 }

@@ -8,6 +8,8 @@ const (
 	EntityComponentsMark_Removed int = iota
 	EntityComponentsMark_Inited
 	EntityComponentsMark_Started
+	EntityComponentsMark_Update
+	EntityComponentsMark_LateUpdate
 )
 
 func (e *EntityFoundation) callEntityInit() {
@@ -23,13 +25,15 @@ func (e *EntityFoundation) callEntityInit() {
 		if e.Escape() || e.GetMark(EntityComponentsMark_Removed) {
 			return true
 		}
+
 		if !e.GetMark(EntityComponentsMark_Inited) {
 			e.SetMark(EntityComponentsMark_Inited, true)
 
-			if cei, ok := IFace2Component(e.GetIFace(EntityComponentsIFace_Component)).(ComponentEntityInit); ok {
+			if cei, ok := IFace2Component(e.GetIFace()).(ComponentEntityInit); ok {
 				cei.EntityInit()
 			}
 		}
+
 		return true
 	})
 }
@@ -47,21 +51,23 @@ func (e *EntityFoundation) callStart() {
 		if e.Escape() || e.GetMark(EntityComponentsMark_Removed) {
 			return true
 		}
+
 		if !e.GetMark(EntityComponentsMark_Started) {
 			e.SetMark(EntityComponentsMark_Started, true)
 
-			if cs, ok := IFace2Component(e.GetIFace(EntityComponentsIFace_Component)).(ComponentStart); ok {
+			if cs, ok := IFace2Component(e.GetIFace()).(ComponentStart); ok {
 				cs.Start()
 			}
 
-			if cu, ok := IFace2Component(e.GetIFace(EntityComponentsIFace_Component)).(ComponentUpdate); ok {
-				e.SetIFace(EntityComponentsIFace_ComponentUpdate, ComponentUpdate2IFace(cu))
+			if _, ok := IFace2Component(e.GetIFace()).(ComponentUpdate); ok {
+				e.SetMark(EntityComponentsMark_Update, true)
 			}
 
-			if clu, ok := IFace2Component(e.GetIFace(EntityComponentsIFace_Component)).(ComponentLateUpdate); ok {
-				e.SetIFace(EntityComponentsIFace_ComponentLateUpdate, ComponentLateUpdate2IFace(clu))
+			if _, ok := IFace2Component(e.GetIFace()).(ComponentLateUpdate); ok {
+				e.SetMark(EntityComponentsMark_LateUpdate, true)
 			}
 		}
+
 		return true
 	})
 }
@@ -78,12 +84,15 @@ func (e *EntityFoundation) callUpdate() {
 	}
 
 	e.componentList.UnsafeTraversal(func(e *misc.Element) bool {
-		if e.Escape() || e.GetMark(EntityComponentsMark_Removed) || !e.GetMark(EntityComponentsMark_Started) {
+		if e.Escape() || e.GetMark(EntityComponentsMark_Removed) || !e.GetMark(EntityComponentsMark_Started) ||
+			!e.GetMark(EntityComponentsMark_Update) {
 			return true
 		}
-		if cu := IFace2ComponentUpdate(e.GetIFace(EntityComponentsIFace_ComponentUpdate)); cu != nil {
+
+		if cu := IFace2ComponentUpdate(e.GetIFace()); cu != nil {
 			cu.Update()
 		}
+
 		return true
 	})
 }
@@ -100,12 +109,15 @@ func (e *EntityFoundation) callLateUpdate() {
 	}
 
 	e.componentList.UnsafeTraversal(func(e *misc.Element) bool {
-		if e.Escape() || e.GetMark(EntityComponentsMark_Removed) || !e.GetMark(EntityComponentsMark_Started) {
+		if e.Escape() || e.GetMark(EntityComponentsMark_Removed) || !e.GetMark(EntityComponentsMark_Started) ||
+			!e.GetMark(EntityComponentsMark_LateUpdate) {
 			return true
 		}
-		if clu := IFace2ComponentLateUpdate(e.GetIFace(EntityComponentsIFace_ComponentLateUpdate)); clu != nil {
+
+		if clu := IFace2ComponentLateUpdate(e.GetIFace()); clu != nil {
 			clu.LateUpdate()
 		}
+
 		return true
 	})
 }
@@ -119,9 +131,11 @@ func (e *EntityFoundation) callEntityShut() {
 		if e.Escape() || e.GetMark(EntityComponentsMark_Removed) || !e.GetMark(EntityComponentsMark_Inited) {
 			return true
 		}
-		if cs, ok := IFace2Component(e.GetIFace(EntityComponentsIFace_Component)).(ComponentEntityShut); ok {
+
+		if cs, ok := IFace2Component(e.GetIFace()).(ComponentEntityShut); ok {
 			cs.EntityShut()
 		}
+
 		return true
 	})
 }

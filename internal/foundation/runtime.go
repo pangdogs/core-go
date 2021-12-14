@@ -26,8 +26,6 @@ type Runtime interface {
 	unbindEvent(hookID, eventSrcID uint64) (hookEle, eventSrcEle *misc.Element, ok bool)
 	eventIsBound(hookID, eventSrcID uint64) bool
 	eventHandleToBit(handle uintptr) int
-	declareEventType(eventID int32, eventType unsafe.Pointer)
-	obtainEventType(eventID int32) unsafe.Pointer
 }
 
 func RuntimeGetInheritor(rt Runtime) Runtime {
@@ -63,11 +61,6 @@ type EventBinderValue struct {
 	HookEle, EventSrcEle *misc.Element
 }
 
-type EventSubscriberKey struct {
-	HookID  uint64
-	EventID int32
-}
-
 type RuntimeFoundation struct {
 	RunnableFoundation
 	Context
@@ -82,7 +75,6 @@ type RuntimeFoundation struct {
 	frame           Frame
 	eventBinderMap  map[EventBinderKey]EventBinderValue
 	eventHandleBits map[uintptr]int
-	eventTypes      [eventsLimit]unsafe.Pointer
 	gcExists        map[uintptr]struct{}
 	gcList          []GC
 	gcLastRunTime   time.Time
@@ -161,7 +153,7 @@ func (rt *RuntimeFoundation) Run() chan struct{} {
 				if e.Escape() || e.GetMark(0) {
 					continue
 				}
-				CallOuter(rt.autoRecover, rt.GetReportError(), IFace2Entity(e.GetIFace(0)).callStart)
+				CallOuter(rt.autoRecover, rt.GetReportError(), IFace2Entity(e.GetIFace()).callStart)
 			}
 			rt.entityStartList = rt.entityStartList[count:]
 		}
@@ -175,7 +167,7 @@ func (rt *RuntimeFoundation) Run() chan struct{} {
 				if e.Escape() || e.GetMark(0) {
 					return true
 				}
-				fun(IFace2Entity(e.GetIFace(0)))
+				fun(IFace2Entity(e.GetIFace()))
 				return true
 			})
 		}
@@ -481,7 +473,7 @@ func (rt *RuntimeFoundation) GetEntity(entID uint64) Entity {
 		return nil
 	}
 
-	return IFace2Entity(e.GetIFace(0))
+	return IFace2Entity(e.GetIFace())
 }
 
 func (rt *RuntimeFoundation) RangeEntities(fun func(entity Entity) bool) {
@@ -493,7 +485,7 @@ func (rt *RuntimeFoundation) RangeEntities(fun func(entity Entity) bool) {
 		if e.Escape() || e.GetMark(0) {
 			return true
 		}
-		return fun(IFace2Entity(e.GetIFace(0)))
+		return fun(IFace2Entity(e.GetIFace()))
 	})
 }
 
@@ -513,7 +505,6 @@ func (rt *RuntimeFoundation) addEntity(entity Entity) {
 	ele := rt.entityList.PushIFaceBack(Entity2IFace(entity))
 	rt.entityMap[entity.GetEntityID()] = ele
 	rt.entityStartList = append(rt.entityStartList, ele)
-
 }
 
 func (rt *RuntimeFoundation) removeEntity(entID uint64) {
@@ -586,22 +577,4 @@ func (rt *RuntimeFoundation) eventHandleToBit(handle uintptr) int {
 		rt.eventHandleBits[handle] = bit
 	}
 	return bit
-}
-
-func (rt *RuntimeFoundation) declareEventType(eventID int32, eventType unsafe.Pointer) {
-	if rt.eventTypes[eventID] != nil {
-		if rt.eventTypes[eventID] != eventType {
-			panic("inconsistent event type")
-		}
-	}
-
-	rt.eventTypes[eventID] = eventType
-}
-
-func (rt *RuntimeFoundation) obtainEventType(eventID int32) unsafe.Pointer {
-	if rt.eventTypes[eventID] == nil {
-		panic("undeclared event type")
-	}
-
-	return rt.eventTypes[eventID]
 }
