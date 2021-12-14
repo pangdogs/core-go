@@ -134,10 +134,6 @@ func (h *HookFoundation) GetEventSubscriber(eventID int32) misc.IFace {
 		panic("eventID invalid")
 	}
 
-	if h.runtime == nil {
-		panic("nil runtime")
-	}
-
 	if !h.getEventMark(eventID) {
 		return misc.NilIFace
 	}
