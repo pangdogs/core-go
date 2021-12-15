@@ -25,17 +25,21 @@ func BindEvent(hook Hook, eventSrc EventSource, _priority ...int32) error {
 		return errors.New("nil hook")
 	}
 
+	if hook.GetHookRuntime() == nil {
+		return errors.New("nil hook runtime")
+	}
+
 	if eventSrc == nil {
 		return errors.New("nil eventSrc")
 	}
 
 	rt := eventSrc.GetEventSourceRuntime()
 	if rt == nil {
-		return errors.New("nil runtime")
+		return errors.New("nil eventSrc runtime")
 	}
 
 	if rt.eventIsBound(hook.GetHookID(), eventSrc.GetEventSourceID()) {
-		return errors.New("already bound")
+		return errors.New("hook and eventSrc already bound")
 	}
 
 	priority := int32(0)

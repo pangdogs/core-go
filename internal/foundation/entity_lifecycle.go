@@ -29,7 +29,7 @@ func (e *EntityFoundation) callEntityInit() {
 		if !e.GetMark(EntityComponentsMark_Inited) {
 			e.SetMark(EntityComponentsMark_Inited, true)
 
-			if cei, ok := IFace2Component(e.GetIFace()).(ComponentEntityInit); ok {
+			if cei, ok := IFace2Component(e.GetIFace(EntityComponentsIFace_Component)).(ComponentEntityInit); ok {
 				cei.EntityInit()
 			}
 		}
@@ -55,15 +55,17 @@ func (e *EntityFoundation) callStart() {
 		if !e.GetMark(EntityComponentsMark_Started) {
 			e.SetMark(EntityComponentsMark_Started, true)
 
-			if cs, ok := IFace2Component(e.GetIFace()).(ComponentStart); ok {
+			if cs, ok := IFace2Component(e.GetIFace(EntityComponentsIFace_Component)).(ComponentStart); ok {
 				cs.Start()
 			}
 
-			if _, ok := IFace2Component(e.GetIFace()).(ComponentUpdate); ok {
+			if cu, ok := IFace2Component(e.GetIFace(EntityComponentsIFace_Component)).(ComponentUpdate); ok {
+				e.SetIFace(EntityComponentsIFace_ComponentUpdate, ComponentUpdate2IFace(cu))
 				e.SetMark(EntityComponentsMark_Update, true)
 			}
 
-			if _, ok := IFace2Component(e.GetIFace()).(ComponentLateUpdate); ok {
+			if clu, ok := IFace2Component(e.GetIFace(EntityComponentsIFace_Component)).(ComponentLateUpdate); ok {
+				e.SetIFace(EntityComponentsIFace_ComponentLateUpdate, ComponentLateUpdate2IFace(clu))
 				e.SetMark(EntityComponentsMark_LateUpdate, true)
 			}
 		}
@@ -89,7 +91,7 @@ func (e *EntityFoundation) callUpdate() {
 			return true
 		}
 
-		if cu := IFace2ComponentUpdate(e.GetIFace()); cu != nil {
+		if cu := IFace2ComponentUpdate(e.GetIFace(EntityComponentsIFace_ComponentUpdate)); cu != nil {
 			cu.Update()
 		}
 
@@ -114,7 +116,7 @@ func (e *EntityFoundation) callLateUpdate() {
 			return true
 		}
 
-		if clu := IFace2ComponentLateUpdate(e.GetIFace()); clu != nil {
+		if clu := IFace2ComponentLateUpdate(e.GetIFace(EntityComponentsIFace_ComponentLateUpdate)); clu != nil {
 			clu.LateUpdate()
 		}
 
@@ -132,7 +134,7 @@ func (e *EntityFoundation) callEntityShut() {
 			return true
 		}
 
-		if cs, ok := IFace2Component(e.GetIFace()).(ComponentEntityShut); ok {
+		if cs, ok := IFace2Component(e.GetIFace(EntityComponentsIFace_Component)).(ComponentEntityShut); ok {
 			cs.EntityShut()
 		}
 
