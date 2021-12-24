@@ -145,7 +145,9 @@ func (e *EntityFoundation) initEntity(rt Runtime, opts *EntityOptions) {
 
 	e.runtime = rt
 	e.componentList.Init(rt.GetCache())
-	e.componentMap = map[string]*misc.Element{}
+	if e.enableFastGetComponent {
+		e.componentMap = map[string]*misc.Element{}
+	}
 
 	rt.GetApp().addEntity(e.inheritor)
 	rt.addEntity(e.inheritor)
@@ -218,7 +220,7 @@ func (e *EntityFoundation) AddComponent(name string, _component interface{}) err
 	component := _component.(Component)
 	component.initComponent(name, e.inheritor, component)
 
-	if ele, ok := e.componentMap[name]; ok {
+	if ele, ok := e.getComponentElement(name); ok {
 		old := ele
 		for t := ele; t != nil && IFace2Component(t.GetIFace(EntityComponentsIFace_Component)).GetName() == name; t = t.Next() {
 			if t.Escape() || t.GetMark(EntityComponentsMark_Removed) {
@@ -228,7 +230,10 @@ func (e *EntityFoundation) AddComponent(name string, _component interface{}) err
 		}
 		e.componentList.InsertIFaceAfter(Component2IFace(component), old)
 	} else {
-		e.componentMap[name] = e.componentList.PushIFaceBack(Component2IFace(component))
+		ele = e.componentList.PushIFaceBack(Component2IFace(component))
+		if e.enableFastGetComponent {
+			e.componentMap[name] = ele
+		}
 	}
 
 	if ci, ok := component.(ComponentInit); ok {
@@ -243,8 +248,10 @@ func (e *EntityFoundation) AddComponent(name string, _component interface{}) err
 }
 
 func (e *EntityFoundation) RemoveComponent(name string) {
-	if ele, ok := e.componentMap[name]; ok {
-		delete(e.componentMap, name)
+	if ele, ok := e.getComponentElement(name); ok {
+		if e.enableFastGetComponent {
+			delete(e.componentMap, name)
+		}
 
 		var elements []*misc.Element
 
@@ -275,7 +282,7 @@ func (e *EntityFoundation) RemoveComponent(name string) {
 }
 
 func (e *EntityFoundation) GetComponent(name string) Component {
-	if ele, ok := e.componentMap[name]; ok {
+	if ele, ok := e.getComponentElement(name); ok {
 		return IFace2Component(ele.GetIFace(EntityComponentsIFace_Component))
 	}
 
@@ -283,7 +290,7 @@ func (e *EntityFoundation) GetComponent(name string) Component {
 }
 
 func (e *EntityFoundation) GetComponents(name string) []Component {
-	if ele, ok := e.componentMap[name]; ok {
+	if ele, ok := e.getComponentElement(name); ok {
 		var components []Component
 
 		for t := ele; t != nil && IFace2Component(t.GetIFace(EntityComponentsIFace_Component)).GetName() == name; t = t.Next() {
@@ -310,4 +317,23 @@ func (e *EntityFoundation) RangeComponents(fun func(component Component) bool) {
 		}
 		return fun(IFace2Component(e.GetIFace(EntityComponentsIFace_Component)))
 	})
+}
+
+func (e *EntityFoundation) getComponentElement(name string) (*misc.Element, bool) {
+	if e.enableFastGetComponent {
+		ele, ok := e.componentMap[name]
+		return ele, ok
+	}
+
+	var ele *misc.Element
+
+	e.componentList.UnsafeTraversal(func(e *misc.Element) bool {
+		if IFace2Component(e.GetIFace(EntityComponentsIFace_Component)).GetName() == name {
+			ele = e
+			return false
+		}
+		return true
+	})
+
+	return ele, ele != nil
 }

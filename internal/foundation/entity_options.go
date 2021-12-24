@@ -6,6 +6,7 @@ type EntityOptions struct {
 	inheritor Entity
 	initFunc,
 	shutFunc func(entity Entity)
+	enableFastGetComponent bool
 }
 
 type NewEntityOptionFunc func(o *EntityOptions)
@@ -17,6 +18,7 @@ func (*NewEntityOptions) Default() NewEntityOptionFunc {
 		o.inheritor = nil
 		o.initFunc = nil
 		o.shutFunc = nil
+		o.enableFastGetComponent = true
 	}
 }
 
@@ -35,5 +37,11 @@ func (*NewEntityOptions) InitFunc(v func(entity Entity)) NewEntityOptionFunc {
 func (*NewEntityOptions) ShutFunc(v func(entity Entity)) NewEntityOptionFunc {
 	return func(o *EntityOptions) {
 		o.shutFunc = v
+	}
+}
+
+func (*NewEntityOptions) EnableFastGetComponent(v bool) NewEntityOptionFunc {
+	return func(o *EntityOptions) {
+		o.enableFastGetComponent = v
 	}
 }
