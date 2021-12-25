@@ -127,7 +127,7 @@ type EntityFoundation struct {
 	lifecycleEntityShutFunc func()
 }
 
-func (e *EntityFoundation) initEntity(rt Runtime, opts *EntityOptions) {
+func (ent *EntityFoundation) initEntity(rt Runtime, opts *EntityOptions) {
 	if rt == nil {
 		panic("nil runtime")
 	}
@@ -136,164 +136,182 @@ func (e *EntityFoundation) initEntity(rt Runtime, opts *EntityOptions) {
 		panic("nil opts")
 	}
 
-	e.id = rt.GetApp().makeUID()
-	e.EntityOptions = *opts
+	ent.id = rt.GetApp().makeUID()
+	ent.EntityOptions = *opts
 
-	if e.inheritor == nil {
-		e.inheritor = e
+	if ent.inheritor == nil {
+		ent.inheritor = ent
 	}
 
-	e.runtime = rt
-	e.componentList.Init(rt.GetCache())
-	if e.enableFastGetComponent {
-		e.componentMap = map[string]*misc.Element{}
+	ent.runtime = rt
+	ent.componentList.Init(rt.GetCache())
+	if ent.enableFastGetComponent {
+		ent.componentMap = map[string]*misc.Element{}
 	}
 
-	rt.GetApp().addEntity(e.inheritor)
-	rt.addEntity(e.inheritor)
+	rt.GetApp().addEntity(ent.inheritor)
+	rt.addEntity(ent.inheritor)
 
-	if e.initFunc != nil {
-		e.initFunc(e)
+	if ent.initFunc != nil {
+		ent.initFunc(ent)
 	}
 
-	e.callEntityInit()
+	ent.callEntityInit()
 }
 
-func (e *EntityFoundation) GC() {
-	for i := 0; i < len(e.componentGCList); i++ {
-		e.componentList.Remove(e.componentGCList[i])
+func (ent *EntityFoundation) GC() {
+	for i := 0; i < len(ent.componentGCList); i++ {
+		ent.componentList.Remove(ent.componentGCList[i])
 	}
-	e.componentGCList = e.componentGCList[:0]
+	ent.componentGCList = ent.componentGCList[:0]
 }
 
-func (e *EntityFoundation) GCHandle() uintptr {
-	return uintptr(unsafe.Pointer(e))
+func (ent *EntityFoundation) GCHandle() uintptr {
+	return uintptr(unsafe.Pointer(ent))
 }
 
-func (e *EntityFoundation) Destroy() {
-	if e.destroyed {
+func (ent *EntityFoundation) Destroy() {
+	if ent.destroyed {
 		return
 	}
 
-	e.destroyed = true
+	ent.destroyed = true
 
-	e.GetRuntime().GetApp().removeEntity(e.id)
-	e.GetRuntime().removeEntity(e.id)
+	ent.GetRuntime().GetApp().removeEntity(ent.id)
+	ent.GetRuntime().removeEntity(ent.id)
 
-	e.callEntityShut()
+	ent.callEntityShut()
 
-	e.RangeComponents(func(component Component) bool {
-		e.RemoveComponent(component.GetName())
+	ent.componentList.UnsafeTraversal(func(e *misc.Element) bool {
+		if e.Escape() || e.GetMark(EntityComponentsMark_Removed) {
+			return true
+		}
+		e.SetMark(EntityComponentsMark_Removed, true)
+
+		component := IFace2Component(e.GetIFace(EntityComponentsIFace_Component))
+
+		if ch, ok := component.(ComponentHalt); ok {
+			ch.Halt()
+		}
+
+		if cs, ok := component.(ComponentShut); ok {
+			cs.Shut()
+		}
+
 		return true
 	})
 
-	if e.shutFunc != nil {
-		e.shutFunc(e)
+	if ent.shutFunc != nil {
+		ent.shutFunc(ent)
 	}
 }
 
-func (e *EntityFoundation) GetEntityID() uint64 {
-	return e.id
+func (ent *EntityFoundation) GetEntityID() uint64 {
+	return ent.id
 }
 
-func (e *EntityFoundation) getEntityInheritor() Entity {
-	return e.inheritor
+func (ent *EntityFoundation) getEntityInheritor() Entity {
+	return ent.inheritor
 }
 
-func (e *EntityFoundation) GetRuntime() Runtime {
-	return e.runtime
+func (ent *EntityFoundation) GetRuntime() Runtime {
+	return ent.runtime
 }
 
-func (e *EntityFoundation) IsDestroyed() bool {
-	return e.destroyed
+func (ent *EntityFoundation) IsDestroyed() bool {
+	return ent.destroyed
 }
 
-func (e *EntityFoundation) AddComponent(name string, _component interface{}) error {
-	if _component == nil {
+func (ent *EntityFoundation) AddComponent(name string, component interface{}) error {
+	if component == nil {
 		return errors.New("nil component")
 	}
 
-	if e.destroyed {
+	if ent.destroyed {
 		return errors.New("entity destroyed")
 	}
 
-	component := _component.(Component)
-	component.initComponent(name, e.inheritor, component)
+	_component := component.(Component)
+	_component.initComponent(name, ent.inheritor, _component)
 
-	if ele, ok := e.getComponentElement(name); ok {
-		old := ele
-		for t := ele; t != nil && IFace2Component(t.GetIFace(EntityComponentsIFace_Component)).GetName() == name; t = t.Next() {
+	if e, ok := ent.getComponentElement(name); ok {
+		old := e
+		for t := e; t != nil && IFace2Component(t.GetIFace(EntityComponentsIFace_Component)).GetName() == name; t = t.Next() {
 			if t.Escape() || t.GetMark(EntityComponentsMark_Removed) {
 				continue
 			}
 			old = t
 		}
-		e.componentList.InsertIFaceAfter(Component2IFace(component), old)
+		ent.componentList.InsertIFaceAfter(Component2IFace(_component), old)
 	} else {
-		ele = e.componentList.PushIFaceBack(Component2IFace(component))
-		if e.enableFastGetComponent {
-			e.componentMap[name] = ele
+		e = ent.componentList.PushIFaceBack(Component2IFace(_component))
+		if ent.enableFastGetComponent {
+			ent.componentMap[name] = e
 		}
 	}
 
-	if ci, ok := component.(ComponentInit); ok {
+	if ci, ok := _component.(ComponentInit); ok {
 		ci.Init()
 	}
 
-	if ca, ok := component.(ComponentAwake); ok {
+	if ca, ok := _component.(ComponentAwake); ok {
 		ca.Awake()
 	}
 
 	return nil
 }
 
-func (e *EntityFoundation) RemoveComponent(name string) {
-	if ele, ok := e.getComponentElement(name); ok {
-		if e.enableFastGetComponent {
-			delete(e.componentMap, name)
+func (ent *EntityFoundation) RemoveComponent(name string) {
+	e, ok := ent.getComponentElement(name)
+	if !ok {
+		return
+	}
+
+	if ent.enableFastGetComponent {
+		delete(ent.componentMap, name)
+	}
+
+	for t := e; t != nil; t = t.Next() {
+		component := IFace2Component(t.GetIFace(EntityComponentsIFace_Component))
+		if component.GetName() != name {
+			break
 		}
 
-		var elements []*misc.Element
+		if t.Escape() || t.GetMark(EntityComponentsMark_Removed) {
+			continue
+		}
+		t.SetMark(EntityComponentsMark_Removed, true)
 
-		for t := ele; t != nil && IFace2Component(t.GetIFace(EntityComponentsIFace_Component)).GetName() == name; t = t.Next() {
-			t.SetMark(EntityComponentsMark_Removed, true)
-			elements = append(elements, t)
+		if ch, ok := component.(ComponentHalt); ok {
+			ch.Halt()
 		}
 
-		for i := 0; i < len(elements); i++ {
-			c := IFace2Component(elements[i].GetIFace(EntityComponentsIFace_Component))
-
-			if ch, ok := c.(ComponentHalt); ok {
-				ch.Halt()
-			}
-
-			if cs, ok := c.(ComponentShut); ok {
-				cs.Shut()
-			}
+		if cs, ok := component.(ComponentShut); ok {
+			cs.Shut()
 		}
 
-		if !e.destroyed {
-			if e.runtime.GCEnabled() {
-				e.componentGCList = append(e.componentGCList, elements...)
-				e.runtime.PushGC(e)
+		if !ent.destroyed {
+			if ent.runtime.GCEnabled() {
+				ent.componentGCList = append(ent.componentGCList, t)
+				ent.runtime.PushGC(ent)
 			}
 		}
 	}
 }
 
-func (e *EntityFoundation) GetComponent(name string) Component {
-	if ele, ok := e.getComponentElement(name); ok {
-		return IFace2Component(ele.GetIFace(EntityComponentsIFace_Component))
+func (ent *EntityFoundation) GetComponent(name string) Component {
+	if e, ok := ent.getComponentElement(name); ok {
+		return IFace2Component(e.GetIFace(EntityComponentsIFace_Component))
 	}
 
 	return nil
 }
 
-func (e *EntityFoundation) GetComponents(name string) []Component {
-	if ele, ok := e.getComponentElement(name); ok {
+func (ent *EntityFoundation) GetComponents(name string) []Component {
+	if e, ok := ent.getComponentElement(name); ok {
 		var components []Component
 
-		for t := ele; t != nil && IFace2Component(t.GetIFace(EntityComponentsIFace_Component)).GetName() == name; t = t.Next() {
+		for t := e; t != nil && IFace2Component(t.GetIFace(EntityComponentsIFace_Component)).GetName() == name; t = t.Next() {
 			if t.Escape() || t.GetMark(EntityComponentsMark_Removed) {
 				continue
 			}
@@ -306,12 +324,12 @@ func (e *EntityFoundation) GetComponents(name string) []Component {
 	return nil
 }
 
-func (e *EntityFoundation) RangeComponents(fun func(component Component) bool) {
+func (ent *EntityFoundation) RangeComponents(fun func(component Component) bool) {
 	if fun == nil {
 		return
 	}
 
-	e.componentList.UnsafeTraversal(func(e *misc.Element) bool {
+	ent.componentList.UnsafeTraversal(func(e *misc.Element) bool {
 		if e.Escape() || e.GetMark(EntityComponentsMark_Removed) {
 			return true
 		}
@@ -319,21 +337,24 @@ func (e *EntityFoundation) RangeComponents(fun func(component Component) bool) {
 	})
 }
 
-func (e *EntityFoundation) getComponentElement(name string) (*misc.Element, bool) {
-	if e.enableFastGetComponent {
-		ele, ok := e.componentMap[name]
-		return ele, ok
+func (ent *EntityFoundation) getComponentElement(name string) (*misc.Element, bool) {
+	if ent.enableFastGetComponent {
+		e, ok := ent.componentMap[name]
+		return e, ok
 	}
 
-	var ele *misc.Element
+	var element *misc.Element
 
-	e.componentList.UnsafeTraversal(func(e *misc.Element) bool {
+	ent.componentList.UnsafeTraversal(func(e *misc.Element) bool {
+		if e.Escape() || e.GetMark(EntityComponentsMark_Removed) {
+			return true
+		}
 		if IFace2Component(e.GetIFace(EntityComponentsIFace_Component)).GetName() == name {
-			ele = e
+			element = e
 			return false
 		}
 		return true
 	})
 
-	return ele, ele != nil
+	return element, element != nil
 }

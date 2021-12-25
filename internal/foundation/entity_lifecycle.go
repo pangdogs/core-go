@@ -12,16 +12,16 @@ const (
 	EntityComponentsMark_LateUpdate
 )
 
-func (e *EntityFoundation) callEntityInit() {
-	if e.destroyed {
+func (ent *EntityFoundation) callEntityInit() {
+	if ent.destroyed {
 		return
 	}
 
-	if e.lifecycleEntityInitFunc != nil {
-		e.lifecycleEntityInitFunc()
+	if ent.lifecycleEntityInitFunc != nil {
+		ent.lifecycleEntityInitFunc()
 	}
 
-	e.componentList.UnsafeTraversal(func(e *misc.Element) bool {
+	ent.componentList.UnsafeTraversal(func(e *misc.Element) bool {
 		if e.Escape() || e.GetMark(EntityComponentsMark_Removed) {
 			return true
 		}
@@ -38,16 +38,16 @@ func (e *EntityFoundation) callEntityInit() {
 	})
 }
 
-func (e *EntityFoundation) callStart() {
-	if e.destroyed {
+func (ent *EntityFoundation) callStart() {
+	if ent.destroyed {
 		return
 	}
 
-	if e.lifecycleStartFunc != nil {
-		e.lifecycleStartFunc()
+	if ent.lifecycleStartFunc != nil {
+		ent.lifecycleStartFunc()
 	}
 
-	e.componentList.UnsafeTraversal(func(e *misc.Element) bool {
+	ent.componentList.UnsafeTraversal(func(e *misc.Element) bool {
 		if e.Escape() || e.GetMark(EntityComponentsMark_Removed) {
 			return true
 		}
@@ -74,18 +74,18 @@ func (e *EntityFoundation) callStart() {
 	})
 }
 
-func (e *EntityFoundation) callUpdate() {
-	if e.destroyed {
+func (ent *EntityFoundation) callUpdate() {
+	if ent.destroyed {
 		return
 	}
 
-	if e.lifecycleUpdateFunc != nil {
-		if !e.lifecycleUpdateFunc() {
+	if ent.lifecycleUpdateFunc != nil {
+		if !ent.lifecycleUpdateFunc() {
 			return
 		}
 	}
 
-	e.componentList.UnsafeTraversal(func(e *misc.Element) bool {
+	ent.componentList.UnsafeTraversal(func(e *misc.Element) bool {
 		if e.Escape() || e.GetMark(EntityComponentsMark_Removed) || !e.GetMark(EntityComponentsMark_Started) ||
 			!e.GetMark(EntityComponentsMark_Update) {
 			return true
@@ -99,18 +99,18 @@ func (e *EntityFoundation) callUpdate() {
 	})
 }
 
-func (e *EntityFoundation) callLateUpdate() {
-	if e.destroyed {
+func (ent *EntityFoundation) callLateUpdate() {
+	if ent.destroyed {
 		return
 	}
 
-	if e.lifecycleLateUpdateFunc != nil {
-		if !e.lifecycleLateUpdateFunc() {
+	if ent.lifecycleLateUpdateFunc != nil {
+		if !ent.lifecycleLateUpdateFunc() {
 			return
 		}
 	}
 
-	e.componentList.UnsafeTraversal(func(e *misc.Element) bool {
+	ent.componentList.UnsafeTraversal(func(e *misc.Element) bool {
 		if e.Escape() || e.GetMark(EntityComponentsMark_Removed) || !e.GetMark(EntityComponentsMark_Started) ||
 			!e.GetMark(EntityComponentsMark_LateUpdate) {
 			return true
@@ -124,12 +124,12 @@ func (e *EntityFoundation) callLateUpdate() {
 	})
 }
 
-func (e *EntityFoundation) callEntityShut() {
-	if e.lifecycleEntityShutFunc != nil {
-		e.lifecycleEntityShutFunc()
+func (ent *EntityFoundation) callEntityShut() {
+	if ent.lifecycleEntityShutFunc != nil {
+		ent.lifecycleEntityShutFunc()
 	}
 
-	e.componentList.UnsafeTraversal(func(e *misc.Element) bool {
+	ent.componentList.UnsafeTraversal(func(e *misc.Element) bool {
 		if e.Escape() || e.GetMark(EntityComponentsMark_Removed) || !e.GetMark(EntityComponentsMark_Inited) {
 			return true
 		}
@@ -142,42 +142,42 @@ func (e *EntityFoundation) callEntityShut() {
 	})
 }
 
-func (e *EntityFoundation) setLifecycleEntityInitFunc(fun func()) {
-	e.lifecycleEntityInitFunc = fun
+func (ent *EntityFoundation) setLifecycleEntityInitFunc(fun func()) {
+	ent.lifecycleEntityInitFunc = fun
 }
 
-func (e *EntityFoundation) setLifecycleStartFunc(fun func()) {
-	e.lifecycleStartFunc = fun
+func (ent *EntityFoundation) setLifecycleStartFunc(fun func()) {
+	ent.lifecycleStartFunc = fun
 }
 
-func (e *EntityFoundation) setLifecycleUpdateFunc(fun func() bool) {
-	e.lifecycleUpdateFunc = fun
+func (ent *EntityFoundation) setLifecycleUpdateFunc(fun func() bool) {
+	ent.lifecycleUpdateFunc = fun
 }
 
-func (e *EntityFoundation) setLifecycleLateUpdateFunc(fun func() bool) {
-	e.lifecycleLateUpdateFunc = fun
+func (ent *EntityFoundation) setLifecycleLateUpdateFunc(fun func() bool) {
+	ent.lifecycleLateUpdateFunc = fun
 }
 
-func (e *EntityFoundation) setLifecycleEntityShutFunc(fun func()) {
-	e.lifecycleEntityShutFunc = fun
+func (ent *EntityFoundation) setLifecycleEntityShutFunc(fun func()) {
+	ent.lifecycleEntityShutFunc = fun
 }
 
-func (e *EntityFoundation) getLifecycleEntityInitFunc() func() {
-	return e.lifecycleEntityInitFunc
+func (ent *EntityFoundation) getLifecycleEntityInitFunc() func() {
+	return ent.lifecycleEntityInitFunc
 }
 
-func (e *EntityFoundation) getLifecycleStartFunc() func() {
-	return e.lifecycleStartFunc
+func (ent *EntityFoundation) getLifecycleStartFunc() func() {
+	return ent.lifecycleStartFunc
 }
 
-func (e *EntityFoundation) getLifecycleUpdateFunc() func() bool {
-	return e.lifecycleUpdateFunc
+func (ent *EntityFoundation) getLifecycleUpdateFunc() func() bool {
+	return ent.lifecycleUpdateFunc
 }
 
-func (e *EntityFoundation) getLifecycleLateUpdateFunc() func() bool {
-	return e.lifecycleLateUpdateFunc
+func (ent *EntityFoundation) getLifecycleLateUpdateFunc() func() bool {
+	return ent.lifecycleLateUpdateFunc
 }
 
-func (e *EntityFoundation) getLifecycleEntityShutFunc() func() {
-	return e.lifecycleEntityShutFunc
+func (ent *EntityFoundation) getLifecycleEntityShutFunc() func() {
+	return ent.lifecycleEntityShutFunc
 }

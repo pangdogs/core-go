@@ -20,7 +20,7 @@ func AllocEventID() int32 {
 	return eventID
 }
 
-func BindEvent(hook Hook, eventSrc EventSource, _priority ...int32) error {
+func BindEvent(hook Hook, eventSrc EventSource, priority ...int32) error {
 	if hook == nil {
 		return errors.New("nil hook")
 	}
@@ -42,12 +42,12 @@ func BindEvent(hook Hook, eventSrc EventSource, _priority ...int32) error {
 		return errors.New("hook and eventSrc already bound")
 	}
 
-	priority := int32(0)
-	if len(_priority) > 0 {
-		priority = _priority[0]
+	_priority := int32(0)
+	if len(priority) > 0 {
+		_priority = priority[0]
 	}
 
-	hookEle, err := eventSrc.addHook(hook, priority)
+	hookEle, err := eventSrc.addHook(hook, _priority)
 	if err != nil {
 		return err
 	}
