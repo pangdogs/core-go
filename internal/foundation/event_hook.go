@@ -7,7 +7,7 @@ import (
 )
 
 type Hook interface {
-	InitHook(rt Runtime)
+	initHook(rt Runtime)
 	GetHookID() uint64
 	GetHookRuntime() Runtime
 	SubscribeEvent(eventID int32, subscriber misc.IFace) error
@@ -25,6 +25,10 @@ func IFace2Hook(f misc.IFace) Hook {
 
 func Hook2IFace(h Hook) misc.IFace {
 	return *(*misc.IFace)(unsafe.Pointer(&h))
+}
+
+func InitHook(hook Hook, rt Runtime) {
+	hook.initHook(rt)
 }
 
 type HookFoundation struct {
@@ -46,9 +50,13 @@ func (h *HookFoundation) GCHandle() uintptr {
 	return uintptr(unsafe.Pointer(h))
 }
 
-func (h *HookFoundation) InitHook(rt Runtime) {
+func (h *HookFoundation) initHook(rt Runtime) {
 	if rt == nil {
 		panic("nil runtime")
+	}
+
+	if h.runtime != nil {
+		panic("init repeated")
 	}
 
 	h.id = rt.GetApp().makeUID()

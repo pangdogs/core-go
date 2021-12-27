@@ -93,11 +93,15 @@ type Hook = foundation.Hook
 
 type HookFoundation = foundation.HookFoundation
 
-var AllocEventID = foundation.AllocEventID
+var InitHook = foundation.InitHook
 
 type EventSource = foundation.EventSource
 
 type EventSourceFoundation = foundation.EventSourceFoundation
+
+var InitEventSource = foundation.InitEventSource
+
+var AllocEventID = foundation.AllocEventID
 
 var BindEvent = foundation.BindEvent
 

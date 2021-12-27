@@ -7,7 +7,7 @@ import (
 )
 
 type EventSource interface {
-	InitEventSource(rt Runtime)
+	initEventSource(rt Runtime)
 	GetEventSourceID() uint64
 	GetEventSourceRuntime() Runtime
 	addHook(hook Hook, priority int32) (*misc.Element, error)
@@ -22,6 +22,10 @@ func IFace2EventSource(f misc.IFace) EventSource {
 
 func EventSource2IFace(es EventSource) misc.IFace {
 	return *(*misc.IFace)(unsafe.Pointer(&es))
+}
+
+func InitEventSource(eventSrc EventSource, rt Runtime) {
+	eventSrc.initEventSource(rt)
 }
 
 type EventSourceFoundation struct {
@@ -42,9 +46,13 @@ func (es *EventSourceFoundation) GCHandle() uintptr {
 	return uintptr(unsafe.Pointer(es))
 }
 
-func (es *EventSourceFoundation) InitEventSource(rt Runtime) {
+func (es *EventSourceFoundation) initEventSource(rt Runtime) {
 	if rt == nil {
 		panic("nil runtime")
+	}
+
+	if es.runtime != nil {
+		panic("init repeated")
 	}
 
 	es.id = rt.GetApp().makeUID()
