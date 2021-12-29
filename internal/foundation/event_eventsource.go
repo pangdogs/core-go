@@ -130,12 +130,15 @@ func (es *EventSourceFoundation) sendEvent(fun func(hook Hook) EventRet, eventHa
 
 		hook := IFace2Hook(ele.GetIFace(0))
 
-		if hook.GetCallDepth() >= es.runtime.GetEventCallDepthLimit() {
-			panic("event call depth exceed limit")
-		}
+		callDepthLimit := es.runtime.GetEventCallDepthLimit()
+		if callDepthLimit > 0 {
+			if hook.GetCallDepth() >= callDepthLimit {
+				panic("event call depth exceed limit")
+			}
 
-		hook.incrCallDepth()
-		defer hook.decrCallDepth()
+			hook.incrCallDepth()
+			defer hook.decrCallDepth()
+		}
 
 		ret := fun(hook)
 
