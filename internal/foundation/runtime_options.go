@@ -12,14 +12,15 @@ type RuntimeOptions struct {
 	initFunc,
 	startFunc,
 	stopFunc func(rt Runtime)
-	autoRun           bool
-	autoRecover       bool
-	safeCallCacheSize int
-	frameCreatorFunc  func(rt Runtime) Frame
-	gcEnable          bool
-	gcTimeInterval    time.Duration
-	gcItemNum         int
-	cache             *misc.Cache
+	autoRun             bool
+	autoRecover         bool
+	safeCallCacheSize   int
+	frameCreatorFunc    func(rt Runtime) Frame
+	gcEnable            bool
+	gcTimeInterval      time.Duration
+	gcItemNum           int
+	cache               *misc.Cache
+	eventCallDepthLimit int32
 }
 
 type NewRuntimeOptionFunc func(o *RuntimeOptions)
@@ -40,6 +41,7 @@ func (*NewRuntimeOptions) Default() NewRuntimeOptionFunc {
 		o.gcTimeInterval = 10 * time.Second
 		o.gcItemNum = 1000
 		o.cache = nil
+		o.eventCallDepthLimit = 0
 	}
 }
 
@@ -112,5 +114,11 @@ func (*NewRuntimeOptions) GCItemNum(v int) NewRuntimeOptionFunc {
 func (*NewRuntimeOptions) Cache(v *misc.Cache) NewRuntimeOptionFunc {
 	return func(o *RuntimeOptions) {
 		o.cache = v
+	}
+}
+
+func (*NewRuntimeOptions) EventCallDepthLimit(v int32) NewRuntimeOptionFunc {
+	return func(o *RuntimeOptions) {
+		o.eventCallDepthLimit = v
 	}
 }

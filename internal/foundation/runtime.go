@@ -19,6 +19,7 @@ type Runtime interface {
 	GetEntity(entID uint64) Entity
 	RangeEntities(fun func(entity Entity) bool)
 	GetCache() *misc.Cache
+	GetEventCallDepthLimit() int32
 	addEntity(entity Entity)
 	removeEntity(entID uint64)
 	pushSafeCall(callBundle *SafeCallBundle)
@@ -491,6 +492,10 @@ func (rt *RuntimeFoundation) RangeEntities(fun func(entity Entity) bool) {
 
 func (rt *RuntimeFoundation) GetCache() *misc.Cache {
 	return rt.cache
+}
+
+func (rt *RuntimeFoundation) GetEventCallDepthLimit() int32 {
+	return rt.eventCallDepthLimit
 }
 
 func (rt *RuntimeFoundation) addEntity(entity Entity) {
