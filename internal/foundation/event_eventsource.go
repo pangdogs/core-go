@@ -128,7 +128,12 @@ func (es *EventSourceFoundation) sendEvent(fun func(hook Hook) EventRet, eventHa
 			return true
 		}
 
-		ret := fun(IFace2Hook(ele.GetIFace(0)))
+		hook := IFace2Hook(ele.GetIFace(0))
+
+		hook.incrCallDepth()
+		defer hook.decrCallDepth()
+
+		ret := fun(hook)
 
 		if ret&EventRet_Unsubscribe != 0 {
 			ele.SetMark(bit, true)

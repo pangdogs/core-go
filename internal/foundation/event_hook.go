@@ -17,6 +17,9 @@ type Hook interface {
 	addEventSource(eventSrc EventSource) (*misc.Element, error)
 	removeEventSource(eventSrcEle *misc.Element)
 	rangeEventSources(fun func(eventSrc EventSource) bool)
+	incrCallDepth()
+	decrCallDepth()
+	GetCallDepth() int32
 }
 
 func IFace2Hook(f misc.IFace) Hook {
@@ -37,6 +40,7 @@ type HookFoundation struct {
 	eventSrcList       misc.List
 	eventSrcGCList     []*misc.Element
 	eventSubscriberMap map[int32]misc.IFace
+	callDepth          int32
 }
 
 func (h *HookFoundation) GC() {
@@ -160,4 +164,16 @@ func (h *HookFoundation) rangeEventSources(fun func(eventSrc EventSource) bool) 
 		}
 		return fun(IFace2EventSource(ele.GetIFace(0)))
 	})
+}
+
+func (h *HookFoundation) incrCallDepth() {
+	h.callDepth++
+}
+
+func (h *HookFoundation) decrCallDepth() {
+	h.callDepth--
+}
+
+func (h *HookFoundation) GetCallDepth() int32 {
+	return h.callDepth
 }
