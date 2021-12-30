@@ -19,14 +19,14 @@ type Runtime interface {
 	GetEntity(entID uint64) Entity
 	RangeEntities(fun func(entity Entity) bool)
 	GetCache() *misc.Cache
-	GetEventCallDepthLimit() int32
 	addEntity(entity Entity)
 	removeEntity(entID uint64)
 	pushSafeCall(callBundle *SafeCallBundle)
 	bindEvent(hookID, eventSrcID uint64, hookEle, eventSrcEle *misc.Element) error
 	unbindEvent(hookID, eventSrcID uint64) (hookEle, eventSrcEle *misc.Element, ok bool)
 	eventIsBound(hookID, eventSrcID uint64) bool
-	eventHandleToBit(handle uintptr) int
+	eventRecursionEnabled() bool
+	eventRecursionDiscarded() bool
 }
 
 func RuntimeGetInheritor(rt Runtime) Runtime {
@@ -75,7 +75,6 @@ type RuntimeFoundation struct {
 	entityGCList    []*misc.Element
 	frame           Frame
 	eventBinderMap  map[EventBinderKey]EventBinderValue
-	eventHandleBits map[uintptr]int
 	gcExists        map[uintptr]struct{}
 	gcList          []GC
 	gcLastRunTime   time.Time
@@ -109,15 +108,14 @@ func (rt *RuntimeFoundation) initRuntime(ctx Context, app App, opts *RuntimeOpti
 	rt.entityList.Init(rt.cache)
 	rt.entityMap = map[uint64]*misc.Element{}
 	rt.eventBinderMap = map[EventBinderKey]EventBinderValue{}
-	rt.eventHandleBits = map[uintptr]int{}
 
-	CallOuter(rt.autoRecover, rt.GetReportError(), func() {
+	CallOuter(rt.enableAutoRecover, rt.GetReportError(), func() {
 		if rt.initFunc != nil {
 			rt.initFunc(rt)
 		}
 	})
 
-	if opts.autoRun {
+	if opts.enableAutoRun {
 		rt.Run()
 	}
 }
@@ -154,7 +152,7 @@ func (rt *RuntimeFoundation) Run() chan struct{} {
 				if e.Escape() || e.GetMark(0) {
 					continue
 				}
-				CallOuter(rt.autoRecover, rt.GetReportError(), IFace2Entity(e.GetIFace(0)).callStart)
+				CallOuter(rt.enableAutoRecover, rt.GetReportError(), IFace2Entity(e.GetIFace(0)).callStart)
 			}
 			rt.entityStartList = rt.entityStartList[count:]
 		}
@@ -174,7 +172,7 @@ func (rt *RuntimeFoundation) Run() chan struct{} {
 		}
 
 		invokeSafeCallFun := func(callBundle *SafeCallBundle) (ret SafeRet) {
-			exception := CallOuter(rt.autoRecover, rt.GetReportError(), func() {
+			exception := CallOuter(rt.enableAutoRecover, rt.GetReportError(), func() {
 				if callBundle.Stack != nil {
 					ret = callBundle.SafeFun(callBundle.Stack)
 				} else {
@@ -218,7 +216,7 @@ func (rt *RuntimeFoundation) Run() chan struct{} {
 			rt.markShutdown()
 			rt.shutChan <- struct{}{}
 
-			CallOuter(rt.autoRecover, rt.GetReportError(), func() {
+			CallOuter(rt.enableAutoRecover, rt.GetReportError(), func() {
 				if rt.stopFunc != nil {
 					rt.stopFunc(rt)
 				}
@@ -231,7 +229,7 @@ func (rt *RuntimeFoundation) Run() chan struct{} {
 		rt.frame = nil
 
 		if rt.frameCreatorFunc == nil {
-			CallOuter(rt.autoRecover, rt.GetReportError(), func() {
+			CallOuter(rt.enableAutoRecover, rt.GetReportError(), func() {
 				if rt.startFunc != nil {
 					rt.startFunc(rt)
 				}
@@ -258,7 +256,7 @@ func (rt *RuntimeFoundation) Run() chan struct{} {
 			}
 
 		} else {
-			CallOuter(rt.autoRecover, rt.GetReportError(), func() {
+			CallOuter(rt.enableAutoRecover, rt.GetReportError(), func() {
 				rt.frame = rt.frameCreatorFunc(rt)
 			})
 
@@ -356,7 +354,7 @@ func (rt *RuntimeFoundation) Run() chan struct{} {
 				}
 			}
 
-			CallOuter(rt.autoRecover, rt.GetReportError(), func() {
+			CallOuter(rt.enableAutoRecover, rt.GetReportError(), func() {
 				if rt.startFunc != nil {
 					rt.startFunc(rt)
 				}
@@ -381,7 +379,7 @@ func (rt *RuntimeFoundation) Stop() {
 }
 
 func (rt *RuntimeFoundation) PushGC(gc GC) {
-	if !rt.gcEnable || gc == nil {
+	if !rt.enableGC || gc == nil {
 		return
 	}
 
@@ -398,7 +396,7 @@ func (rt *RuntimeFoundation) PushGC(gc GC) {
 }
 
 func (rt *RuntimeFoundation) RunGC() {
-	if !rt.gcEnable {
+	if !rt.enableGC {
 		return
 	}
 
@@ -445,7 +443,7 @@ func (rt *RuntimeFoundation) GCHandle() uintptr {
 }
 
 func (rt *RuntimeFoundation) GCEnabled() bool {
-	return rt.gcEnable
+	return rt.enableGC
 }
 
 func (rt *RuntimeFoundation) GetRuntimeID() uint64 {
@@ -494,10 +492,6 @@ func (rt *RuntimeFoundation) GetCache() *misc.Cache {
 	return rt.cache
 }
 
-func (rt *RuntimeFoundation) GetEventCallDepthLimit() int32 {
-	return rt.eventCallDepthLimit
-}
-
 func (rt *RuntimeFoundation) addEntity(entity Entity) {
 	if entity == nil {
 		panic("nil entity")
@@ -507,9 +501,9 @@ func (rt *RuntimeFoundation) addEntity(entity Entity) {
 		panic("entity id already exists")
 	}
 
-	ele := rt.entityList.PushIFaceBack(Entity2IFace(entity))
-	rt.entityMap[entity.GetEntityID()] = ele
-	rt.entityStartList = append(rt.entityStartList, ele)
+	e := rt.entityList.PushIFaceBack(Entity2IFace(entity))
+	rt.entityMap[entity.GetEntityID()] = e
+	rt.entityStartList = append(rt.entityStartList, e)
 }
 
 func (rt *RuntimeFoundation) removeEntity(entID uint64) {
@@ -575,11 +569,10 @@ func (rt *RuntimeFoundation) eventIsBound(hookID, eventSrcID uint64) bool {
 	return ok
 }
 
-func (rt *RuntimeFoundation) eventHandleToBit(handle uintptr) int {
-	bit, ok := rt.eventHandleBits[handle]
-	if !ok {
-		bit = len(rt.eventHandleBits) + 64
-		rt.eventHandleBits[handle] = bit
-	}
-	return bit
+func (rt *RuntimeFoundation) eventRecursionEnabled() bool {
+	return rt.enableEventRecursion
+}
+
+func (rt *RuntimeFoundation) eventRecursionDiscarded() bool {
+	return rt.discardEventRecursion
 }

@@ -12,15 +12,16 @@ type RuntimeOptions struct {
 	initFunc,
 	startFunc,
 	stopFunc func(rt Runtime)
-	autoRun             bool
-	autoRecover         bool
-	safeCallCacheSize   int
-	frameCreatorFunc    func(rt Runtime) Frame
-	gcEnable            bool
-	gcTimeInterval      time.Duration
-	gcItemNum           int
-	cache               *misc.Cache
-	eventCallDepthLimit int32
+	enableAutoRun         bool
+	enableAutoRecover     bool
+	safeCallCacheSize     int
+	frameCreatorFunc      func(rt Runtime) Frame
+	enableGC              bool
+	gcTimeInterval        time.Duration
+	gcItemNum             int
+	cache                 *misc.Cache
+	enableEventRecursion  bool
+	discardEventRecursion bool
 }
 
 type NewRuntimeOptionFunc func(o *RuntimeOptions)
@@ -33,15 +34,16 @@ func (*NewRuntimeOptions) Default() NewRuntimeOptionFunc {
 		o.initFunc = nil
 		o.startFunc = nil
 		o.stopFunc = nil
-		o.autoRun = false
-		o.autoRecover = false
+		o.enableAutoRun = false
+		o.enableAutoRecover = false
 		o.safeCallCacheSize = 100
 		o.frameCreatorFunc = nil
-		o.gcEnable = true
+		o.enableGC = true
 		o.gcTimeInterval = 10 * time.Second
 		o.gcItemNum = 1000
 		o.cache = nil
-		o.eventCallDepthLimit = 0
+		o.enableEventRecursion = false
+		o.discardEventRecursion = true
 	}
 }
 
@@ -69,15 +71,15 @@ func (*NewRuntimeOptions) StopFunc(v func(rt Runtime)) NewRuntimeOptionFunc {
 	}
 }
 
-func (*NewRuntimeOptions) AutoRun(v bool) NewRuntimeOptionFunc {
+func (*NewRuntimeOptions) EnableAutoRun(v bool) NewRuntimeOptionFunc {
 	return func(o *RuntimeOptions) {
-		o.autoRun = v
+		o.enableAutoRun = v
 	}
 }
 
-func (*NewRuntimeOptions) AutoRecover(v bool) NewRuntimeOptionFunc {
+func (*NewRuntimeOptions) EnableAutoRecover(v bool) NewRuntimeOptionFunc {
 	return func(o *RuntimeOptions) {
-		o.autoRecover = v
+		o.enableAutoRecover = v
 	}
 }
 
@@ -93,9 +95,9 @@ func (*NewRuntimeOptions) FrameCreatorFunc(v func(rt Runtime) Frame) NewRuntimeO
 	}
 }
 
-func (*NewRuntimeOptions) GCEnable(v bool) NewRuntimeOptionFunc {
+func (*NewRuntimeOptions) EnableGC(v bool) NewRuntimeOptionFunc {
 	return func(o *RuntimeOptions) {
-		o.gcEnable = v
+		o.enableGC = v
 	}
 }
 
@@ -117,8 +119,14 @@ func (*NewRuntimeOptions) Cache(v *misc.Cache) NewRuntimeOptionFunc {
 	}
 }
 
-func (*NewRuntimeOptions) EventCallDepthLimit(v int32) NewRuntimeOptionFunc {
+func (*NewRuntimeOptions) EnableEventRecursion(v bool) NewRuntimeOptionFunc {
 	return func(o *RuntimeOptions) {
-		o.eventCallDepthLimit = v
+		o.enableEventRecursion = v
+	}
+}
+
+func (*NewRuntimeOptions) DiscardEventRecursion(v bool) NewRuntimeOptionFunc {
+	return func(o *RuntimeOptions) {
+		o.discardEventRecursion = v
 	}
 }

@@ -7,8 +7,8 @@ type AppOptions struct {
 	initFunc,
 	startFunc,
 	stopFunc func(app App)
-	autoRecover     bool
-	enableGetEntity bool
+	enableAutoRecover bool
+	enableGetEntity   bool
 }
 
 type NewAppOptionFunc func(o *AppOptions)
@@ -21,7 +21,7 @@ func (*NewAppOptions) Default() NewAppOptionFunc {
 		o.initFunc = nil
 		o.startFunc = nil
 		o.stopFunc = nil
-		o.autoRecover = false
+		o.enableAutoRecover = false
 		o.enableGetEntity = true
 	}
 }
@@ -32,9 +32,9 @@ func (*NewAppOptions) Inheritor(v App) NewAppOptionFunc {
 	}
 }
 
-func (*NewAppOptions) AutoRecover(v bool) NewAppOptionFunc {
+func (*NewAppOptions) EnableAutoRecover(v bool) NewAppOptionFunc {
 	return func(o *AppOptions) {
-		o.autoRecover = v
+		o.enableAutoRecover = v
 	}
 }
 

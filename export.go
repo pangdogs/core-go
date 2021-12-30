@@ -116,9 +116,8 @@ var SendEvent = foundation.SendEvent
 type EventRet = foundation.EventRet
 
 const (
-	EventRet_Continue    = foundation.EventRet_Continue
-	EventRet_Break       = foundation.EventRet_Break
-	EventRet_Unsubscribe = foundation.EventRet_Unsubscribe
+	EventRet_Continue = foundation.EventRet_Continue
+	EventRet_Break    = foundation.EventRet_Break
 )
 
 type SafeStack = foundation.SafeStack

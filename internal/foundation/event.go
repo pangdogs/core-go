@@ -3,10 +3,9 @@ package foundation
 import (
 	"errors"
 	"github.com/pangdogs/core/internal/misc"
-	"unsafe"
 )
 
-const eventsLimit = int32(64 * (misc.StoreMarkLimit - 1))
+const eventsLimit = 256
 
 var eventID = int32(-1)
 
@@ -115,15 +114,14 @@ func UnbindAllHook(eventSrc EventSource) {
 type EventRet int32
 
 const (
-	EventRet_Continue EventRet = 1 << iota
+	EventRet_Continue EventRet = iota
 	EventRet_Break
-	EventRet_Unsubscribe
 )
 
-func SendEvent(eventSrc EventSource, fun func(hook Hook) EventRet) {
+func SendEvent(eventSrc EventSource, eventID int32, fun func(subscriber misc.IFace) EventRet) {
 	if eventSrc == nil || fun == nil {
 		return
 	}
 
-	eventSrc.sendEvent(fun, **(**uintptr)(unsafe.Pointer(&fun)))
+	eventSrc.sendEvent(eventID, fun)
 }

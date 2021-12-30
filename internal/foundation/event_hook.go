@@ -14,12 +14,11 @@ type Hook interface {
 	UnsubscribeEvent(eventID int32)
 	UnsubscribeAllEvent()
 	GetEventSubscriber(eventID int32) misc.IFace
+	setEventCalled(eventID int32, v bool)
+	getEventCalled(eventID int32) bool
 	addEventSource(eventSrc EventSource) (*misc.Element, error)
 	removeEventSource(eventSrcEle *misc.Element)
 	rangeEventSources(fun func(eventSrc EventSource) bool)
-	incrCallDepth()
-	decrCallDepth()
-	GetCallDepth() int32
 }
 
 func IFace2Hook(f misc.IFace) Hook {
@@ -40,7 +39,7 @@ type HookFoundation struct {
 	eventSrcList       misc.List
 	eventSrcGCList     []*misc.Element
 	eventSubscriberMap map[int32]misc.IFace
-	callDepth          int32
+	eventCalledMark    [eventsLimit / 64]uint64
 }
 
 func (h *HookFoundation) GC() {
@@ -127,6 +126,18 @@ func (h *HookFoundation) GetEventSubscriber(eventID int32) misc.IFace {
 	return subscriber
 }
 
+func (h *HookFoundation) setEventCalled(eventID int32, v bool) {
+	if v {
+		h.eventCalledMark[eventID/64] |= 1 << (eventID % 64)
+	} else {
+		h.eventCalledMark[eventID/64] &= ^(1 << (eventID % 64))
+	}
+}
+
+func (h *HookFoundation) getEventCalled(eventID int32) bool {
+	return (h.eventCalledMark[eventID/64]>>(eventID%64))&1 != 0
+}
+
 func (h *HookFoundation) addEventSource(eventSrc EventSource) (*misc.Element, error) {
 	if eventSrc == nil {
 		return nil, errors.New("nil eventSrc")
@@ -158,22 +169,10 @@ func (h *HookFoundation) rangeEventSources(fun func(eventSrc EventSource) bool) 
 		return
 	}
 
-	h.eventSrcList.UnsafeTraversal(func(ele *misc.Element) bool {
-		if ele.Escape() || ele.GetMark(0) {
+	h.eventSrcList.UnsafeTraversal(func(e *misc.Element) bool {
+		if e.Escape() || e.GetMark(0) {
 			return true
 		}
-		return fun(IFace2EventSource(ele.GetIFace(0)))
+		return fun(IFace2EventSource(e.GetIFace(0)))
 	})
-}
-
-func (h *HookFoundation) incrCallDepth() {
-	h.callDepth++
-}
-
-func (h *HookFoundation) decrCallDepth() {
-	h.callDepth--
-}
-
-func (h *HookFoundation) GetCallDepth() int32 {
-	return h.callDepth
 }

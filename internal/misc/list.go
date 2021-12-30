@@ -19,7 +19,7 @@ type IFace [2]unsafe.Pointer
 
 const StoreIFaceLimit = 4
 
-const StoreMarkLimit = 4
+const StoreMarkLimit = 2
 
 // Element is an element of a linked misc.
 type Element struct {
@@ -64,15 +64,15 @@ func (e *Element) Escape() bool {
 // SetMark 设置标记
 func (e *Element) SetMark(bit int, v bool) {
 	if v {
-		e.Mark[bit/64] |= 1 << bit
+		e.Mark[bit/64] |= 1 << (bit % 64)
 	} else {
-		e.Mark[bit/64] &= ^(1 << bit)
+		e.Mark[bit/64] &= ^(1 << (bit % 64))
 	}
 }
 
 // GetMark 获取标记
 func (e *Element) GetMark(bit int) bool {
-	return (e.Mark[bit/64]>>bit)&uint64(1) == 1
+	return (e.Mark[bit/64]>>(bit%64))&1 != 0
 }
 
 // SetIFace 设置接口指针，用于提高接口转换效率

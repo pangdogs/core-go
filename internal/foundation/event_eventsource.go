@@ -13,7 +13,7 @@ type EventSource interface {
 	addHook(hook Hook, priority int32) (*misc.Element, error)
 	removeHook(hookEle *misc.Element)
 	rangeHooks(fun func(hook Hook, priority int32) bool)
-	sendEvent(fun func(hook Hook) EventRet, eventHandle uintptr)
+	sendEvent(eventID int32, fun func(subscriber misc.IFace) EventRet)
 }
 
 func IFace2EventSource(f misc.IFace) EventSource {
@@ -77,9 +77,9 @@ func (es *EventSourceFoundation) addHook(hook Hook, priority int32) (*misc.Eleme
 		return nil, errors.New("nil runtime")
 	}
 
-	for ele := es.hookList.Front(); ele != nil; ele = ele.Next() {
-		if priority < int32(ele.Mark[0]>>32) {
-			hookEle := es.hookList.InsertIFaceBefore(Hook2IFace(hook), ele)
+	for e := es.hookList.Front(); e != nil; e = e.Next() {
+		if priority < int32(e.Mark[0]>>32) {
+			hookEle := es.hookList.InsertIFaceBefore(Hook2IFace(hook), e)
 			hookEle.Mark[0] |= uint64(priority) << 32
 			return hookEle, nil
 		}
@@ -108,44 +108,48 @@ func (es *EventSourceFoundation) rangeHooks(fun func(hook Hook, priority int32) 
 		return
 	}
 
-	es.hookList.UnsafeTraversal(func(ele *misc.Element) bool {
-		if ele.Escape() || ele.GetMark(0) {
+	es.hookList.UnsafeTraversal(func(e *misc.Element) bool {
+		if e.Escape() || e.GetMark(0) {
 			return true
 		}
-		return fun(IFace2Hook(ele.GetIFace(0)), int32(ele.Mark[0]>>32))
+		return fun(IFace2Hook(e.GetIFace(0)), int32(e.Mark[0]>>32))
 	})
 }
 
-func (es *EventSourceFoundation) sendEvent(fun func(hook Hook) EventRet, eventHandle uintptr) {
+func (es *EventSourceFoundation) sendEvent(eventID int32, fun func(subscriber misc.IFace) EventRet) {
 	if fun == nil || es.runtime == nil {
 		return
 	}
 
-	bit := es.runtime.eventHandleToBit(eventHandle)
+	enableEventRecursion := es.runtime.eventRecursionEnabled()
+	discardEventRecursion := es.runtime.eventRecursionDiscarded()
 
-	es.hookList.UnsafeTraversal(func(ele *misc.Element) bool {
-		if ele.Escape() || ele.GetMark(0) || ele.GetMark(bit) {
+	es.hookList.UnsafeTraversal(func(e *misc.Element) bool {
+		if e.Escape() || e.GetMark(0) {
 			return true
 		}
 
-		hook := IFace2Hook(ele.GetIFace(0))
+		hook := IFace2Hook(e.GetIFace(0))
 
-		callDepthLimit := es.runtime.GetEventCallDepthLimit()
-		if callDepthLimit > 0 {
-			if hook.GetCallDepth() >= callDepthLimit {
-				panic("event call depth exceed limit")
+		subscriber := hook.GetEventSubscriber(eventID)
+		if subscriber == misc.NilIFace {
+			return true
+		}
+
+		called := hook.getEventCalled(eventID)
+		if called {
+			if enableEventRecursion {
+				if discardEventRecursion {
+					return true
+				}
+			} else {
+				panic("event recursion not allowed")
 			}
-
-			hook.incrCallDepth()
-			defer hook.decrCallDepth()
+		} else {
+			hook.setEventCalled(eventID, true)
+			defer hook.setEventCalled(eventID, false)
 		}
 
-		ret := fun(hook)
-
-		if ret&EventRet_Unsubscribe != 0 {
-			ele.SetMark(bit, true)
-		}
-
-		return ret&EventRet_Break == 0
+		return fun(subscriber) == EventRet_Continue
 	})
 }
