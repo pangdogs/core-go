@@ -34,12 +34,13 @@ func InitHook(hook Hook, rt Runtime) {
 }
 
 type HookFoundation struct {
-	id                 uint64
-	runtime            Runtime
-	eventSrcList       misc.List
-	eventSrcGCList     []*misc.Element
-	eventSubscriberMap map[int32]misc.IFace
-	eventCalledMark    [eventsLimit / 64]uint64
+	id                  uint64
+	runtime             Runtime
+	eventSrcList        misc.List
+	eventSrcGCList      []*misc.Element
+	eventSubscriberMap  map[int32]misc.IFace
+	eventSubscribedMark [eventsLimit / 64]uint64
+	eventCalledMark     [eventsLimit / 64]uint64
 }
 
 func (h *HookFoundation) GC() {
@@ -89,6 +90,7 @@ func (h *HookFoundation) SubscribeEvent(eventID int32, subscriber misc.IFace) er
 	}
 
 	h.eventSubscriberMap[eventID] = subscriber
+	h.setEventSubscribed(eventID, true)
 
 	return nil
 }
@@ -103,10 +105,14 @@ func (h *HookFoundation) UnsubscribeEvent(eventID int32) {
 	}
 
 	delete(h.eventSubscriberMap, eventID)
+	h.setEventSubscribed(eventID, false)
 }
 
 func (h *HookFoundation) UnsubscribeAllEvent() {
 	h.eventSubscriberMap = nil
+	for i := range h.eventSubscribedMark {
+		h.eventSubscribedMark[i] = 0
+	}
 }
 
 func (h *HookFoundation) GetEventSubscriber(eventID int32) misc.IFace {
@@ -118,12 +124,28 @@ func (h *HookFoundation) GetEventSubscriber(eventID int32) misc.IFace {
 		return misc.NilIFace
 	}
 
+	if !h.getEventSubscribed(eventID) {
+		return misc.NilIFace
+	}
+
 	subscriber, ok := h.eventSubscriberMap[eventID]
 	if !ok {
 		return misc.NilIFace
 	}
 
 	return subscriber
+}
+
+func (h *HookFoundation) setEventSubscribed(eventID int32, v bool) {
+	if v {
+		h.eventSubscribedMark[eventID/64] |= 1 << (eventID % 64)
+	} else {
+		h.eventSubscribedMark[eventID/64] &= ^(1 << (eventID % 64))
+	}
+}
+
+func (h *HookFoundation) getEventSubscribed(eventID int32) bool {
+	return (h.eventSubscribedMark[eventID/64]>>(eventID%64))&1 != 0
 }
 
 func (h *HookFoundation) setEventCalled(eventID int32, v bool) {
