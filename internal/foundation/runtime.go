@@ -26,7 +26,7 @@ type Runtime interface {
 	unbindEvent(hookID, eventSrcID uint64) (hookEle, eventSrcEle *misc.Element, ok bool)
 	eventIsBound(hookID, eventSrcID uint64) bool
 	eventRecursionEnabled() bool
-	eventRecursionDiscarded() bool
+	recursiveEventDiscarded() bool
 }
 
 func RuntimeGetInheritor(rt Runtime) Runtime {
@@ -573,6 +573,6 @@ func (rt *RuntimeFoundation) eventRecursionEnabled() bool {
 	return rt.enableEventRecursion
 }
 
-func (rt *RuntimeFoundation) eventRecursionDiscarded() bool {
-	return rt.discardEventRecursion
+func (rt *RuntimeFoundation) recursiveEventDiscarded() bool {
+	return rt.discardRecursiveEvent
 }

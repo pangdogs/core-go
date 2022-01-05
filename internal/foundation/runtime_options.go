@@ -21,7 +21,7 @@ type RuntimeOptions struct {
 	gcItemNum             int
 	cache                 *misc.Cache
 	enableEventRecursion  bool
-	discardEventRecursion bool
+	discardRecursiveEvent bool
 }
 
 type NewRuntimeOptionFunc func(o *RuntimeOptions)
@@ -43,7 +43,7 @@ func (*NewRuntimeOptions) Default() NewRuntimeOptionFunc {
 		o.gcItemNum = 1000
 		o.cache = nil
 		o.enableEventRecursion = false
-		o.discardEventRecursion = true
+		o.discardRecursiveEvent = true
 	}
 }
 
@@ -125,8 +125,8 @@ func (*NewRuntimeOptions) EnableEventRecursion(v bool) NewRuntimeOptionFunc {
 	}
 }
 
-func (*NewRuntimeOptions) DiscardEventRecursion(v bool) NewRuntimeOptionFunc {
+func (*NewRuntimeOptions) DiscardRecursiveEvent(v bool) NewRuntimeOptionFunc {
 	return func(o *RuntimeOptions) {
-		o.discardEventRecursion = v
+		o.discardRecursiveEvent = v
 	}
 }

@@ -122,7 +122,7 @@ func (es *EventSourceFoundation) sendEvent(eventID int32, fun func(subscriber mi
 	}
 
 	enableEventRecursion := es.runtime.eventRecursionEnabled()
-	discardEventRecursion := es.runtime.eventRecursionDiscarded()
+	discardEventRecursion := es.runtime.recursiveEventDiscarded()
 
 	es.hookList.UnsafeTraversal(func(e *misc.Element) bool {
 		if e.Escape() || e.GetMark(0) {
