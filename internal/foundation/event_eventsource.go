@@ -143,7 +143,7 @@ func (es *EventSourceFoundation) sendEvent(eventID int32, fun func(subscriber mi
 					return true
 				}
 			} else {
-				panic("event recursion not allowed")
+				panic("event recursion not enabled")
 			}
 		} else {
 			hook.setEventCalled(eventID, true)
