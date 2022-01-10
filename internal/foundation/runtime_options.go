@@ -36,11 +36,11 @@ func (*NewRuntimeOptions) Default() NewRuntimeOptionFunc {
 		o.stopFunc = nil
 		o.enableAutoRun = false
 		o.enableAutoRecover = false
-		o.safeCallCacheSize = 100
+		o.safeCallCacheSize = 128
 		o.frameCreatorFunc = nil
 		o.enableGC = true
-		o.gcTimeInterval = 10 * time.Second
-		o.gcItemNum = 1000
+		o.gcTimeInterval = 0
+		o.gcItemNum = 512
 		o.cache = nil
 		o.enableEventRecursion = false
 		o.discardRecursiveEvent = true

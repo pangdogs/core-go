@@ -44,7 +44,7 @@ type HookFoundation struct {
 }
 
 func (h *HookFoundation) GC() {
-	for i := 0; i < len(h.eventSrcGCList); i++ {
+	for i := range h.eventSrcGCList {
 		h.eventSrcList.Remove(h.eventSrcGCList[i])
 	}
 	h.eventSrcGCList = h.eventSrcGCList[:0]

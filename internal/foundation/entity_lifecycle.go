@@ -10,6 +10,7 @@ const (
 	EntityComponentsMark_Started
 	EntityComponentsMark_Update
 	EntityComponentsMark_LateUpdate
+	EntityComponentsMark_HaltedAndShut
 )
 
 func (ent *EntityFoundation) callEntityInit() {

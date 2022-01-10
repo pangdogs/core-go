@@ -223,8 +223,10 @@ func (rt *RuntimeFoundation) Run() chan struct{} {
 			})
 		}()
 
-		if rt.gcLastRunTime.IsZero() {
-			rt.gcLastRunTime = time.Now()
+		if rt.gcTimeInterval > 0 {
+			if rt.gcLastRunTime.IsZero() {
+				rt.gcLastRunTime = time.Now()
+			}
 		}
 		rt.frame = nil
 
@@ -422,17 +424,19 @@ func (rt *RuntimeFoundation) RunGC() {
 		return
 	}
 
-	for i := 0; i < len(rt.gcList); i++ {
+	for i := range rt.gcList {
 		rt.gcList[i].GC()
 	}
 
 	rt.gcExists = nil
 	rt.gcList = rt.gcList[:0]
-	rt.gcLastRunTime = time.Now()
+	if rt.gcTimeInterval > 0 {
+		rt.gcLastRunTime = time.Now()
+	}
 }
 
 func (rt *RuntimeFoundation) GC() {
-	for i := 0; i < len(rt.entityGCList); i++ {
+	for i := range rt.entityGCList {
 		rt.entityList.Remove(rt.entityGCList[i])
 	}
 	rt.entityGCList = rt.entityGCList[:0]

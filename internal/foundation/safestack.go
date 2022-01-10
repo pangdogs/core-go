@@ -44,7 +44,7 @@ func (stack *_SafeStack) SafeCall(callee Runtime, fun func(stack SafeStack) Safe
 		panic("nil fun")
 	}
 
-	for i := 0; i <= len(*stack); i++ {
+	for i := range *stack {
 		if (*stack)[i].GetRuntimeID() == callee.GetRuntimeID() {
 			ret = fun(stack.Copy())
 			return

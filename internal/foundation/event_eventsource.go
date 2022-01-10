@@ -36,7 +36,7 @@ type EventSourceFoundation struct {
 }
 
 func (es *EventSourceFoundation) GC() {
-	for i := 0; i < len(es.hookGCList); i++ {
+	for i := range es.hookGCList {
 		es.hookList.Remove(es.hookGCList[i])
 	}
 	es.hookGCList = es.hookGCList[:0]

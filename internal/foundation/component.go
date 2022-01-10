@@ -7,6 +7,7 @@ import (
 
 type Component interface {
 	initComponent(name string, entity Entity, inheritor Component)
+	GetComponentID() uint64
 	GetName() string
 	GetEntity() Entity
 	getComponentInheritor() Component
@@ -25,15 +26,25 @@ func ComponentGetInheritor(c Component) Component {
 }
 
 type ComponentFoundation struct {
+	id        uint64
 	name      string
 	entity    Entity
 	inheritor Component
 }
 
 func (c *ComponentFoundation) initComponent(name string, entity Entity, inheritor Component) {
+	if c.entity != nil {
+		panic("init repeated")
+	}
+
 	c.name = name
 	c.entity = entity
 	c.inheritor = inheritor
+	c.id = entity.GetRuntime().GetApp().makeUID()
+}
+
+func (c *ComponentFoundation) GetComponentID() uint64 {
+	return c.id
 }
 
 func (c *ComponentFoundation) GetName() string {

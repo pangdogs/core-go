@@ -302,7 +302,7 @@ func (l *List) SafeTraversal(visitor func(e *Element) bool) {
 		snap = append(snap, e)
 	}
 
-	for i := 0; i < len(snap); i++ {
+	for i := range snap {
 		if !visitor(snap[i]) {
 			break
 		}

@@ -15,7 +15,9 @@ type Entity interface {
 	IsDestroyed() bool
 	AddComponent(name string, component interface{}) error
 	RemoveComponent(name string)
+	RemoveComponentByID(id uint64)
 	GetComponent(name string) Component
+	GetComponentByID(id uint64) Component
 	GetComponents(name string) []Component
 	RangeComponents(fun func(component Component) bool)
 	callEntityInit()
@@ -118,6 +120,7 @@ type EntityFoundation struct {
 	runtime                 Runtime
 	destroyed               bool
 	componentMap            map[string]*misc.Element
+	componentByIDMap        map[uint64]*misc.Element
 	componentList           misc.List
 	componentGCList         []*misc.Element
 	lifecycleEntityInitFunc func()
@@ -148,6 +151,9 @@ func (ent *EntityFoundation) initEntity(rt Runtime, opts *EntityOptions) {
 	if ent.enableFastGetComponent {
 		ent.componentMap = map[string]*misc.Element{}
 	}
+	if ent.enableFastGetComponentByID {
+		ent.componentByIDMap = map[uint64]*misc.Element{}
+	}
 
 	rt.GetApp().addEntity(ent.inheritor)
 	rt.addEntity(ent.inheritor)
@@ -160,7 +166,10 @@ func (ent *EntityFoundation) initEntity(rt Runtime, opts *EntityOptions) {
 }
 
 func (ent *EntityFoundation) GC() {
-	for i := 0; i < len(ent.componentGCList); i++ {
+	if ent.destroyed {
+		return
+	}
+	for i := range ent.componentGCList {
 		ent.componentList.Remove(ent.componentGCList[i])
 	}
 	ent.componentGCList = ent.componentGCList[:0]
@@ -182,11 +191,28 @@ func (ent *EntityFoundation) Destroy() {
 
 	ent.callEntityShut()
 
+	if ent.enableFastGetComponent {
+		ent.componentMap = nil
+	}
+
+	if ent.enableFastGetComponentByID {
+		ent.componentByIDMap = nil
+	}
+
 	ent.componentList.UnsafeTraversal(func(e *misc.Element) bool {
 		if e.Escape() || e.GetMark(EntityComponentsMark_Removed) {
 			return true
 		}
 		e.SetMark(EntityComponentsMark_Removed, true)
+
+		return true
+	})
+
+	ent.componentList.UnsafeTraversal(func(e *misc.Element) bool {
+		if e.Escape() || e.GetMark(EntityComponentsMark_HaltedAndShut) {
+			return true
+		}
+		e.SetMark(EntityComponentsMark_HaltedAndShut, true)
 
 		component := IFace2Component(e.GetIFace(EntityComponentsIFace_Component))
 
@@ -248,6 +274,9 @@ func (ent *EntityFoundation) AddComponent(name string, component interface{}) er
 		if ent.enableFastGetComponent {
 			ent.componentMap[name] = e
 		}
+		if ent.enableFastGetComponentByID {
+			ent.componentByIDMap[_component.GetComponentID()] = e
+		}
 	}
 
 	if ci, ok := _component.(ComponentInit); ok {
@@ -282,6 +311,22 @@ func (ent *EntityFoundation) RemoveComponent(name string) {
 		}
 		t.SetMark(EntityComponentsMark_Removed, true)
 
+		if ent.enableFastGetComponentByID {
+			delete(ent.componentByIDMap, component.GetComponentID())
+		}
+	}
+
+	for t := e; t != nil; t = t.Next() {
+		component := IFace2Component(t.GetIFace(EntityComponentsIFace_Component))
+		if component.GetName() != name {
+			break
+		}
+
+		if t.Escape() || t.GetMark(EntityComponentsMark_HaltedAndShut) {
+			continue
+		}
+		t.SetMark(EntityComponentsMark_HaltedAndShut, true)
+
 		if ch, ok := component.(ComponentHalt); ok {
 			ch.Halt()
 		}
@@ -299,8 +344,72 @@ func (ent *EntityFoundation) RemoveComponent(name string) {
 	}
 }
 
+func (ent *EntityFoundation) RemoveComponentByID(id uint64) {
+	e, ok := ent.getComponentElementByID(id)
+	if !ok {
+		return
+	}
+
+	if ent.enableFastGetComponentByID {
+		delete(ent.componentByIDMap, id)
+	}
+
+	if e.Escape() || e.GetMark(EntityComponentsMark_Removed) {
+		return
+	}
+	e.SetMark(EntityComponentsMark_Removed, true)
+	e.SetMark(EntityComponentsMark_HaltedAndShut, true)
+
+	component := IFace2Component(e.GetIFace(EntityComponentsIFace_Component))
+
+	if ent.enableFastGetComponent {
+		allRemoved := true
+
+		for t := e; t != nil; t = t.Next() {
+			other := IFace2Component(t.GetIFace(EntityComponentsIFace_Component))
+			if other.GetName() != component.GetName() {
+				break
+			}
+
+			if t.Escape() || t.GetMark(EntityComponentsMark_Removed) {
+				continue
+			}
+
+			allRemoved = false
+			break
+		}
+
+		if allRemoved {
+			delete(ent.componentMap, component.GetName())
+		}
+	}
+
+	if ch, ok := component.(ComponentHalt); ok {
+		ch.Halt()
+	}
+
+	if cs, ok := component.(ComponentShut); ok {
+		cs.Shut()
+	}
+
+	if !ent.destroyed {
+		if ent.runtime.GCEnabled() {
+			ent.componentGCList = append(ent.componentGCList, e)
+			ent.runtime.PushGC(ent)
+		}
+	}
+}
+
 func (ent *EntityFoundation) GetComponent(name string) Component {
 	if e, ok := ent.getComponentElement(name); ok {
+		return IFace2Component(e.GetIFace(EntityComponentsIFace_Component))
+	}
+
+	return nil
+}
+
+func (ent *EntityFoundation) GetComponentByID(id uint64) Component {
+	if e, ok := ent.getComponentElementByID(id); ok {
 		return IFace2Component(e.GetIFace(EntityComponentsIFace_Component))
 	}
 
@@ -350,6 +459,28 @@ func (ent *EntityFoundation) getComponentElement(name string) (*misc.Element, bo
 			return true
 		}
 		if IFace2Component(e.GetIFace(EntityComponentsIFace_Component)).GetName() == name {
+			element = e
+			return false
+		}
+		return true
+	})
+
+	return element, element != nil
+}
+
+func (ent *EntityFoundation) getComponentElementByID(id uint64) (*misc.Element, bool) {
+	if ent.enableFastGetComponentByID {
+		e, ok := ent.componentByIDMap[id]
+		return e, ok
+	}
+
+	var element *misc.Element
+
+	ent.componentList.UnsafeTraversal(func(e *misc.Element) bool {
+		if e.Escape() || e.GetMark(EntityComponentsMark_Removed) {
+			return true
+		}
+		if IFace2Component(e.GetIFace(EntityComponentsIFace_Component)).GetComponentID() == id {
 			element = e
 			return false
 		}
