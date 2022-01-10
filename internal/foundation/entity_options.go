@@ -19,8 +19,8 @@ func (*NewEntityOptions) Default() NewEntityOptionFunc {
 		o.inheritor = nil
 		o.initFunc = nil
 		o.shutFunc = nil
-		o.enableFastGetComponent = true
-		o.enableFastGetComponentByID = true
+		o.enableFastGetComponent = false
+		o.enableFastGetComponentByID = false
 	}
 }
 
