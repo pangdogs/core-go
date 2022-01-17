@@ -260,7 +260,8 @@ func (ent *EntityFoundation) AddComponent(name string, component interface{}) er
 	_component := component.(Component)
 	_component.initComponent(name, ent.inheritor, _component)
 
-	if e, ok := ent.getComponentElement(name); ok {
+	e, ok := ent.getComponentElement(name)
+	if ok {
 		old := e
 		for t := e; t != nil && IFace2Component(t.GetIFace(EntityComponentsIFace_Component)).GetName() == name; t = t.Next() {
 			if t.Escape() || t.GetMark(EntityComponentsMark_Removed) {
@@ -268,7 +269,7 @@ func (ent *EntityFoundation) AddComponent(name string, component interface{}) er
 			}
 			old = t
 		}
-		ent.componentList.InsertIFaceAfter(Component2IFace(_component), old)
+		e = ent.componentList.InsertIFaceAfter(Component2IFace(_component), old)
 	} else {
 		e = ent.componentList.PushIFaceBack(Component2IFace(_component))
 		if ent.enableFastGetComponent {
@@ -281,6 +282,10 @@ func (ent *EntityFoundation) AddComponent(name string, component interface{}) er
 
 	if ci, ok := _component.(ComponentInit); ok {
 		ci.Init()
+	}
+
+	if e.Escape() || e.GetMark(EntityComponentsMark_HaltedAndShut) {
+		return nil
 	}
 
 	if ca, ok := _component.(ComponentAwake); ok {
