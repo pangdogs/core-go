@@ -209,19 +209,30 @@ func (ent *EntityFoundation) Destroy() {
 	})
 
 	ent.componentList.UnsafeTraversal(func(e *misc.Element) bool {
-		if e.Escape() || e.GetMark(EntityComponentsMark_HaltedAndShut) {
+		if e.Escape() {
 			return true
 		}
-		e.SetMark(EntityComponentsMark_HaltedAndShut, true)
 
 		component := IFace2Component(e.GetIFace(EntityComponentsIFace_Component))
 
-		if ch, ok := component.(ComponentHalt); ok {
-			ch.Halt()
+		if e.GetMark(EntityComponentsMark_Awaked) {
+			if !e.GetMark(EntityComponentsMark_Halted) {
+				e.SetMark(EntityComponentsMark_Halted, true)
+
+				if ch, ok := component.(ComponentHalt); ok {
+					ch.Halt()
+				}
+			}
 		}
 
-		if cs, ok := component.(ComponentShut); ok {
-			cs.Shut()
+		if e.GetMark(EntityComponentsMark_Inited) {
+			if !e.GetMark(EntityComponentsMark_Shut) {
+				e.SetMark(EntityComponentsMark_Shut, true)
+
+				if cs, ok := component.(ComponentShut); ok {
+					cs.Shut()
+				}
+			}
 		}
 
 		return true
@@ -280,13 +291,17 @@ func (ent *EntityFoundation) AddComponent(name string, component interface{}) er
 		}
 	}
 
+	e.SetMark(EntityComponentsMark_Inited, true)
+
 	if ci, ok := _component.(ComponentInit); ok {
 		ci.Init()
 	}
 
-	if e.Escape() || e.GetMark(EntityComponentsMark_HaltedAndShut) {
+	if e.Escape() || e.GetMark(EntityComponentsMark_Removed) {
 		return nil
 	}
+
+	e.SetMark(EntityComponentsMark_Awaked, true)
 
 	if ca, ok := _component.(ComponentAwake); ok {
 		ca.Awake()
@@ -327,17 +342,28 @@ func (ent *EntityFoundation) RemoveComponent(name string) {
 			break
 		}
 
-		if t.Escape() || t.GetMark(EntityComponentsMark_HaltedAndShut) {
+		if t.Escape() {
 			continue
 		}
-		t.SetMark(EntityComponentsMark_HaltedAndShut, true)
 
-		if ch, ok := component.(ComponentHalt); ok {
-			ch.Halt()
+		if t.GetMark(EntityComponentsMark_Awaked) {
+			if !t.GetMark(EntityComponentsMark_Halted) {
+				t.SetMark(EntityComponentsMark_Halted, true)
+
+				if ch, ok := component.(ComponentHalt); ok {
+					ch.Halt()
+				}
+			}
 		}
 
-		if cs, ok := component.(ComponentShut); ok {
-			cs.Shut()
+		if t.GetMark(EntityComponentsMark_Inited) {
+			if !t.GetMark(EntityComponentsMark_Shut) {
+				t.SetMark(EntityComponentsMark_Shut, true)
+
+				if cs, ok := component.(ComponentShut); ok {
+					cs.Shut()
+				}
+			}
 		}
 
 		if !ent.destroyed {
@@ -363,7 +389,6 @@ func (ent *EntityFoundation) RemoveComponentByID(id uint64) {
 		return
 	}
 	e.SetMark(EntityComponentsMark_Removed, true)
-	e.SetMark(EntityComponentsMark_HaltedAndShut, true)
 
 	component := IFace2Component(e.GetIFace(EntityComponentsIFace_Component))
 
@@ -389,12 +414,24 @@ func (ent *EntityFoundation) RemoveComponentByID(id uint64) {
 		}
 	}
 
-	if ch, ok := component.(ComponentHalt); ok {
-		ch.Halt()
+	if e.GetMark(EntityComponentsMark_Awaked) {
+		if !e.GetMark(EntityComponentsMark_Halted) {
+			e.SetMark(EntityComponentsMark_Halted, true)
+
+			if ch, ok := component.(ComponentHalt); ok {
+				ch.Halt()
+			}
+		}
 	}
 
-	if cs, ok := component.(ComponentShut); ok {
-		cs.Shut()
+	if e.GetMark(EntityComponentsMark_Inited) {
+		if !e.GetMark(EntityComponentsMark_Shut) {
+			e.SetMark(EntityComponentsMark_Shut, true)
+
+			if cs, ok := component.(ComponentShut); ok {
+				cs.Shut()
+			}
+		}
 	}
 
 	if !ent.destroyed {

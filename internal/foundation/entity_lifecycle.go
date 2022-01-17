@@ -7,10 +7,14 @@ import (
 const (
 	EntityComponentsMark_Removed int = iota
 	EntityComponentsMark_Inited
+	EntityComponentsMark_Awaked
+	EntityComponentsMark_EntityInited
 	EntityComponentsMark_Started
 	EntityComponentsMark_Update
 	EntityComponentsMark_LateUpdate
-	EntityComponentsMark_HaltedAndShut
+	EntityComponentsMark_EntityShut
+	EntityComponentsMark_Halted
+	EntityComponentsMark_Shut
 )
 
 func (ent *EntityFoundation) callEntityInit() {
@@ -27,8 +31,8 @@ func (ent *EntityFoundation) callEntityInit() {
 			return true
 		}
 
-		if !e.GetMark(EntityComponentsMark_Inited) {
-			e.SetMark(EntityComponentsMark_Inited, true)
+		if !e.GetMark(EntityComponentsMark_EntityInited) {
+			e.SetMark(EntityComponentsMark_EntityInited, true)
 
 			if cei, ok := IFace2Component(e.GetIFace(EntityComponentsIFace_Component)).(ComponentEntityInit); ok {
 				cei.EntityInit()
@@ -87,8 +91,8 @@ func (ent *EntityFoundation) callUpdate() {
 	}
 
 	ent.componentList.UnsafeTraversal(func(e *misc.Element) bool {
-		if e.Escape() || e.GetMark(EntityComponentsMark_Removed) || !e.GetMark(EntityComponentsMark_Started) ||
-			!e.GetMark(EntityComponentsMark_Update) {
+		if e.Escape() || e.GetMark(EntityComponentsMark_Removed) ||
+			!e.GetMark(EntityComponentsMark_Started) || !e.GetMark(EntityComponentsMark_Update) {
 			return true
 		}
 
@@ -112,8 +116,8 @@ func (ent *EntityFoundation) callLateUpdate() {
 	}
 
 	ent.componentList.UnsafeTraversal(func(e *misc.Element) bool {
-		if e.Escape() || e.GetMark(EntityComponentsMark_Removed) || !e.GetMark(EntityComponentsMark_Started) ||
-			!e.GetMark(EntityComponentsMark_LateUpdate) {
+		if e.Escape() || e.GetMark(EntityComponentsMark_Removed) ||
+			!e.GetMark(EntityComponentsMark_Started) || !e.GetMark(EntityComponentsMark_LateUpdate) {
 			return true
 		}
 
@@ -131,12 +135,17 @@ func (ent *EntityFoundation) callEntityShut() {
 	}
 
 	ent.componentList.UnsafeTraversal(func(e *misc.Element) bool {
-		if e.Escape() || e.GetMark(EntityComponentsMark_Removed) || !e.GetMark(EntityComponentsMark_Inited) {
+		if e.Escape() || e.GetMark(EntityComponentsMark_Removed) ||
+			!e.GetMark(EntityComponentsMark_EntityInited) {
 			return true
 		}
 
-		if cs, ok := IFace2Component(e.GetIFace(EntityComponentsIFace_Component)).(ComponentEntityShut); ok {
-			cs.EntityShut()
+		if !e.GetMark(EntityComponentsMark_EntityShut) {
+			e.SetMark(EntityComponentsMark_EntityShut, true)
+
+			if cs, ok := IFace2Component(e.GetIFace(EntityComponentsIFace_Component)).(ComponentEntityShut); ok {
+				cs.EntityShut()
+			}
 		}
 
 		return true
