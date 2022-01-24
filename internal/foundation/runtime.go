@@ -27,6 +27,8 @@ type Runtime interface {
 	eventIsBound(hookID, eventSrcID uint64) bool
 	eventRecursionEnabled() bool
 	recursiveEventDiscarded() bool
+	incrEventCalledDepth() bool
+	decrEventCalledDepth()
 }
 
 func RuntimeGetInheritor(rt Runtime) Runtime {
@@ -66,18 +68,19 @@ type RuntimeFoundation struct {
 	RunnableFoundation
 	Context
 	RuntimeOptions
-	id              uint64
-	app             App
-	safeCallList    chan *SafeCallBundle
-	entityMap       map[uint64]*misc.Element
-	entityList      misc.List
-	entityStartList []*misc.Element
-	entityGCList    []*misc.Element
-	frame           Frame
-	eventBinderMap  map[EventBinderKey]EventBinderValue
-	gcExists        map[uintptr]struct{}
-	gcList          []GC
-	gcLastRunTime   time.Time
+	id               uint64
+	app              App
+	safeCallList     chan *SafeCallBundle
+	entityMap        map[uint64]*misc.Element
+	entityList       misc.List
+	entityStartList  []*misc.Element
+	entityGCList     []*misc.Element
+	frame            Frame
+	eventBinderMap   map[EventBinderKey]EventBinderValue
+	eventCalledDepth int
+	gcExists         map[uintptr]struct{}
+	gcList           []GC
+	gcLastRunTime    time.Time
 }
 
 func (rt *RuntimeFoundation) initRuntime(ctx Context, app App, opts *RuntimeOptions) {
@@ -579,4 +582,22 @@ func (rt *RuntimeFoundation) eventRecursionEnabled() bool {
 
 func (rt *RuntimeFoundation) recursiveEventDiscarded() bool {
 	return rt.discardRecursiveEvent
+}
+
+func (rt *RuntimeFoundation) incrEventCalledDepth() bool {
+	if rt.callEventDepth > 0 {
+		if rt.eventCalledDepth > rt.callEventDepth {
+			return false
+		}
+	}
+
+	rt.eventCalledDepth++
+
+	return true
+}
+
+func (rt *RuntimeFoundation) decrEventCalledDepth() {
+	if rt.eventCalledDepth > 0 {
+		rt.eventCalledDepth--
+	}
 }
