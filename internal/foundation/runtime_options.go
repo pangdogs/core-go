@@ -12,17 +12,18 @@ type RuntimeOptions struct {
 	initFunc,
 	startFunc,
 	stopFunc func(rt Runtime)
-	enableAutoRun         bool
-	enableAutoRecover     bool
-	safeCallCacheSize     int
-	frameCreatorFunc      func(rt Runtime) Frame
-	enableGC              bool
-	gcTimeInterval        time.Duration
-	gcItemNum             int
-	cache                 *misc.Cache
-	enableEventRecursion  bool
-	discardRecursiveEvent bool
-	callEventDepth        int
+	enableAutoRun           bool
+	enableAutoRecover       bool
+	safeCallCacheSize       int
+	frameCreatorFunc        func(rt Runtime) Frame
+	enableGC                bool
+	gcTimeInterval          time.Duration
+	gcItemNum               int
+	cache                   *misc.Cache
+	enableEventRecursion    bool
+	discardRecursiveEvent   bool
+	callEventDepth          int
+	discardExceedDepthEvent bool
 }
 
 type NewRuntimeOptionFunc func(o *RuntimeOptions)
@@ -136,5 +137,11 @@ func (*NewRuntimeOptions) DiscardRecursiveEvent(v bool) NewRuntimeOptionFunc {
 func (*NewRuntimeOptions) CallEventDepth(v int) NewRuntimeOptionFunc {
 	return func(o *RuntimeOptions) {
 		o.callEventDepth = v
+	}
+}
+
+func (*NewRuntimeOptions) DiscardExceedDepthEvent(v bool) NewRuntimeOptionFunc {
+	return func(o *RuntimeOptions) {
+		o.discardExceedDepthEvent = v
 	}
 }

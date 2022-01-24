@@ -587,7 +587,10 @@ func (rt *RuntimeFoundation) recursiveEventDiscarded() bool {
 func (rt *RuntimeFoundation) incrEventCalledDepth() bool {
 	if rt.callEventDepth > 0 {
 		if rt.eventCalledDepth > rt.callEventDepth {
-			return false
+			if rt.discardExceedDepthEvent {
+				return false
+			}
+			panic("event called exceed limited depth")
 		}
 	}
 
