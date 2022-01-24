@@ -47,6 +47,7 @@ func (*NewRuntimeOptions) Default() NewRuntimeOptionFunc {
 		o.enableEventRecursion = false
 		o.discardRecursiveEvent = true
 		o.callEventDepth = 0
+		o.discardExceedDepthEvent = false
 	}
 }
 
