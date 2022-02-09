@@ -12,6 +12,7 @@ type Entity interface {
 	GetEntityID() uint64
 	getEntityInheritor() Entity
 	GetRuntime() Runtime
+	IsDestroying() bool
 	IsDestroyed() bool
 	AddComponent(name string, component interface{}) error
 	RemoveComponent(name string)
@@ -118,6 +119,7 @@ type EntityFoundation struct {
 	EntityOptions
 	id                      uint64
 	runtime                 Runtime
+	destroying              bool
 	destroyed               bool
 	componentMap            map[string]*misc.Element
 	componentByIDMap        map[uint64]*misc.Element
@@ -180,11 +182,11 @@ func (ent *EntityFoundation) GCHandle() uintptr {
 }
 
 func (ent *EntityFoundation) Destroy() {
-	if ent.destroyed {
+	if ent.destroying || ent.destroyed {
 		return
 	}
 
-	ent.destroyed = true
+	ent.destroying = true
 
 	ent.GetRuntime().GetApp().removeEntity(ent.id)
 	ent.GetRuntime().removeEntity(ent.id)
@@ -241,6 +243,8 @@ func (ent *EntityFoundation) Destroy() {
 	if ent.shutFunc != nil {
 		ent.shutFunc(ent)
 	}
+
+	ent.destroyed = true
 }
 
 func (ent *EntityFoundation) GetEntityID() uint64 {
@@ -253,6 +257,10 @@ func (ent *EntityFoundation) getEntityInheritor() Entity {
 
 func (ent *EntityFoundation) GetRuntime() Runtime {
 	return ent.runtime
+}
+
+func (ent *EntityFoundation) IsDestroying() bool {
+	return ent.destroying
 }
 
 func (ent *EntityFoundation) IsDestroyed() bool {
