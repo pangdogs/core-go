@@ -18,7 +18,7 @@ const (
 )
 
 func (ent *EntityFoundation) callEntityInit() {
-	if ent.destroyed {
+	if ent.destroying {
 		return
 	}
 
@@ -44,7 +44,7 @@ func (ent *EntityFoundation) callEntityInit() {
 }
 
 func (ent *EntityFoundation) callStart() {
-	if ent.destroyed {
+	if ent.destroying {
 		return
 	}
 
@@ -80,7 +80,7 @@ func (ent *EntityFoundation) callStart() {
 }
 
 func (ent *EntityFoundation) callUpdate() {
-	if ent.destroyed {
+	if ent.destroying {
 		return
 	}
 
@@ -105,7 +105,7 @@ func (ent *EntityFoundation) callUpdate() {
 }
 
 func (ent *EntityFoundation) callLateUpdate() {
-	if ent.destroyed {
+	if ent.destroying {
 		return
 	}
 

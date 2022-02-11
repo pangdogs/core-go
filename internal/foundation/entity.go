@@ -168,7 +168,7 @@ func (ent *EntityFoundation) initEntity(rt Runtime, opts *EntityOptions) {
 }
 
 func (ent *EntityFoundation) GC() {
-	if ent.destroyed {
+	if ent.destroying {
 		return
 	}
 	for i := range ent.componentGCList {
@@ -182,7 +182,7 @@ func (ent *EntityFoundation) GCHandle() uintptr {
 }
 
 func (ent *EntityFoundation) Destroy() {
-	if ent.destroying || ent.destroyed {
+	if ent.destroying {
 		return
 	}
 
@@ -272,7 +272,7 @@ func (ent *EntityFoundation) AddComponent(name string, component interface{}) er
 		return errors.New("nil component")
 	}
 
-	if ent.destroyed {
+	if ent.destroying {
 		return errors.New("entity destroyed")
 	}
 
@@ -374,7 +374,7 @@ func (ent *EntityFoundation) RemoveComponent(name string) {
 			}
 		}
 
-		if !ent.destroyed {
+		if !ent.destroying {
 			if ent.runtime.GCEnabled() {
 				ent.componentGCList = append(ent.componentGCList, t)
 				ent.runtime.PushGC(ent)
@@ -442,7 +442,7 @@ func (ent *EntityFoundation) RemoveComponentByID(id uint64) {
 		}
 	}
 
-	if !ent.destroyed {
+	if !ent.destroying {
 		if ent.runtime.GCEnabled() {
 			ent.componentGCList = append(ent.componentGCList, e)
 			ent.runtime.PushGC(ent)
