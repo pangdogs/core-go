@@ -63,7 +63,6 @@ func (app *AppFoundation) initApp(ctx Context, opts *AppOptions) {
 		app.inheritor = app
 	}
 
-	app.initRunnable()
 	app.Context = ctx
 
 	CallOuter(app.enableAutoRecover, app.GetReportError(), func() {
@@ -78,40 +77,11 @@ func (app *AppFoundation) Run() chan struct{} {
 		panic("app already running")
 	}
 
-	go func() {
-		if parentCtx, ok := app.GetParentContext().(Context); ok {
-			parentCtx.GetWaitGroup().Add(1)
-		}
+	shutChan := make(chan struct{}, 1)
 
-		defer func() {
-			if parentCtx, ok := app.GetParentContext().(Context); ok {
-				parentCtx.GetWaitGroup().Done()
-			}
+	go app.running(shutChan)
 
-			app.GetWaitGroup().Wait()
-			app.markShutdown()
-			app.shutChan <- struct{}{}
-
-			CallOuter(app.enableAutoRecover, app.GetReportError(), func() {
-				if app.stopFunc != nil {
-					app.stopFunc(app)
-				}
-			})
-		}()
-
-		CallOuter(app.enableAutoRecover, app.GetReportError(), func() {
-			if app.startFunc != nil {
-				app.startFunc(app)
-			}
-		})
-
-		select {
-		case <-app.Done():
-			return
-		}
-	}()
-
-	return app.shutChan
+	return shutChan
 }
 
 func (app *AppFoundation) Stop() {

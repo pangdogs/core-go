@@ -8,12 +8,7 @@ type Runnable interface {
 }
 
 type RunnableFoundation struct {
-	shutChan    chan struct{}
 	runningFlag int32
-}
-
-func (r *RunnableFoundation) initRunnable() {
-	r.shutChan = make(chan struct{}, 1)
 }
 
 func (r *RunnableFoundation) markRunning() bool {
