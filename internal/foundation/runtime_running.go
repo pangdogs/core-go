@@ -201,7 +201,6 @@ func (rt *RuntimeFoundation) running(shutChan chan struct{}) {
 		}
 
 		rt.GetWaitGroup().Wait()
-		rt.markShutdown()
 
 		CallOuter(rt.enableAutoRecover, rt.GetReportError(), func() {
 			if rt.stopFunc != nil {
@@ -209,6 +208,7 @@ func (rt *RuntimeFoundation) running(shutChan chan struct{}) {
 			}
 		})
 
+		rt.markShutdown()
 		shutChan <- struct{}{}
 	}()
 

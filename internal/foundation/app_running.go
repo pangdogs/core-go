@@ -11,7 +11,6 @@ func (app *AppFoundation) running(shutChan chan struct{}) {
 		}
 
 		app.GetWaitGroup().Wait()
-		app.markShutdown()
 
 		CallOuter(app.enableAutoRecover, app.GetReportError(), func() {
 			if app.stopFunc != nil {
@@ -19,6 +18,7 @@ func (app *AppFoundation) running(shutChan chan struct{}) {
 			}
 		})
 
+		app.markShutdown()
 		shutChan <- struct{}{}
 	}()
 
