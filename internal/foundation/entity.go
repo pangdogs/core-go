@@ -117,19 +117,21 @@ const (
 
 type EntityFoundation struct {
 	EntityOptions
-	id                      uint64
-	runtime                 Runtime
-	destroying              bool
-	destroyed               bool
-	componentMap            map[string]*misc.Element
-	componentByIDMap        map[uint64]*misc.Element
-	componentList           misc.List
-	componentGCList         []*misc.Element
-	lifecycleEntityInitFunc func()
-	lifecycleStartFunc      func()
-	lifecycleUpdateFunc     func() bool
-	lifecycleLateUpdateFunc func() bool
-	lifecycleEntityShutFunc func()
+	id                                 uint64
+	runtime                            Runtime
+	destroying                         bool
+	destroyed                          bool
+	componentMap                       map[string]*misc.Element
+	componentByIDMap                   map[uint64]*misc.Element
+	componentList                      misc.List
+	componentGCList                    []*misc.Element
+	lifecycleEntityInitFunc            func()
+	lifecycleStartFunc                 func()
+	lifecycleUpdateFunc                func() bool
+	lifecycleLateUpdateFunc            func() bool
+	lifecycleEntityShutFunc            func()
+	componentsLifecycleUpdateCount     int32
+	componentsLifecycleLateUpdateCount int32
 }
 
 func (ent *EntityFoundation) initEntity(rt Runtime, opts *EntityOptions) {
@@ -206,6 +208,14 @@ func (ent *EntityFoundation) Destroy() {
 			return true
 		}
 		e.SetMark(EntityComponentsMark_Removed, true)
+
+		if e.GetMark(EntityComponentsMark_Update) {
+			ent.componentsLifecycleUpdateCount--
+		}
+
+		if e.GetMark(EntityComponentsMark_LateUpdate) {
+			ent.componentsLifecycleLateUpdateCount--
+		}
 
 		return true
 	})
@@ -339,6 +349,14 @@ func (ent *EntityFoundation) RemoveComponent(name string) {
 		}
 		t.SetMark(EntityComponentsMark_Removed, true)
 
+		if t.GetMark(EntityComponentsMark_Update) {
+			ent.componentsLifecycleUpdateCount--
+		}
+
+		if t.GetMark(EntityComponentsMark_LateUpdate) {
+			ent.componentsLifecycleLateUpdateCount--
+		}
+
 		if ent.enableFastGetComponentByID {
 			delete(ent.componentByIDMap, component.GetComponentID())
 		}
@@ -397,6 +415,14 @@ func (ent *EntityFoundation) RemoveComponentByID(id uint64) {
 		return
 	}
 	e.SetMark(EntityComponentsMark_Removed, true)
+
+	if e.GetMark(EntityComponentsMark_Update) {
+		ent.componentsLifecycleUpdateCount--
+	}
+
+	if e.GetMark(EntityComponentsMark_LateUpdate) {
+		ent.componentsLifecycleLateUpdateCount--
+	}
 
 	component := IFace2Component(e.GetIFace(EntityComponentsIFace_Component))
 

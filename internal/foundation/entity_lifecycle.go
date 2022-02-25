@@ -67,11 +67,13 @@ func (ent *EntityFoundation) callStart() {
 			if cu, ok := IFace2Component(e.GetIFace(EntityComponentsIFace_Component)).(ComponentUpdate); ok {
 				e.SetIFace(EntityComponentsIFace_ComponentUpdate, ComponentUpdate2IFace(cu))
 				e.SetMark(EntityComponentsMark_Update, true)
+				ent.componentsLifecycleUpdateCount++
 			}
 
 			if clu, ok := IFace2Component(e.GetIFace(EntityComponentsIFace_Component)).(ComponentLateUpdate); ok {
 				e.SetIFace(EntityComponentsIFace_ComponentLateUpdate, ComponentLateUpdate2IFace(clu))
 				e.SetMark(EntityComponentsMark_LateUpdate, true)
+				ent.componentsLifecycleLateUpdateCount++
 			}
 		}
 
@@ -88,6 +90,10 @@ func (ent *EntityFoundation) callUpdate() {
 		if !ent.lifecycleUpdateFunc() {
 			return
 		}
+	}
+
+	if ent.componentsLifecycleUpdateCount <= 0 {
+		return
 	}
 
 	ent.componentList.UnsafeTraversal(func(e *misc.Element) bool {
@@ -113,6 +119,10 @@ func (ent *EntityFoundation) callLateUpdate() {
 		if !ent.lifecycleLateUpdateFunc() {
 			return
 		}
+	}
+
+	if ent.componentsLifecycleLateUpdateCount <= 0 {
+		return
 	}
 
 	ent.componentList.UnsafeTraversal(func(e *misc.Element) bool {
