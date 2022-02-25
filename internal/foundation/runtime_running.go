@@ -61,7 +61,7 @@ func (rt *RuntimeFoundation) loopNoFrame() {
 		select {
 		case callBundle, ok := <-rt.safeCallList:
 			if !ok {
-				break
+				return
 			}
 			callBundle.Ret <- rt.invokeSafeCall(callBundle)
 
@@ -122,7 +122,7 @@ func (rt *RuntimeFoundation) loopWithFrameOnce(ticker *time.Ticker) bool {
 			select {
 			case callBundle, ok := <-rt.safeCallList:
 				if !ok {
-					break
+					return false
 				}
 				callBundle.Ret <- rt.invokeSafeCall(callBundle)
 
@@ -149,7 +149,7 @@ func (rt *RuntimeFoundation) loopWithFrameOnce(ticker *time.Ticker) bool {
 			select {
 			case callBundle, ok := <-rt.safeCallList:
 				if !ok {
-					break
+					return false
 				}
 				callBundle.Ret <- rt.invokeSafeCall(callBundle)
 
@@ -187,7 +187,7 @@ func (rt *RuntimeFoundation) running(shutChan chan struct{}) {
 			select {
 			case callBundle, ok := <-rt.safeCallList:
 				if !ok {
-					break
+					break label
 				}
 				callBundle.Ret <- rt.invokeSafeCall(callBundle)
 
