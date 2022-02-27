@@ -7,6 +7,8 @@ import (
 
 type Component interface {
 	initComponent(name string, entity Entity, inheritor Component)
+	shutComponent()
+	IsEmbedded() bool
 	GetComponentID() uint64
 	GetName() string
 	GetEntity() Entity
@@ -30,6 +32,7 @@ type ComponentFoundation struct {
 	name      string
 	entity    Entity
 	inheritor Component
+	embedded  bool
 }
 
 func (c *ComponentFoundation) initComponent(name string, entity Entity, inheritor Component) {
@@ -41,6 +44,15 @@ func (c *ComponentFoundation) initComponent(name string, entity Entity, inherito
 	c.entity = entity
 	c.inheritor = inheritor
 	c.id = entity.GetRuntime().GetApp().makeUID()
+	c.embedded = true
+}
+
+func (c *ComponentFoundation) shutComponent() {
+	c.embedded = false
+}
+
+func (c *ComponentFoundation) IsEmbedded() bool {
+	return c.embedded
 }
 
 func (c *ComponentFoundation) GetComponentID() uint64 {

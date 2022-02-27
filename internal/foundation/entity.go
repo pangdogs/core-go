@@ -227,6 +227,8 @@ func (ent *EntityFoundation) Destroy() {
 
 		component := IFace2Component(e.GetIFace(EntityComponentsIFace_Component))
 
+		component.shutComponent()
+
 		if e.GetMark(EntityComponentsMark_Awaked) {
 			if !e.GetMark(EntityComponentsMark_Halted) {
 				e.SetMark(EntityComponentsMark_Halted, true)
@@ -372,6 +374,8 @@ func (ent *EntityFoundation) RemoveComponent(name string) {
 			continue
 		}
 
+		component.shutComponent()
+
 		if t.GetMark(EntityComponentsMark_Awaked) {
 			if !t.GetMark(EntityComponentsMark_Halted) {
 				t.SetMark(EntityComponentsMark_Halted, true)
@@ -447,6 +451,8 @@ func (ent *EntityFoundation) RemoveComponentByID(id uint64) {
 			delete(ent.componentMap, component.GetName())
 		}
 	}
+
+	component.shutComponent()
 
 	if e.GetMark(EntityComponentsMark_Awaked) {
 		if !e.GetMark(EntityComponentsMark_Halted) {
