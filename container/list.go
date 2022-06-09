@@ -85,7 +85,7 @@ func (l *List[T]) GC() {
 			l.remove(e)
 		} else {
 			if e.GC != nil {
-				e.GC()
+				e.GC.GC()
 			}
 		}
 	}
