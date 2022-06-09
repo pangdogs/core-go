@@ -11,6 +11,7 @@ type RuntimeOptions struct {
 	ProcessQueueCapacity int
 	ProcessQueueTimeout  time.Duration
 	Frame                Frame
+	GCInterval           time.Duration
 }
 
 type NewRuntimeOptionFunc func(o *RuntimeOptions)
@@ -25,6 +26,7 @@ func (*NewRuntimeOptions) Default() NewRuntimeOptionFunc {
 		o.ProcessQueueCapacity = 128
 		o.ProcessQueueTimeout = 5 * time.Second
 		o.Frame = nil
+		o.GCInterval = 10 * time.Second
 	}
 }
 
@@ -61,5 +63,11 @@ func (*NewRuntimeOptions) ProcessQueueTimeout(v time.Duration) NewRuntimeOptionF
 func (*NewRuntimeOptions) Frame(v Frame) NewRuntimeOptionFunc {
 	return func(o *RuntimeOptions) {
 		o.Frame = v
+	}
+}
+
+func (*NewRuntimeOptions) GCInterval(v time.Duration) NewRuntimeOptionFunc {
+	return func(o *RuntimeOptions) {
+		o.GCInterval = v
 	}
 }

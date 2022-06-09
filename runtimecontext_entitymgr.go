@@ -61,7 +61,7 @@ func (runtimeCtx *RuntimeContextBehavior) AddEntity(entity Entity) {
 
 	runtimeCtx.entityMap[entity.GetID()] = entityInfo
 
-	EmitEventEntityMgrAddEntity[RuntimeContext](&runtimeCtx.eventEntityMgrAddEntity, runtimeCtx.opts.Inheritor, entity)
+	emitEventEntityMgrAddEntity[RuntimeContext](&runtimeCtx.eventEntityMgrAddEntity, runtimeCtx.opts.Inheritor, entity)
 }
 
 func (runtimeCtx *RuntimeContextBehavior) RemoveEntity(id uint64) {
@@ -77,7 +77,7 @@ func (runtimeCtx *RuntimeContextBehavior) RemoveEntity(id uint64) {
 		hook.Unbind()
 	}
 
-	EmitEventEntityMgrRemoveEntity[RuntimeContext](&runtimeCtx.eventEntityMgrRemoveEntity, runtimeCtx.opts.Inheritor, Fast2IFace[Entity](e.Element.Value.FastIFace))
+	emitEventEntityMgrRemoveEntity[RuntimeContext](&runtimeCtx.eventEntityMgrRemoveEntity, runtimeCtx.opts.Inheritor, Fast2IFace[Entity](e.Element.Value.FastIFace))
 }
 
 func (runtimeCtx *RuntimeContextBehavior) EventEntityMgrAddEntity() IEvent {
@@ -97,9 +97,9 @@ func (runtimeCtx *RuntimeContextBehavior) EventEntityMgrEntityRemoveComponent() 
 }
 
 func (runtimeCtx *RuntimeContextBehavior) OnCompMgrAddComponents(entity Entity, components []Component) {
-	EmitEventEntityMgrEntityAddComponents(&runtimeCtx.eventEntityMgrEntityAddComponents, runtimeCtx.opts.Inheritor, entity, components)
+	emitEventEntityMgrEntityAddComponents(&runtimeCtx.eventEntityMgrEntityAddComponents, runtimeCtx.opts.Inheritor, entity, components)
 }
 
 func (runtimeCtx *RuntimeContextBehavior) OnCompMgrRemoveComponent(entity Entity, component Component) {
-	EmitEventEntityMgrEntityRemoveComponent(&runtimeCtx.eventEntityMgrEntityRemoveComponent, runtimeCtx.opts.Inheritor, entity, component)
+	emitEventEntityMgrEntityRemoveComponent(&runtimeCtx.eventEntityMgrEntityRemoveComponent, runtimeCtx.opts.Inheritor, entity, component)
 }

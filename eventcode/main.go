@@ -10,6 +10,7 @@ import (
 	"io/ioutil"
 	"os"
 	"path/filepath"
+	"regexp"
 	"strings"
 )
 
@@ -18,7 +19,8 @@ func main() {
 	declFile := flag.String("decl", "", "event declare go file (*.go)")
 	genFile := flag.String("gen", "", "event generate go file (*.go)")
 	corePackage := flag.String("core", "core", "core package")
-	eventPrefix := flag.String("prefix", "Event", "event prefix")
+	eventRegexp := flag.String("regexp", "^[eE]vent.+", "event regexp")
+	exportEmit := flag.Bool("exportemit", true, "export emit")
 
 	flag.Parse()
 
@@ -68,6 +70,25 @@ package %s
 		}(),
 		*goPackage)
 
+	if *corePackage != "" && *corePackage != "core" {
+		fmt.Fprintf(genCode, `
+import (
+	%s "github.com/pangdogs/core"
+)
+`, *corePackage)
+	}
+
+	exp, err := regexp.Compile(*eventRegexp)
+	if err != nil {
+		panic(err)
+	}
+
+	exportEmitStr := "emit"
+
+	if *exportEmit {
+		exportEmitStr = "Emit"
+	}
+
 	ast.Inspect(fast, func(node ast.Node) bool {
 		ts, ok := node.(*ast.TypeSpec)
 		if !ok {
@@ -80,7 +101,7 @@ package %s
 
 		eventName := ts.Name.Name
 
-		if !strings.HasPrefix(eventName, *eventPrefix) {
+		if !exp.MatchString(eventName) {
 			return true
 		}
 
@@ -188,7 +209,7 @@ package %s
 			}
 
 			fmt.Fprintf(genCode, `
-func Emit%[1]s%[6]s(event %[5]sIEvent%[3]s) {
+func %[8]s%[1]s%[6]s(event %[5]sIEvent%[3]s) {
 	if event == nil {
 		panic("nil event")
 	}
@@ -196,12 +217,12 @@ func Emit%[1]s%[6]s(event %[5]sIEvent%[3]s) {
 		return %[5]sFast2IFace[%[1]s%[7]s](delegate).%[2]s(%[4]s)
 	})
 }
-`, eventName, eventFuncName, eventFuncParamsDecl, eventFuncParams, *corePackage, eventFuncTypeParamsDecl, eventFuncTypeParams)
+`, eventName, eventFuncName, eventFuncParamsDecl, eventFuncParams, *corePackage, eventFuncTypeParamsDecl, eventFuncTypeParams, exportEmitStr)
 
 		} else {
 
 			fmt.Fprintf(genCode, `
-func Emit%[1]s%[6]s(event %[5]sIEvent%[3]s) {
+func %[8]s%[1]s%[6]s(event %[5]sIEvent%[3]s) {
 	if event == nil {
 		panic("nil event")
 	}
@@ -210,7 +231,7 @@ func Emit%[1]s%[6]s(event %[5]sIEvent%[3]s) {
 		return true
 	})
 }
-`, eventName, eventFuncName, eventFuncParamsDecl, eventFuncParams, *corePackage, eventFuncTypeParamsDecl, eventFuncTypeParams)
+`, eventName, eventFuncName, eventFuncParamsDecl, eventFuncParams, *corePackage, eventFuncTypeParamsDecl, eventFuncTypeParams, exportEmitStr)
 		}
 
 		fmt.Println(eventName)

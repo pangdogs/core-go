@@ -24,6 +24,7 @@ func (runtime *RuntimeBehavior) OnPushSafeCallSegment(segment func()) {
 
 	select {
 	case runtime.processQueue <- segment:
+		return
 	case <-timer.C:
 		panic("process queue push segment timeout")
 	}
@@ -124,12 +125,18 @@ func (runtime *RuntimeBehavior) loopStopped(hooks [5]Hook) {
 }
 
 func (runtime *RuntimeBehavior) loopNoFrame() {
+	gcTicker := time.NewTicker(runtime.opts.GCInterval)
+	defer gcTicker.Stop()
+
 	for {
 		select {
 		case process, ok := <-runtime.processQueue:
 			if ok {
 				CallOuterNoRet(runtime.opts.EnableAutoRecover, runtime.ctx.GetReportError(), process)
 			}
+
+		case <-gcTicker.C:
+			runtime.GC()
 
 		case <-runtime.ctx.Done():
 			return
@@ -138,6 +145,8 @@ func (runtime *RuntimeBehavior) loopNoFrame() {
 }
 
 func (runtime *RuntimeBehavior) loopNoFrameEnd() {
+	close(runtime.processQueue)
+
 	for {
 		select {
 		case process, ok := <-runtime.processQueue:
@@ -162,7 +171,6 @@ func (runtime *RuntimeBehavior) loopWithFrame() {
 
 		for i := uint64(0); ; i++ {
 			if totalFrames > 0 && i >= totalFrames {
-				runtime.Stop()
 				return
 			}
 
@@ -174,6 +182,7 @@ func (runtime *RuntimeBehavior) loopWithFrame() {
 
 					select {
 					case runtime.processQueue <- runtime.frameUpdate:
+						return
 					case <-timer.C:
 						panic("process queue push frame update timeout")
 					}
@@ -182,12 +191,18 @@ func (runtime *RuntimeBehavior) loopWithFrame() {
 		}
 	}()
 
+	gcTicker := time.NewTicker(runtime.opts.GCInterval)
+	defer gcTicker.Stop()
+
 	for {
 		select {
 		case process, ok := <-runtime.processQueue:
 			if ok {
 				CallOuterNoRet(runtime.opts.EnableAutoRecover, runtime.ctx.GetReportError(), process)
 			}
+
+		case <-gcTicker.C:
+			runtime.GC()
 
 		case <-runtime.ctx.Done():
 			return
@@ -197,6 +212,8 @@ func (runtime *RuntimeBehavior) loopWithFrame() {
 
 func (runtime *RuntimeBehavior) loopWithFrameEnd() {
 	frame := runtime.opts.Frame
+
+	close(runtime.processQueue)
 
 	for {
 		select {
@@ -226,26 +243,38 @@ func (runtime *RuntimeBehavior) frameUpdate() {
 	frame.updateBegin()
 	defer frame.updateEnd()
 
-	EmitEventUpdate(&runtime.eventUpdate)
-	EmitEventLateUpdate(&runtime.eventLateUpdate)
+	emitEventUpdate(&runtime.eventUpdate)
+	emitEventLateUpdate(&runtime.eventLateUpdate)
 }
 
 func (runtime *RuntimeBehavior) loopWithBlinkFrame() {
 	frame := runtime.opts.Frame
 	totalFrames := frame.GetTotalFrames()
 
-	for frame.setCurFrames(0); ; frame.setCurFrames(frame.GetCurFrames() + 1) {
-		if totalFrames > 0 && frame.GetCurFrames() >= totalFrames {
+	gcFrames := uint64(runtime.opts.GCInterval.Seconds() * float64(frame.GetTargetFPS()))
+
+	for frame.setCurFrames(0); ; {
+		curFrames := frame.GetCurFrames()
+
+		if totalFrames > 0 && curFrames >= totalFrames {
 			return
 		}
 
 		if !runtime.blinkFrameUpdate() {
 			return
 		}
+
+		if curFrames%gcFrames == 0 {
+			runtime.GC()
+		}
+
+		frame.setCurFrames(curFrames + 1)
 	}
 }
 
 func (runtime *RuntimeBehavior) loopWithBlinkFrameEnd() {
+	close(runtime.processQueue)
+
 	for {
 		select {
 		case process, ok := <-runtime.processQueue:
@@ -280,8 +309,8 @@ func (runtime *RuntimeBehavior) blinkFrameUpdate() bool {
 				frame.updateBegin()
 				defer frame.updateEnd()
 
-				EmitEventUpdate(&runtime.eventUpdate)
-				EmitEventLateUpdate(&runtime.eventLateUpdate)
+				emitEventUpdate(&runtime.eventUpdate)
+				emitEventLateUpdate(&runtime.eventLateUpdate)
 			}()
 		}
 	}

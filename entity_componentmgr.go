@@ -57,7 +57,7 @@ func (entity *EntityBehavior) AddComponents(name string, components []Component)
 		}
 	}
 
-	EmitEventCompMgrAddComponents(&entity.eventCompMgrAddComponents, entity.opts.Inheritor, components)
+	emitEventCompMgrAddComponents(&entity.eventCompMgrAddComponents, entity.opts.Inheritor, components)
 	return nil
 }
 
@@ -66,7 +66,7 @@ func (entity *EntityBehavior) AddComponent(name string, component Component) err
 		return err
 	}
 
-	EmitEventCompMgrAddComponents(&entity.eventCompMgrAddComponents, entity.opts.Inheritor, []Component{component})
+	emitEventCompMgrAddComponents(&entity.eventCompMgrAddComponents, entity.opts.Inheritor, []Component{component})
 	return nil
 }
 
@@ -84,7 +84,7 @@ func (entity *EntityBehavior) RemoveComponent(name string) {
 		comp := Fast2IFace[Component](other.Value.FastIFace)
 		if comp.GetName() == name {
 			other.Escape()
-			EmitEventCompMgrRemoveComponent(&entity.eventCompMgrRemoveComponent, entity.opts.Inheritor, comp)
+			emitEventCompMgrRemoveComponent(&entity.eventCompMgrRemoveComponent, entity.opts.Inheritor, comp)
 			return true
 		}
 		return false
@@ -102,7 +102,7 @@ func (entity *EntityBehavior) RemoveComponentByID(id uint64) {
 	}
 
 	e.Escape()
-	EmitEventCompMgrRemoveComponent(&entity.eventCompMgrRemoveComponent, entity.opts.Inheritor, Fast2IFace[Component](e.Value.FastIFace))
+	emitEventCompMgrRemoveComponent(&entity.eventCompMgrRemoveComponent, entity.opts.Inheritor, Fast2IFace[Component](e.Value.FastIFace))
 }
 
 func (entity *EntityBehavior) EventCompMgrAddComponents() IEvent {

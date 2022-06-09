@@ -58,7 +58,7 @@ func (comp *ComponentBehavior) getInheritor() Component {
 }
 
 func (comp *ComponentBehavior) DestroySelf() {
-	EmitEventComponentDestroySelf(&comp.eventComponentDestroySelf, comp.inheritor)
+	emitEventComponentDestroySelf(&comp.eventComponentDestroySelf, comp.inheritor)
 }
 
 func (comp *ComponentBehavior) EventComponentDestroySelf() IEvent {

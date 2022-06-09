@@ -109,7 +109,7 @@ func (entity *EntityBehavior) GetRuntimeCtx() RuntimeContext {
 }
 
 func (entity *EntityBehavior) DestroySelf() {
-	EmitEventEntityDestroySelf(&entity.eventEntityDestroySelf, entity.opts.Inheritor)
+	emitEventEntityDestroySelf(&entity.eventEntityDestroySelf, entity.opts.Inheritor)
 }
 
 func (entity *EntityBehavior) EventEntityDestroySelf() IEvent {
