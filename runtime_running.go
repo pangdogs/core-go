@@ -18,6 +18,17 @@ func (runtime *RuntimeBehavior) Stop() {
 	runtime.ctx.GetCancelFunc()()
 }
 
+func (runtime *RuntimeBehavior) OnPushSafeCallSegment(segment func()) {
+	timer := time.NewTimer(runtime.opts.ProcessQueueTimeout)
+	defer timer.Stop()
+
+	select {
+	case runtime.processQueue <- segment:
+	case <-timer.C:
+		panic("process queue push segment timeout")
+	}
+}
+
 func (runtime *RuntimeBehavior) running(shutChan chan struct{}) {
 	if parentCtx, ok := runtime.ctx.GetParentCtx().(Context); ok {
 		parentCtx.GetWaitGroup().Add(1)
@@ -54,7 +65,7 @@ func (runtime *RuntimeBehavior) running(shutChan chan struct{}) {
 	}
 }
 
-func (runtime *RuntimeBehavior) loopStarted() (hooks [4]Hook) {
+func (runtime *RuntimeBehavior) loopStarted() (hooks [5]Hook) {
 	runtimeCtx := runtime.ctx
 	frame := runtime.opts.Frame
 
@@ -66,6 +77,7 @@ func (runtime *RuntimeBehavior) loopStarted() (hooks [4]Hook) {
 	hooks[1] = BindEvent[EventEntityMgrRemoveEntity[RuntimeContext]](runtimeCtx.EventEntityMgrRemoveEntity(), runtime)
 	hooks[2] = BindEvent[EventEntityMgrEntityAddComponents[RuntimeContext]](runtimeCtx.EventEntityMgrEntityAddComponents(), runtime)
 	hooks[3] = BindEvent[EventEntityMgrEntityRemoveComponent[RuntimeContext]](runtimeCtx.EventEntityMgrEntityRemoveComponent(), runtime)
+	hooks[4] = BindEvent[EventPushSafeCallSegment](runtimeCtx.EventPushSafeCallSegment(), runtime)
 
 	runtimeCtx.RangeEntities(func(entity Entity) bool {
 		CallOuterNoRet(runtime.opts.EnableAutoRecover, runtimeCtx.GetReportError(), func() {
@@ -83,7 +95,7 @@ func (runtime *RuntimeBehavior) loopStarted() (hooks [4]Hook) {
 	return
 }
 
-func (runtime *RuntimeBehavior) loopStopped(hooks [4]Hook) {
+func (runtime *RuntimeBehavior) loopStopped(hooks [5]Hook) {
 	runtimeCtx := runtime.ctx
 	frame := runtime.opts.Frame
 
@@ -154,7 +166,16 @@ func (runtime *RuntimeBehavior) loopWithFrame() {
 
 			select {
 			case <-ticker.C:
-				runtime.processQueue <- runtime.frameUpdate
+				CallOuterNoRet(runtime.opts.EnableAutoRecover, runtime.ctx.GetReportError(), func() {
+					timer := time.NewTimer(runtime.opts.ProcessQueueTimeout)
+					defer timer.Stop()
+
+					select {
+					case runtime.processQueue <- runtime.frameUpdate:
+					case <-timer.C:
+						panic("process queue push frame update timeout")
+					}
+				})
 			}
 		}
 	}()
