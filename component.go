@@ -1,12 +1,10 @@
 package core
 
-import (
-	container2 "github.com/pangdogs/core/container"
-)
+import "github.com/pangdogs/core/container"
 
 type Component interface {
-	container2.GC
-	init(name string, entity Entity, inheritor Component, hookCache *container2.Cache[Hook])
+	container.GC
+	init(name string, entity Entity, inheritor Component, hookCache *container.Cache[Hook])
 	setID(id uint64)
 	GetID() uint64
 	GetName() string
@@ -32,7 +30,7 @@ func (comp *ComponentBehavior) GC() {
 	comp.eventComponentDestroySelf.GC()
 }
 
-func (comp *ComponentBehavior) init(name string, entity Entity, inheritor Component, hookCache *container2.Cache[Hook]) {
+func (comp *ComponentBehavior) init(name string, entity Entity, inheritor Component, hookCache *container.Cache[Hook]) {
 	comp.name = name
 	comp.entity = entity
 	comp.inheritor = inheritor

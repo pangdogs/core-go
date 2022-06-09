@@ -1,8 +1,6 @@
 package core
 
-import (
-	container2 "github.com/pangdogs/core/container"
-)
+import "github.com/pangdogs/core/container"
 
 type IEvent interface {
 	Emit(fun func(delegate FastIFace) bool)
@@ -10,12 +8,12 @@ type IEvent interface {
 }
 
 type Event struct {
-	subscribers container2.List[Hook]
+	subscribers container.List[Hook]
 	autoRecover bool
 	reportError chan error
 }
 
-func (event *Event) Init(autoRecover bool, reportError chan error, hookCache *container2.Cache[Hook]) {
+func (event *Event) Init(autoRecover bool, reportError chan error, hookCache *container.Cache[Hook]) {
 	event.autoRecover = autoRecover
 	event.reportError = reportError
 	event.subscribers.Init(hookCache)
@@ -30,7 +28,7 @@ func (event *Event) Emit(fun func(delegate FastIFace) bool) {
 		return
 	}
 
-	event.subscribers.Traversal(func(e *container2.Element[Hook]) bool {
+	event.subscribers.Traversal(func(e *container.Element[Hook]) bool {
 		if e.Value.delegateFastIFace != NilFastIFace {
 			ret, err := CallOuter(event.autoRecover, event.reportError, func() bool {
 				return fun(e.Value.delegateFastIFace)
@@ -50,9 +48,9 @@ func (event *Event) newHook(delegate interface{}, delegateFastIFace FastIFace, p
 		delegateFastIFace: delegateFastIFace,
 	}
 
-	var mark *container2.Element[Hook]
+	var mark *container.Element[Hook]
 
-	event.subscribers.ReverseTraversal(func(other *container2.Element[Hook]) bool {
+	event.subscribers.ReverseTraversal(func(other *container.Element[Hook]) bool {
 		if hook.priority >= other.Value.priority {
 			mark = other
 			return false
@@ -72,7 +70,7 @@ func (event *Event) newHook(delegate interface{}, delegateFastIFace FastIFace, p
 }
 
 func (event *Event) Clear() {
-	event.subscribers.Traversal(func(e *container2.Element[Hook]) bool {
+	event.subscribers.Traversal(func(e *container.Element[Hook]) bool {
 		e.Value.Unbind()
 		return true
 	})

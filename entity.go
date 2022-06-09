@@ -1,11 +1,9 @@
 package core
 
-import (
-	container2 "github.com/pangdogs/core/container"
-)
+import "github.com/pangdogs/core/container"
 
 type Entity interface {
-	container2.GC
+	container.GC
 	ComponentMgr
 	ComponentMgrEvents
 	init(opts *EntityOptions)
@@ -49,9 +47,9 @@ type EntityBehavior struct {
 	id                          uint64
 	opts                        EntityOptions
 	runtimeCtx                  RuntimeContext
-	componentList               container2.List[Face]
-	componentMap                map[string]*container2.Element[Face]
-	componentByIDMap            map[uint64]*container2.Element[Face]
+	componentList               container.List[Face]
+	componentMap                map[string]*container.Element[Face]
+	componentByIDMap            map[uint64]*container.Element[Face]
 	eventEntityDestroySelf      Event
 	eventCompMgrAddComponents   Event
 	eventCompMgrRemoveComponent Event
@@ -78,11 +76,11 @@ func (entity *EntityBehavior) init(opts *EntityOptions) {
 	entity.componentList.Init(entity.opts.FaceCache)
 
 	if entity.opts.EnableFastGetComponent {
-		entity.componentMap = map[string]*container2.Element[Face]{}
+		entity.componentMap = map[string]*container.Element[Face]{}
 	}
 
 	if entity.opts.EnableFastGetComponentByID {
-		entity.componentByIDMap = map[uint64]*container2.Element[Face]{}
+		entity.componentByIDMap = map[uint64]*container.Element[Face]{}
 	}
 
 	entity.eventEntityDestroySelf.Init(false, nil, opts.HookCache)

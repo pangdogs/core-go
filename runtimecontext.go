@@ -1,11 +1,9 @@
 package core
 
-import (
-	container2 "github.com/pangdogs/core/container"
-)
+import "github.com/pangdogs/core/container"
 
 type RuntimeContext interface {
-	container2.GC
+	container.GC
 	Context
 	EntityMgr
 	EntityMgrEvents
@@ -47,7 +45,7 @@ func NewRuntimeContext(appCtx AppContext, optFuncs ...NewRuntimeContextOptionFun
 }
 
 type RuntimeCtxEntityInfo struct {
-	Element *container2.Element[Face]
+	Element *container.Element[Face]
 	Hooks   [2]Hook
 }
 
@@ -56,7 +54,7 @@ type RuntimeContextBehavior struct {
 	opts                                RuntimeContextOptions
 	appCtx                              AppContext
 	entityMap                           map[uint64]RuntimeCtxEntityInfo
-	entityList                          container2.List[Face]
+	entityList                          container.List[Face]
 	frame                               Frame
 	eventEntityMgrAddEntity             Event
 	eventEntityMgrRemoveEntity          Event
