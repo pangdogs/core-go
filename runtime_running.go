@@ -69,6 +69,8 @@ func (runtime *RuntimeBehavior) loopStarted() (hooks [5]Hook) {
 	runtimeCtx := runtime.ctx
 	frame := runtime.opts.Frame
 
+	runtime.processQueue = make(chan func(), runtime.opts.ProcessQueueCapacity)
+
 	if frame != nil {
 		frame.runningBegin()
 	}
