@@ -66,6 +66,8 @@ func (event *Event) newHook(delegate interface{}, delegateFastIFace FastIFace, p
 		hook.element = event.subscribers.PushBack(Hook{})
 	}
 
+	hook.element.Value = hook
+
 	return hook
 }
 
