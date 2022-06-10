@@ -172,7 +172,7 @@ func (runtime *RuntimeBehavior) loopWithFrame() {
 		totalFrames := frame.GetTotalFrames()
 
 		for curFrames := uint64(0); ; {
-			if totalFrames > 0 && curFrames >= totalFrames {
+			if totalFrames > 0 && curFrames > totalFrames {
 				return
 			}
 
@@ -274,7 +274,7 @@ func (runtime *RuntimeBehavior) loopWithBlinkFrame() {
 	for frame.setCurFrames(0); ; {
 		curFrames := frame.GetCurFrames()
 
-		if totalFrames > 0 && curFrames >= totalFrames {
+		if totalFrames > 0 && curFrames > totalFrames {
 			return
 		}
 

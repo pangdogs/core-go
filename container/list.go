@@ -62,7 +62,7 @@ func NewList[T any](cache *Cache[T]) *List[T] {
 	return new(List[T]).Init(cache)
 }
 
-// List 链表
+// List 链表，非线程安全，支持在遍历过程中删除元素
 type List[T any] struct {
 	cache *Cache[T]
 	root  Element[T]
