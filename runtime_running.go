@@ -171,7 +171,7 @@ func (runtime *RuntimeBehavior) loopWithFrame() {
 
 		totalFrames := frame.GetTotalFrames()
 
-		for curFrames := uint64(0); ; {
+		for curFrames := uint64(1); ; {
 			if totalFrames > 0 && curFrames >= totalFrames {
 				return
 			}
