@@ -9,6 +9,8 @@ func (runtime *RuntimeBehavior) Run() chan struct{} {
 
 	shutChan := make(chan struct{}, 1)
 
+	runtime.processQueue = make(chan func(), runtime.opts.ProcessQueueCapacity)
+
 	go runtime.running(shutChan)
 
 	return shutChan
@@ -19,13 +21,13 @@ func (runtime *RuntimeBehavior) Stop() {
 }
 
 func (runtime *RuntimeBehavior) OnPushSafeCallSegment(segment func()) {
-	timer := time.NewTimer(runtime.opts.ProcessQueueTimeout)
-	defer timer.Stop()
+	timeoutTimer := time.NewTimer(runtime.opts.ProcessQueueTimeout)
+	defer timeoutTimer.Stop()
 
 	select {
 	case runtime.processQueue <- segment:
 		return
-	case <-timer.C:
+	case <-timeoutTimer.C:
 		panic("process queue push segment timeout")
 	}
 }
@@ -69,8 +71,6 @@ func (runtime *RuntimeBehavior) running(shutChan chan struct{}) {
 func (runtime *RuntimeBehavior) loopStarted() (hooks [5]Hook) {
 	runtimeCtx := runtime.ctx
 	frame := runtime.opts.Frame
-
-	runtime.processQueue = make(chan func(), runtime.opts.ProcessQueueCapacity)
 
 	if frame != nil {
 		frame.runningBegin()
@@ -131,9 +131,10 @@ func (runtime *RuntimeBehavior) loopNoFrame() {
 	for {
 		select {
 		case process, ok := <-runtime.processQueue:
-			if ok {
-				CallOuterNoRet(runtime.opts.EnableAutoRecover, runtime.ctx.GetReportError(), process)
+			if !ok {
+				return
 			}
+			CallOuterNoRet(runtime.opts.EnableAutoRecover, runtime.ctx.GetReportError(), process)
 
 		case <-gcTicker.C:
 			runtime.GC()
@@ -150,9 +151,10 @@ func (runtime *RuntimeBehavior) loopNoFrameEnd() {
 	for {
 		select {
 		case process, ok := <-runtime.processQueue:
-			if ok {
-				CallOuterNoRet(runtime.opts.EnableAutoRecover, runtime.ctx.GetReportError(), process)
+			if !ok {
+				return
 			}
+			CallOuterNoRet(runtime.opts.EnableAutoRecover, runtime.ctx.GetReportError(), process)
 
 		default:
 			return
@@ -163,33 +165,40 @@ func (runtime *RuntimeBehavior) loopNoFrameEnd() {
 func (runtime *RuntimeBehavior) loopWithFrame() {
 	frame := runtime.opts.Frame
 
-	ticker := time.NewTicker(time.Duration(float64(time.Second) / float64(frame.GetTargetFPS())))
-	defer ticker.Stop()
-
 	go func() {
+		updateTicker := time.NewTicker(time.Duration(float64(time.Second) / float64(frame.GetTargetFPS())))
+		defer updateTicker.Stop()
+
 		totalFrames := frame.GetTotalFrames()
 
-		for i := uint64(0); ; i++ {
-			if totalFrames > 0 && i >= totalFrames {
+		for curFrames := uint64(0); ; {
+			if totalFrames > 0 && curFrames >= totalFrames {
 				return
 			}
 
 			select {
-			case <-ticker.C:
+			case <-updateTicker.C:
 				CallOuterNoRet(runtime.opts.EnableAutoRecover, runtime.ctx.GetReportError(), func() {
-					timer := time.NewTimer(runtime.opts.ProcessQueueTimeout)
-					defer timer.Stop()
+					timeoutTimer := time.NewTimer(runtime.opts.ProcessQueueTimeout)
+					defer timeoutTimer.Stop()
 
 					select {
 					case runtime.processQueue <- runtime.frameUpdate:
+						curFrames++
 						return
-					case <-timer.C:
+					case <-timeoutTimer.C:
 						panic("process queue push frame update timeout")
 					}
 				})
+
+			case <-runtime.ctx.Done():
+				return
 			}
 		}
 	}()
+
+	frame.setCurFrames(0)
+	runtime.firstFrameUpdate()
 
 	gcTicker := time.NewTicker(runtime.opts.GCInterval)
 	defer gcTicker.Stop()
@@ -197,9 +206,10 @@ func (runtime *RuntimeBehavior) loopWithFrame() {
 	for {
 		select {
 		case process, ok := <-runtime.processQueue:
-			if ok {
-				CallOuterNoRet(runtime.opts.EnableAutoRecover, runtime.ctx.GetReportError(), process)
+			if !ok {
+				return
 			}
+			CallOuterNoRet(runtime.opts.EnableAutoRecover, runtime.ctx.GetReportError(), process)
 
 		case <-gcTicker.C:
 			runtime.GC()
@@ -215,29 +225,37 @@ func (runtime *RuntimeBehavior) loopWithFrameEnd() {
 
 	close(runtime.processQueue)
 
-	for {
-		select {
-		case process, ok := <-runtime.processQueue:
-			if ok {
+	func() {
+		for {
+			select {
+			case process, ok := <-runtime.processQueue:
+				if !ok {
+					return
+				}
 				CallOuterNoRet(runtime.opts.EnableAutoRecover, runtime.ctx.GetReportError(), process)
+
+			default:
+				return
 			}
-
-		default:
-			break
 		}
-	}
+	}()
 
-	if frame.GetCurFrames() > 0 {
-		frame.frameEnd()
-	}
+	frame.frameEnd()
+	frame.setCurFrames(frame.GetCurFrames() + 1)
 }
 
 func (runtime *RuntimeBehavior) frameUpdate() {
 	frame := runtime.opts.Frame
 
-	if frame.GetCurFrames() > 0 {
-		frame.frameEnd()
-	}
+	frame.frameEnd()
+	frame.setCurFrames(frame.GetCurFrames() + 1)
+
+	runtime.firstFrameUpdate()
+}
+
+func (runtime *RuntimeBehavior) firstFrameUpdate() {
+	frame := runtime.opts.Frame
+
 	frame.frameBegin()
 
 	frame.updateBegin()

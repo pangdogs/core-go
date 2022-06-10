@@ -50,12 +50,18 @@ func (*NewRuntimeOptions) EnableAutoRecover(v bool) NewRuntimeOptionFunc {
 
 func (*NewRuntimeOptions) ProcessQueueCapacity(v int) NewRuntimeOptionFunc {
 	return func(o *RuntimeOptions) {
+		if v <= 0 {
+			panic("ProcessQueueCapacity less equal 0 invalid")
+		}
 		o.ProcessQueueCapacity = v
 	}
 }
 
 func (*NewRuntimeOptions) ProcessQueueTimeout(v time.Duration) NewRuntimeOptionFunc {
 	return func(o *RuntimeOptions) {
+		if v <= 0 {
+			panic("ProcessQueueTimeout less equal 0 invalid")
+		}
 		o.ProcessQueueTimeout = v
 	}
 }
@@ -68,6 +74,9 @@ func (*NewRuntimeOptions) Frame(v Frame) NewRuntimeOptionFunc {
 
 func (*NewRuntimeOptions) GCInterval(v time.Duration) NewRuntimeOptionFunc {
 	return func(o *RuntimeOptions) {
+		if v <= 0 {
+			panic("GCInterval less equal 0 invalid")
+		}
 		o.GCInterval = v
 	}
 }
