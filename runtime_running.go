@@ -296,9 +296,10 @@ func (runtime *RuntimeBehavior) loopWithBlinkFrameEnd() {
 	for {
 		select {
 		case process, ok := <-runtime.processQueue:
-			if ok {
-				CallOuterNoRet(runtime.opts.EnableAutoRecover, runtime.ctx.GetReportError(), process)
+			if !ok {
+				return
 			}
+			CallOuterNoRet(runtime.opts.EnableAutoRecover, runtime.ctx.GetReportError(), process)
 
 		default:
 			break
@@ -315,9 +316,10 @@ func (runtime *RuntimeBehavior) blinkFrameUpdate() bool {
 	for {
 		select {
 		case process, ok := <-runtime.processQueue:
-			if ok {
-				CallOuterNoRet(runtime.opts.EnableAutoRecover, runtime.ctx.GetReportError(), process)
+			if !ok {
+				return false
 			}
+			CallOuterNoRet(runtime.opts.EnableAutoRecover, runtime.ctx.GetReportError(), process)
 
 		case <-runtime.ctx.Done():
 			return false
