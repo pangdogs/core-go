@@ -19,7 +19,6 @@ func (runtimeCtx *RuntimeContextBehavior) SafeCall(segment func() SafeRet) <-cha
 					err = fmt.Errorf("%v", info)
 				}
 				ret <- SafeRet{Err: err}
-				panic(err)
 			}
 		}()
 
