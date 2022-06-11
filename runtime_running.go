@@ -332,6 +332,7 @@ func (runtime *RuntimeBehavior) blinkFrameUpdate() bool {
 				emitEventUpdate(&runtime.eventUpdate)
 				emitEventLateUpdate(&runtime.eventLateUpdate)
 			}()
+			return true
 		}
 	}
 
