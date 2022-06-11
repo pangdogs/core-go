@@ -42,7 +42,7 @@ func NewAppContext(ctx context.Context, optFuncs ...NewAppContextOptionFunc) App
 }
 
 type AppContextBehavior struct {
-	ContextBehavior
+	_ContextBehavior
 	opts      AppContextOptions
 	uidGen    uint64
 	entityMap sync.Map
@@ -63,7 +63,7 @@ func (appCtx *AppContextBehavior) init(ctx context.Context, opts *AppContextOpti
 		appCtx.opts.Inheritor = appCtx
 	}
 
-	appCtx.ContextBehavior.init(ctx)
+	appCtx._ContextBehavior.init(ctx, appCtx.opts.ReportError)
 }
 
 func (appCtx *AppContextBehavior) getOptions() *AppContextOptions {

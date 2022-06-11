@@ -7,7 +7,8 @@ import (
 var NewRuntimeContextOption = &NewRuntimeContextOptions{}
 
 type RuntimeContextOptions struct {
-	Inheritor RuntimeContext
+	Inheritor   RuntimeContext
+	ReportError chan error
 	StartedCallback,
 	StoppedCallback func(runtime Runtime)
 	FaceCache *container.Cache[Face]
@@ -31,6 +32,12 @@ func (*NewRuntimeContextOptions) Default() NewRuntimeContextOptionFunc {
 func (*NewRuntimeContextOptions) Inheritor(v RuntimeContext) NewRuntimeContextOptionFunc {
 	return func(o *RuntimeContextOptions) {
 		o.Inheritor = v
+	}
+}
+
+func (*NewRuntimeContextOptions) ReportError(v chan error) NewRuntimeContextOptionFunc {
+	return func(o *RuntimeContextOptions) {
+		o.ReportError = v
 	}
 }
 

@@ -50,7 +50,7 @@ type RuntimeCtxEntityInfo struct {
 }
 
 type RuntimeContextBehavior struct {
-	ContextBehavior
+	_ContextBehavior
 	opts                                RuntimeContextOptions
 	appCtx                              AppContext
 	entityMap                           map[uint64]RuntimeCtxEntityInfo
@@ -101,7 +101,7 @@ func (runtimeCtx *RuntimeContextBehavior) init(appCtx AppContext, opts *RuntimeC
 		runtimeCtx.opts.Inheritor = runtimeCtx
 	}
 
-	runtimeCtx.ContextBehavior.init(appCtx)
+	runtimeCtx._ContextBehavior.init(appCtx, runtimeCtx.opts.ReportError)
 	runtimeCtx.appCtx = appCtx
 
 	runtimeCtx.entityList.Init(runtimeCtx.opts.FaceCache, runtimeCtx)

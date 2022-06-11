@@ -315,12 +315,6 @@ func (runtime *RuntimeBehavior) blinkFrameUpdate() bool {
 
 	for {
 		select {
-		case process, ok := <-runtime.processQueue:
-			if !ok {
-				return false
-			}
-			CallOuterNoRet(runtime.opts.EnableAutoRecover, runtime.ctx.GetReportError(), process)
-
 		case <-runtime.ctx.Done():
 			return false
 

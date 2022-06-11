@@ -16,13 +16,7 @@ type Context interface {
 	GetCancelFunc() context.CancelFunc
 }
 
-func NewContext(parentCtx context.Context, reportError ...chan error) Context {
-	ctx := &ContextBehavior{}
-	ctx.init(parentCtx, reportError...)
-	return ctx
-}
-
-type ContextBehavior struct {
+type _ContextBehavior struct {
 	context.Context
 	parentCtx   context.Context
 	reportError chan error
@@ -31,44 +25,42 @@ type ContextBehavior struct {
 	valueMap    sync.Map
 }
 
-func (ctx *ContextBehavior) init(parentCtx context.Context, reportError ...chan error) {
+func (ctx *_ContextBehavior) init(parentCtx context.Context, reportError chan error) {
 	if parentCtx == nil {
 		ctx.parentCtx = context.Background()
 	} else {
 		ctx.parentCtx = parentCtx
 	}
 
-	if len(reportError) > 0 {
-		ctx.reportError = reportError[0]
-	}
+	ctx.reportError = reportError
 
 	ctx.Context, ctx.cancel = context.WithCancel(ctx.parentCtx)
 }
 
-func (ctx *ContextBehavior) GetParentCtx() context.Context {
+func (ctx *_ContextBehavior) GetParentCtx() context.Context {
 	return ctx.parentCtx
 }
 
-func (ctx *ContextBehavior) GetReportError() chan error {
+func (ctx *_ContextBehavior) GetReportError() chan error {
 	return ctx.reportError
 }
 
-func (ctx *ContextBehavior) GetOrSetValue(key string, value interface{}) (actual interface{}, got bool) {
+func (ctx *_ContextBehavior) GetOrSetValue(key string, value interface{}) (actual interface{}, got bool) {
 	return ctx.valueMap.LoadOrStore(key, value)
 }
 
-func (ctx *ContextBehavior) SetValue(key string, value interface{}) {
+func (ctx *_ContextBehavior) SetValue(key string, value interface{}) {
 	ctx.valueMap.Store(key, value)
 }
 
-func (ctx *ContextBehavior) GetValue(key string) (interface{}, bool) {
+func (ctx *_ContextBehavior) GetValue(key string) (interface{}, bool) {
 	return ctx.valueMap.Load(key)
 }
 
-func (ctx *ContextBehavior) GetWaitGroup() *sync.WaitGroup {
+func (ctx *_ContextBehavior) GetWaitGroup() *sync.WaitGroup {
 	return &ctx.wg
 }
 
-func (ctx *ContextBehavior) GetCancelFunc() context.CancelFunc {
+func (ctx *_ContextBehavior) GetCancelFunc() context.CancelFunc {
 	return ctx.cancel
 }
