@@ -38,6 +38,10 @@ func (comp *ComponentBehavior) GC() {
 
 func (comp *ComponentBehavior) MarkGC() {
 	comp.gcMark = true
+
+	if comp.entity != nil {
+		comp.entity.MarkGC()
+	}
 }
 
 func (comp *ComponentBehavior) NeedGC() bool {

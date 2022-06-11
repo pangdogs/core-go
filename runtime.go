@@ -46,26 +46,19 @@ type RuntimeBehavior struct {
 	processQueue    chan func()
 	eventUpdate     Event
 	eventLateUpdate Event
-	gcMark          bool
 }
 
 func (runtime *RuntimeBehavior) GC() {
-	if !runtime.gcMark {
-		return
-	}
-	runtime.gcMark = false
-
 	runtime.ctx.GC()
 	runtime.eventUpdate.GC()
 	runtime.eventLateUpdate.GC()
 }
 
 func (runtime *RuntimeBehavior) MarkGC() {
-	runtime.gcMark = true
 }
 
 func (runtime *RuntimeBehavior) NeedGC() bool {
-	return runtime.gcMark
+	return true
 }
 
 func (runtime *RuntimeBehavior) init(runtimeCtx RuntimeContext, opts *RuntimeOptions) {
