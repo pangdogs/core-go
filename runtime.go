@@ -46,12 +46,26 @@ type RuntimeBehavior struct {
 	processQueue    chan func()
 	eventUpdate     Event
 	eventLateUpdate Event
+	gcMark          bool
 }
 
 func (runtime *RuntimeBehavior) GC() {
+	if !runtime.gcMark {
+		return
+	}
+	runtime.gcMark = false
+
 	runtime.ctx.GC()
 	runtime.eventUpdate.GC()
 	runtime.eventLateUpdate.GC()
+}
+
+func (runtime *RuntimeBehavior) MarkGC() {
+	runtime.gcMark = true
+}
+
+func (runtime *RuntimeBehavior) NeedGC() bool {
+	return runtime.gcMark
 }
 
 func (runtime *RuntimeBehavior) init(runtimeCtx RuntimeContext, opts *RuntimeOptions) {
@@ -73,8 +87,8 @@ func (runtime *RuntimeBehavior) init(runtimeCtx RuntimeContext, opts *RuntimeOpt
 	runtime.ctx = runtimeCtx
 	runtime.hooksMap = make(map[uint64][3]Hook)
 
-	runtime.eventUpdate.Init(runtime.getOptions().EnableAutoRecover, runtimeCtx.GetReportError(), runtimeCtx.getOptions().HookCache)
-	runtime.eventLateUpdate.Init(runtime.getOptions().EnableAutoRecover, runtimeCtx.GetReportError(), runtimeCtx.getOptions().HookCache)
+	runtime.eventUpdate.Init(runtime.getOptions().EnableAutoRecover, runtimeCtx.GetReportError(), runtimeCtx.getOptions().HookCache, runtime)
+	runtime.eventLateUpdate.Init(runtime.getOptions().EnableAutoRecover, runtimeCtx.GetReportError(), runtimeCtx.getOptions().HookCache, runtime)
 
 	runtimeCtx.setFrame(runtime.opts.Frame)
 

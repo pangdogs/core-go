@@ -13,14 +13,22 @@ type Event struct {
 	reportError chan error
 }
 
-func (event *Event) Init(autoRecover bool, reportError chan error, hookCache *container.Cache[Hook]) {
+func (event *Event) Init(autoRecover bool, reportError chan error, hookCache *container.Cache[Hook], gcParent container.GC) {
 	event.autoRecover = autoRecover
 	event.reportError = reportError
-	event.subscribers.Init(hookCache)
+	event.subscribers.Init(hookCache, gcParent)
 }
 
 func (event *Event) GC() {
 	event.subscribers.GC()
+}
+
+func (event *Event) MarkGC() {
+	event.subscribers.MarkGC()
+}
+
+func (event *Event) NeedGC() bool {
+	return event.subscribers.NeedGC()
 }
 
 func (event *Event) Emit(fun func(delegate FastIFace) bool) {

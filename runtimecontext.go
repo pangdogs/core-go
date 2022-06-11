@@ -61,15 +61,29 @@ type RuntimeContextBehavior struct {
 	eventEntityMgrEntityAddComponents   Event
 	eventEntityMgrEntityRemoveComponent Event
 	eventPushSafeCallSegment            Event
+	gcMark                              bool
 }
 
 func (runtimeCtx *RuntimeContextBehavior) GC() {
+	if !runtimeCtx.gcMark {
+		return
+	}
+	runtimeCtx.gcMark = false
+
 	runtimeCtx.entityList.GC()
 	runtimeCtx.eventEntityMgrAddEntity.GC()
 	runtimeCtx.eventEntityMgrRemoveEntity.GC()
 	runtimeCtx.eventEntityMgrEntityAddComponents.GC()
 	runtimeCtx.eventEntityMgrEntityRemoveComponent.GC()
 	runtimeCtx.eventPushSafeCallSegment.GC()
+}
+
+func (runtimeCtx *RuntimeContextBehavior) MarkGC() {
+	runtimeCtx.gcMark = true
+}
+
+func (runtimeCtx *RuntimeContextBehavior) NeedGC() bool {
+	return runtimeCtx.gcMark
 }
 
 func (runtimeCtx *RuntimeContextBehavior) init(appCtx AppContext, opts *RuntimeContextOptions) {
@@ -90,14 +104,14 @@ func (runtimeCtx *RuntimeContextBehavior) init(appCtx AppContext, opts *RuntimeC
 	runtimeCtx.ContextBehavior.init(appCtx)
 	runtimeCtx.appCtx = appCtx
 
-	runtimeCtx.entityList.Init(runtimeCtx.opts.FaceCache)
+	runtimeCtx.entityList.Init(runtimeCtx.opts.FaceCache, runtimeCtx)
 	runtimeCtx.entityMap = map[uint64]RuntimeCtxEntityInfo{}
 
-	runtimeCtx.eventEntityMgrAddEntity.Init(false, nil, runtimeCtx.opts.HookCache)
-	runtimeCtx.eventEntityMgrRemoveEntity.Init(false, nil, runtimeCtx.opts.HookCache)
-	runtimeCtx.eventEntityMgrEntityAddComponents.Init(false, nil, runtimeCtx.opts.HookCache)
-	runtimeCtx.eventEntityMgrEntityRemoveComponent.Init(false, nil, runtimeCtx.opts.HookCache)
-	runtimeCtx.eventPushSafeCallSegment.Init(false, nil, runtimeCtx.opts.HookCache)
+	runtimeCtx.eventEntityMgrAddEntity.Init(false, nil, runtimeCtx.opts.HookCache, runtimeCtx)
+	runtimeCtx.eventEntityMgrRemoveEntity.Init(false, nil, runtimeCtx.opts.HookCache, runtimeCtx)
+	runtimeCtx.eventEntityMgrEntityAddComponents.Init(false, nil, runtimeCtx.opts.HookCache, runtimeCtx)
+	runtimeCtx.eventEntityMgrEntityRemoveComponent.Init(false, nil, runtimeCtx.opts.HookCache, runtimeCtx)
+	runtimeCtx.eventPushSafeCallSegment.Init(false, nil, runtimeCtx.opts.HookCache, runtimeCtx)
 }
 
 func (runtimeCtx *RuntimeContextBehavior) getOptions() *RuntimeContextOptions {

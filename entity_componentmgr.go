@@ -154,6 +154,10 @@ func (entity *EntityBehavior) addSingleComponent(name string, component Componen
 		}
 	}
 
+	if component.NeedGC() {
+		entity.MarkGC()
+	}
+
 	return nil
 }
 

@@ -61,6 +61,10 @@ func (runtimeCtx *RuntimeContextBehavior) AddEntity(entity Entity) {
 
 	runtimeCtx.entityMap[entity.GetID()] = entityInfo
 
+	if entity.NeedGC() {
+		runtimeCtx.MarkGC()
+	}
+
 	emitEventEntityMgrAddEntity[RuntimeContext](&runtimeCtx.eventEntityMgrAddEntity, runtimeCtx.opts.Inheritor, entity)
 }
 

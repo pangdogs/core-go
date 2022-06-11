@@ -24,17 +24,31 @@ type ComponentBehavior struct {
 	entity                    Entity
 	inheritor                 Component
 	eventComponentDestroySelf Event
+	gcMark                    bool
 }
 
 func (comp *ComponentBehavior) GC() {
+	if !comp.gcMark {
+		return
+	}
+	comp.gcMark = false
+
 	comp.eventComponentDestroySelf.GC()
+}
+
+func (comp *ComponentBehavior) MarkGC() {
+	comp.gcMark = true
+}
+
+func (comp *ComponentBehavior) NeedGC() bool {
+	return comp.gcMark
 }
 
 func (comp *ComponentBehavior) init(name string, entity Entity, inheritor Component, hookCache *container.Cache[Hook]) {
 	comp.name = name
 	comp.entity = entity
 	comp.inheritor = inheritor
-	comp.eventComponentDestroySelf.Init(false, nil, hookCache)
+	comp.eventComponentDestroySelf.Init(false, nil, hookCache, comp)
 }
 
 func (comp *ComponentBehavior) setID(id uint64) {

@@ -53,13 +53,27 @@ type EntityBehavior struct {
 	eventEntityDestroySelf      Event
 	eventCompMgrAddComponents   Event
 	eventCompMgrRemoveComponent Event
+	gcMark                      bool
 }
 
 func (entity *EntityBehavior) GC() {
+	if !entity.gcMark {
+		return
+	}
+	entity.gcMark = false
+
 	entity.componentList.GC()
 	entity.eventEntityDestroySelf.GC()
 	entity.eventCompMgrAddComponents.GC()
 	entity.eventCompMgrRemoveComponent.GC()
+}
+
+func (entity *EntityBehavior) MarkGC() {
+	entity.gcMark = true
+}
+
+func (entity *EntityBehavior) NeedGC() bool {
+	return entity.gcMark
 }
 
 func (entity *EntityBehavior) init(opts *EntityOptions) {
@@ -73,7 +87,7 @@ func (entity *EntityBehavior) init(opts *EntityOptions) {
 		entity.opts.Inheritor = entity
 	}
 
-	entity.componentList.Init(entity.opts.FaceCache)
+	entity.componentList.Init(entity.opts.FaceCache, entity)
 
 	if entity.opts.EnableFastGetComponent {
 		entity.componentMap = map[string]*container.Element[Face]{}
@@ -83,9 +97,9 @@ func (entity *EntityBehavior) init(opts *EntityOptions) {
 		entity.componentByIDMap = map[uint64]*container.Element[Face]{}
 	}
 
-	entity.eventEntityDestroySelf.Init(false, nil, opts.HookCache)
-	entity.eventCompMgrAddComponents.Init(false, nil, opts.HookCache)
-	entity.eventCompMgrRemoveComponent.Init(false, nil, opts.HookCache)
+	entity.eventEntityDestroySelf.Init(false, nil, opts.HookCache, entity)
+	entity.eventCompMgrAddComponents.Init(false, nil, opts.HookCache, entity)
+	entity.eventCompMgrRemoveComponent.Init(false, nil, opts.HookCache, entity)
 }
 
 func (entity *EntityBehavior) getOptions() *EntityOptions {
