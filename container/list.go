@@ -137,7 +137,7 @@ func (l *List[T]) Back() *Element[T] {
 // lazyInit 迟滞初始化
 func (l *List[T]) lazyInit() {
 	if l.root._next == nil {
-		l.Init(nil)
+		l.Init(nil, nil)
 	}
 }
 
