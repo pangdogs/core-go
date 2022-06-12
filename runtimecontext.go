@@ -5,6 +5,7 @@ import "github.com/pangdogs/core/container"
 type RuntimeContext interface {
 	container.GC
 	Context
+	_RunnableMark
 	EntityMgr
 	EntityMgrEvents
 	SafeCall
@@ -51,6 +52,7 @@ type RuntimeCtxEntityInfo struct {
 
 type RuntimeContextBehavior struct {
 	_ContextBehavior
+	_RunnableMarkBehavior
 	opts                                RuntimeContextOptions
 	appCtx                              AppContext
 	entityMap                           map[uint64]RuntimeCtxEntityInfo

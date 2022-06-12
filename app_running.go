@@ -1,7 +1,7 @@
 package core
 
 func (app *AppBehavior) Run() chan struct{} {
-	if !app.markRunning() {
+	if !app.ctx.markRunning() {
 		panic("app already running")
 	}
 
@@ -40,7 +40,7 @@ func (app *AppBehavior) running(shutChan chan struct{}) {
 			}
 		})
 
-		app.markShutdown()
+		app.ctx.markShutdown()
 		shutChan <- struct{}{}
 	}()
 

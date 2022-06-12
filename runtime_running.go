@@ -3,12 +3,13 @@ package core
 import "time"
 
 func (runtime *RuntimeBehavior) Run() chan struct{} {
-	if !runtime.markRunning() {
+	if !runtime.ctx.markRunning() {
 		panic("runtime already running")
 	}
 
 	shutChan := make(chan struct{}, 1)
 
+	runtime.ctx.setFrame(runtime.opts.Frame)
 	runtime.processQueue = make(chan func(), runtime.opts.ProcessQueueCapacity)
 
 	go runtime.running(shutChan)
@@ -48,7 +49,7 @@ func (runtime *RuntimeBehavior) running(shutChan chan struct{}) {
 
 		runtime.ctx.GetWaitGroup().Wait()
 
-		runtime.markShutdown()
+		runtime.ctx.markShutdown()
 		shutChan <- struct{}{}
 	}()
 

@@ -38,7 +38,6 @@ func NewRuntime(runtimeCtx RuntimeContext, optFuncs ...NewRuntimeOptionFunc) Run
 }
 
 type RuntimeBehavior struct {
-	RunnableBehavior
 	id              uint64
 	opts            RuntimeOptions
 	ctx             RuntimeContext
@@ -82,8 +81,6 @@ func (runtime *RuntimeBehavior) init(runtimeCtx RuntimeContext, opts *RuntimeOpt
 
 	runtime.eventUpdate.Init(runtime.getOptions().EnableAutoRecover, runtimeCtx.GetReportError(), runtimeCtx.getOptions().HookCache, runtime)
 	runtime.eventLateUpdate.Init(runtime.getOptions().EnableAutoRecover, runtimeCtx.GetReportError(), runtimeCtx.getOptions().HookCache, runtime)
-
-	runtimeCtx.setFrame(runtime.opts.Frame)
 
 	if opts.EnableAutoRun {
 		runtime.Run()

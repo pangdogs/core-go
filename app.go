@@ -35,7 +35,6 @@ func NewApp(appCtx AppContext, optFuncs ...NewAppOptionFunc) App {
 }
 
 type AppBehavior struct {
-	RunnableBehavior
 	opts AppOptions
 	ctx  AppContext
 }

@@ -8,6 +8,7 @@ import (
 
 type AppContext interface {
 	Context
+	_RunnableMark
 	EntityMgr
 	init(ctx context.Context, opts *AppContextOptions)
 	getOptions() *AppContextOptions
@@ -43,6 +44,7 @@ func NewAppContext(ctx context.Context, optFuncs ...NewAppContextOptionFunc) App
 
 type AppContextBehavior struct {
 	_ContextBehavior
+	_RunnableMarkBehavior
 	opts      AppContextOptions
 	uidGen    uint64
 	entityMap sync.Map
