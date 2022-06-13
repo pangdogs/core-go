@@ -11,6 +11,7 @@ func (runtime *RuntimeBehavior) Run() chan struct{} {
 
 	runtime.ctx.setFrame(runtime.opts.Frame)
 	runtime.processQueue = make(chan func(), runtime.opts.ProcessQueueCapacity)
+	runtime.ctx.setCallee(runtime)
 
 	go runtime.running(shutChan)
 
@@ -19,18 +20,6 @@ func (runtime *RuntimeBehavior) Run() chan struct{} {
 
 func (runtime *RuntimeBehavior) Stop() {
 	runtime.ctx.GetCancelFunc()()
-}
-
-func (runtime *RuntimeBehavior) OnPushSafeCallSegment(segment func()) {
-	timeoutTimer := time.NewTimer(runtime.opts.ProcessQueueTimeout)
-	defer timeoutTimer.Stop()
-
-	select {
-	case runtime.processQueue <- segment:
-		return
-	case <-timeoutTimer.C:
-		panic("process queue push segment timeout")
-	}
 }
 
 func (runtime *RuntimeBehavior) running(shutChan chan struct{}) {
@@ -69,7 +58,7 @@ func (runtime *RuntimeBehavior) running(shutChan chan struct{}) {
 	}
 }
 
-func (runtime *RuntimeBehavior) loopStarted() (hooks [5]Hook) {
+func (runtime *RuntimeBehavior) loopStarted() (hooks [4]Hook) {
 	runtimeCtx := runtime.ctx
 	frame := runtime.opts.Frame
 
@@ -81,7 +70,6 @@ func (runtime *RuntimeBehavior) loopStarted() (hooks [5]Hook) {
 	hooks[1] = BindEvent[EventEntityMgrRemoveEntity[RuntimeContext]](runtimeCtx.EventEntityMgrRemoveEntity(), runtime)
 	hooks[2] = BindEvent[EventEntityMgrEntityAddComponents[RuntimeContext]](runtimeCtx.EventEntityMgrEntityAddComponents(), runtime)
 	hooks[3] = BindEvent[EventEntityMgrEntityRemoveComponent[RuntimeContext]](runtimeCtx.EventEntityMgrEntityRemoveComponent(), runtime)
-	hooks[4] = BindEvent[EventPushSafeCallSegment](runtimeCtx.EventPushSafeCallSegment(), runtime)
 
 	runtimeCtx.RangeEntities(func(entity Entity) bool {
 		CallOuterNoRet(runtime.opts.EnableAutoRecover, runtimeCtx.GetReportError(), func() {
@@ -99,7 +87,7 @@ func (runtime *RuntimeBehavior) loopStarted() (hooks [5]Hook) {
 	return
 }
 
-func (runtime *RuntimeBehavior) loopStopped(hooks [5]Hook) {
+func (runtime *RuntimeBehavior) loopStopped(hooks [4]Hook) {
 	runtimeCtx := runtime.ctx
 	frame := runtime.opts.Frame
 

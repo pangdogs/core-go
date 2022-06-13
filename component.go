@@ -52,7 +52,7 @@ func (comp *ComponentBehavior) init(name string, entity Entity, inheritor Compon
 	comp.name = name
 	comp.entity = entity
 	comp.inheritor = inheritor
-	comp.eventComponentDestroySelf.Init(false, nil, hookCache, comp)
+	comp.eventComponentDestroySelf.Init(false, nil, EventRecursion_Discard, hookCache, comp)
 }
 
 func (comp *ComponentBehavior) setID(id uint64) {

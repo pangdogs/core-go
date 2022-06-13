@@ -7,15 +7,26 @@ type IEvent interface {
 	newHook(delegate interface{}, delegateFastIFace FastIFace, priority int32) Hook
 }
 
+type EventRecursion int32
+
+const (
+	EventRecursion_Allow EventRecursion = iota
+	EventRecursion_Disallow
+	EventRecursion_Discard
+)
+
 type Event struct {
-	subscribers container.List[Hook]
-	autoRecover bool
-	reportError chan error
+	subscribers    container.List[Hook]
+	autoRecover    bool
+	reportError    chan error
+	eventRecursion EventRecursion
+	emitted        int
 }
 
-func (event *Event) Init(autoRecover bool, reportError chan error, hookCache *container.Cache[Hook], gcParent container.GC) {
+func (event *Event) Init(autoRecover bool, reportError chan error, eventRecursion EventRecursion, hookCache *container.Cache[Hook], gcParent container.GC) {
 	event.autoRecover = autoRecover
 	event.reportError = reportError
+	event.eventRecursion = eventRecursion
 	event.subscribers.Init(hookCache, gcParent)
 }
 
@@ -35,6 +46,22 @@ func (event *Event) Emit(fun func(delegate FastIFace) bool) {
 	if fun == nil {
 		return
 	}
+
+	if event.emitted > 0 {
+		switch event.eventRecursion {
+		case EventRecursion_Allow:
+			break
+		case EventRecursion_Disallow:
+			panic("recursive event disallowed")
+		case EventRecursion_Discard:
+			return
+		}
+	}
+
+	event.emitted++
+	defer func() {
+		event.emitted--
+	}()
 
 	event.subscribers.Traversal(func(e *container.Element[Hook]) bool {
 		if e.Value.delegateFastIFace != NilFastIFace {

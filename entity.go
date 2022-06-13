@@ -101,9 +101,9 @@ func (entity *EntityBehavior) init(opts *EntityOptions) {
 		entity.componentByIDMap = map[uint64]*container.Element[Face]{}
 	}
 
-	entity.eventEntityDestroySelf.Init(false, nil, opts.HookCache, entity)
-	entity.eventCompMgrAddComponents.Init(false, nil, opts.HookCache, entity)
-	entity.eventCompMgrRemoveComponent.Init(false, nil, opts.HookCache, entity)
+	entity.eventEntityDestroySelf.Init(false, nil, EventRecursion_Discard, opts.HookCache, entity)
+	entity.eventCompMgrAddComponents.Init(false, nil, EventRecursion_Allow, opts.HookCache, entity)
+	entity.eventCompMgrRemoveComponent.Init(false, nil, EventRecursion_Allow, opts.HookCache, entity)
 }
 
 func (entity *EntityBehavior) getOptions() *EntityOptions {

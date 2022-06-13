@@ -1,9 +1,13 @@
 package core
 
+type _Callee interface {
+	pushCall(segment func())
+}
+
 type SafeCall interface {
 	SafeCall(segment func() SafeRet) <-chan SafeRet
 	SafeCallNoRet(segment func())
-	EventPushSafeCallSegment() IEvent
+	setCallee(callee _Callee)
 }
 
 type SafeRet struct {

@@ -11,7 +11,7 @@ func (runtimeCtx *RuntimeContextBehavior) SafeCall(segment func() SafeRet) <-cha
 
 	ret := make(chan SafeRet, 1)
 
-	emitEventPushSafeCallSegment(&runtimeCtx.eventPushSafeCallSegment, func() {
+	runtimeCtx.callee.pushCall(func() {
 		defer func() {
 			if info := recover(); info != nil {
 				err, ok := info.(error)
@@ -34,9 +34,9 @@ func (runtimeCtx *RuntimeContextBehavior) SafeCallNoRet(segment func()) {
 		panic("nil segment")
 	}
 
-	emitEventPushSafeCallSegment(&runtimeCtx.eventPushSafeCallSegment, segment)
+	runtimeCtx.callee.pushCall(segment)
 }
 
-func (runtimeCtx *RuntimeContextBehavior) EventPushSafeCallSegment() IEvent {
-	return &runtimeCtx.eventPushSafeCallSegment
+func (runtimeCtx *RuntimeContextBehavior) setCallee(callee _Callee) {
+	runtimeCtx.callee = callee
 }
