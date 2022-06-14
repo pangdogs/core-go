@@ -9,54 +9,49 @@
 * 因为EC树只是一种Entity的管理方式，并非EC系统必须包含的，所以本层不提供EC树。
 
 ### 运行时
-* 结合EC组件系统，设计了一种运行时架构，让不同的Entity工作在指定的线程中，并且工作在不同线程上的Entity可以跨线程相互通信。
-* 线程之间通信使用 闭包 + 队列 的方式，即将闭包压入被调线程的调用队列，这样可以在运行时中保持调用顺序，实现线程安全。
+* 结合EC组件系统，设计了一种运行时架构，使Entity工作在指定的线程中，工作在不同线程上的Entity可以安全的相互通信。
+* 运行时之间安全通信使用 闭包 + 队列 的方式实现，即将闭包压入被调运行时的调用队列，被调运行时不断从队列中取出闭包执行，这样实现安全的线程间通信。
 
 ### 事件系统
-* 类似C#的事件机制，注意非线程安全。
+* 类似C#的事件机制，注意非线程安全，不能用于实现跨线程通知。
 
 ## 主要对象与函数
-### Context
-* 上下文，提供存储变量、跨线程报告异常、停止线程几项功能，贯穿所有代码。
+### AppContext
+* 应用上下文，提供存储变量、全局Entity管理、全局异常报告、全局Cancel等几项功能，所有方法线程安全。
 
-### APP
-* 应用，从Context继承，同时增加了Entity管理、开始停止几项功能，贯穿所有代码。
+### App
+* 应用，提供开始、停止运行功能。
+
+### RuntimeContext
+* 运行时上下文，提供存储变量、Entity管理、异常报告、Cancel、跨运行时安全调用、获取帧数据等几项功能，除了Entity管理与获取帧数据外，其他方法均线程安全。
+
+### Runtime
+* 运行时，提供开始、停止运行功能，用于驱动Entity与Component生命周期运转。
+
+### Frame
+* 帧，结合Runtime，可以调整Runtime的运行方式。
+
+### SafeCall
+* 跨运行时安全调用，递归调用会失败并超时，例如：`线程A -> 线程B -> 线程A`。
 
 ### Entity
 * 实体，提供Component管理功能。
+* 生命周期：`[Init] -> [Update] -> [LateUpdate] -> [Shut]`
 
 ### Component
-* 组件，提供一组生命周期回调函数：
-` [Init] -> [Awake] -> [EntityInit] -> [Start] -> [Update] -> [LateUpdate] -> [EntityShut] -> [Halt] -> [Shut]`
-
-### Runtime
-* 线程运行时，从Context继承，用于给Entity提供多线程运行环境，提供GC能力，贯穿所有代码。
-
-### Frame
-* 结合Runtime，可以调整Runtime的运行方式。
-
-### SafeStack
-* 跨线程安全调用栈，可用于提供不会死锁的跨线程调用，会阻塞当前线程。
-
-### UnsafeCall
-* 跨线程不安全调用，可以选择是否阻塞当前线程，阻塞当前线程可能会造成死锁，例如：`线程A -> 线程B -> 线程A`。
+* 组件，用于拓展编写逻辑。
+* 生命周期：`[Awake] -> [Start] -> [Update] -> [LateUpdate] -> [Shut]`
 
 ### 事件：
+* Event
+	* 事件，提供主动通知，即生产者。
+
 * Hook 
-	* 钩子，事件的接收端，可以同时绑定多个EventSource。
+	* 钩子，消费者订阅事件产生的句柄，用于解除订阅。
 
-* EventSource 
-	* 事件源，事件的发送端，可以被不同的Hook绑定。
+* BindEvent，BindEventWithPriority
+	* 绑定事件函数。
 
-### 事件函数：
-* BindEvent 
-	* 绑定Hook与EventSource。
-
-* UnbindEvent 
-	* 解绑定Hook与EventSource。
-
-* UnbindAllEventSource 
-	* Hook解绑定所有已绑定的EventSource。
-
-* UnbindAllHook 
-	* EventSource解绑定所有已绑定的Hook。
+* eventcode
+	* 用于生成发送事件代码，使用`go:generate`功能加在事件定义代码头部，即可生成代码。
+	* 通常使用`//go:generate go run github.com/pangdogs/core/eventcode -decl $GOFILE -package $GOPACKAGE`
