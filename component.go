@@ -37,6 +37,9 @@ func (comp *ComponentBehavior) GC() {
 }
 
 func (comp *ComponentBehavior) MarkGC() {
+	if comp.gcMark {
+		return
+	}
 	comp.gcMark = true
 
 	if comp.entity != nil {

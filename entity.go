@@ -69,6 +69,9 @@ func (entity *EntityBehavior) GC() {
 }
 
 func (entity *EntityBehavior) MarkGC() {
+	if entity.gcMark {
+		return
+	}
 	entity.gcMark = true
 
 	if entity.runtimeCtx != nil {

@@ -102,7 +102,11 @@ func (l *List[T]) GC() {
 
 // MarkGC 标记需要GC
 func (l *List[T]) MarkGC() {
+	if l.gcMark {
+		return
+	}
 	l.gcMark = true
+
 	if l.gcParent != nil {
 		l.gcParent.MarkGC()
 	}
