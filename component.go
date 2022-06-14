@@ -27,13 +27,15 @@ type ComponentBehavior struct {
 	gcMark                    bool
 }
 
-func (comp *ComponentBehavior) GC() {
+func (comp *ComponentBehavior) GC() bool {
 	if !comp.gcMark {
-		return
+		return false
 	}
 	comp.gcMark = false
 
 	comp.eventComponentDestroySelf.GC()
+
+	return true
 }
 
 func (comp *ComponentBehavior) MarkGC() {
@@ -55,7 +57,7 @@ func (comp *ComponentBehavior) init(name string, entity Entity, inheritor Compon
 	comp.name = name
 	comp.entity = entity
 	comp.inheritor = inheritor
-	comp.eventComponentDestroySelf.Init(false, nil, EventRecursion_Discard, hookCache, comp)
+	comp.eventComponentDestroySelf.Init(false, nil, EventRecursion_Discard, hookCache, comp.inheritor)
 }
 
 func (comp *ComponentBehavior) setID(id uint64) {

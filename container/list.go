@@ -83,9 +83,9 @@ func (l *List[T]) Init(cache *Cache[T], gcParent GC) *List[T] {
 }
 
 // GC 执行GC
-func (l *List[T]) GC() {
+func (l *List[T]) GC() bool {
 	if !l.gcMark {
-		return
+		return false
 	}
 	l.gcMark = false
 
@@ -98,6 +98,8 @@ func (l *List[T]) GC() {
 			}
 		}
 	}
+
+	return true
 }
 
 // MarkGC 标记需要GC

@@ -126,7 +126,7 @@ func (runtime *RuntimeBehavior) loopNoFrame() {
 			CallOuterNoRet(runtime.opts.EnableAutoRecover, runtime.ctx.GetReportError(), process)
 
 		case <-gcTicker.C:
-			runtime.GC()
+			runtime.opts.Inheritor.GC()
 
 		case <-runtime.ctx.Done():
 			return
@@ -201,7 +201,7 @@ func (runtime *RuntimeBehavior) loopWithFrame() {
 			CallOuterNoRet(runtime.opts.EnableAutoRecover, runtime.ctx.GetReportError(), process)
 
 		case <-gcTicker.C:
-			runtime.GC()
+			runtime.opts.Inheritor.GC()
 
 		case <-runtime.ctx.Done():
 			return
@@ -272,7 +272,7 @@ func (runtime *RuntimeBehavior) loopWithBlinkFrame() {
 		}
 
 		if curFrames%gcFrames == 0 {
-			runtime.GC()
+			runtime.opts.Inheritor.GC()
 		}
 
 		frame.setCurFrames(curFrames + 1)

@@ -1,6 +1,9 @@
 package core
 
+import "github.com/pangdogs/core/container"
+
 type Runtime interface {
+	container.GC
 	Runnable
 	init(runtimeCtx RuntimeContext, opts *RuntimeOptions)
 	getOptions() *RuntimeOptions
@@ -47,10 +50,11 @@ type RuntimeBehavior struct {
 	eventLateUpdate Event
 }
 
-func (runtime *RuntimeBehavior) GC() {
+func (runtime *RuntimeBehavior) GC() bool {
 	runtime.ctx.GC()
 	runtime.eventUpdate.GC()
 	runtime.eventLateUpdate.GC()
+	return true
 }
 
 func (runtime *RuntimeBehavior) MarkGC() {
@@ -79,8 +83,8 @@ func (runtime *RuntimeBehavior) init(runtimeCtx RuntimeContext, opts *RuntimeOpt
 	runtime.ctx = runtimeCtx
 	runtime.hooksMap = make(map[uint64][3]Hook)
 
-	runtime.eventUpdate.Init(runtime.getOptions().EnableAutoRecover, runtimeCtx.GetReportError(), EventRecursion_Disallow, runtimeCtx.getOptions().HookCache, runtime)
-	runtime.eventLateUpdate.Init(runtime.getOptions().EnableAutoRecover, runtimeCtx.GetReportError(), EventRecursion_Disallow, runtimeCtx.getOptions().HookCache, runtime)
+	runtime.eventUpdate.Init(runtime.getOptions().EnableAutoRecover, runtimeCtx.GetReportError(), EventRecursion_Disallow, runtimeCtx.getOptions().HookCache, runtime.opts.Inheritor)
+	runtime.eventLateUpdate.Init(runtime.getOptions().EnableAutoRecover, runtimeCtx.GetReportError(), EventRecursion_Disallow, runtimeCtx.getOptions().HookCache, runtime.opts.Inheritor)
 
 	if opts.EnableAutoRun {
 		runtime.Run()

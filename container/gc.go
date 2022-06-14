@@ -1,7 +1,7 @@
 package container
 
 type GC interface {
-	GC()
+	GC() bool
 	MarkGC()
 	NeedGC() bool
 }

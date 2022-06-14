@@ -66,9 +66,9 @@ type RuntimeContextBehavior struct {
 	gcMark                              bool
 }
 
-func (runtimeCtx *RuntimeContextBehavior) GC() {
+func (runtimeCtx *RuntimeContextBehavior) GC() bool {
 	if !runtimeCtx.gcMark {
-		return
+		return false
 	}
 	runtimeCtx.gcMark = false
 
@@ -77,6 +77,8 @@ func (runtimeCtx *RuntimeContextBehavior) GC() {
 	runtimeCtx.eventEntityMgrRemoveEntity.GC()
 	runtimeCtx.eventEntityMgrEntityAddComponents.GC()
 	runtimeCtx.eventEntityMgrEntityRemoveComponent.GC()
+
+	return true
 }
 
 func (runtimeCtx *RuntimeContextBehavior) MarkGC() {
@@ -105,13 +107,13 @@ func (runtimeCtx *RuntimeContextBehavior) init(appCtx AppContext, opts *RuntimeC
 	runtimeCtx._ContextBehavior.init(appCtx, runtimeCtx.opts.ReportError)
 	runtimeCtx.appCtx = appCtx
 
-	runtimeCtx.entityList.Init(runtimeCtx.opts.FaceCache, runtimeCtx)
+	runtimeCtx.entityList.Init(runtimeCtx.opts.FaceCache, runtimeCtx.opts.Inheritor)
 	runtimeCtx.entityMap = map[uint64]RuntimeCtxEntityInfo{}
 
-	runtimeCtx.eventEntityMgrAddEntity.Init(false, nil, EventRecursion_Allow, runtimeCtx.opts.HookCache, runtimeCtx)
-	runtimeCtx.eventEntityMgrRemoveEntity.Init(false, nil, EventRecursion_Allow, runtimeCtx.opts.HookCache, runtimeCtx)
-	runtimeCtx.eventEntityMgrEntityAddComponents.Init(false, nil, EventRecursion_Allow, runtimeCtx.opts.HookCache, runtimeCtx)
-	runtimeCtx.eventEntityMgrEntityRemoveComponent.Init(false, nil, EventRecursion_Allow, runtimeCtx.opts.HookCache, runtimeCtx)
+	runtimeCtx.eventEntityMgrAddEntity.Init(false, nil, EventRecursion_Allow, runtimeCtx.opts.HookCache, runtimeCtx.opts.Inheritor)
+	runtimeCtx.eventEntityMgrRemoveEntity.Init(false, nil, EventRecursion_Allow, runtimeCtx.opts.HookCache, runtimeCtx.opts.Inheritor)
+	runtimeCtx.eventEntityMgrEntityAddComponents.Init(false, nil, EventRecursion_Allow, runtimeCtx.opts.HookCache, runtimeCtx.opts.Inheritor)
+	runtimeCtx.eventEntityMgrEntityRemoveComponent.Init(false, nil, EventRecursion_Allow, runtimeCtx.opts.HookCache, runtimeCtx.opts.Inheritor)
 }
 
 func (runtimeCtx *RuntimeContextBehavior) getOptions() *RuntimeContextOptions {

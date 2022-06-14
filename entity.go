@@ -56,9 +56,9 @@ type EntityBehavior struct {
 	gcMark                      bool
 }
 
-func (entity *EntityBehavior) GC() {
+func (entity *EntityBehavior) GC() bool {
 	if !entity.gcMark {
-		return
+		return false
 	}
 	entity.gcMark = false
 
@@ -66,6 +66,8 @@ func (entity *EntityBehavior) GC() {
 	entity.eventEntityDestroySelf.GC()
 	entity.eventCompMgrAddComponents.GC()
 	entity.eventCompMgrRemoveComponent.GC()
+
+	return true
 }
 
 func (entity *EntityBehavior) MarkGC() {
@@ -94,7 +96,7 @@ func (entity *EntityBehavior) init(opts *EntityOptions) {
 		entity.opts.Inheritor = entity
 	}
 
-	entity.componentList.Init(entity.opts.FaceCache, entity)
+	entity.componentList.Init(entity.opts.FaceCache, entity.opts.Inheritor)
 
 	if entity.opts.EnableFastGetComponent {
 		entity.componentMap = map[string]*container.Element[Face]{}
@@ -104,9 +106,9 @@ func (entity *EntityBehavior) init(opts *EntityOptions) {
 		entity.componentByIDMap = map[uint64]*container.Element[Face]{}
 	}
 
-	entity.eventEntityDestroySelf.Init(false, nil, EventRecursion_Discard, opts.HookCache, entity)
-	entity.eventCompMgrAddComponents.Init(false, nil, EventRecursion_Allow, opts.HookCache, entity)
-	entity.eventCompMgrRemoveComponent.Init(false, nil, EventRecursion_Allow, opts.HookCache, entity)
+	entity.eventEntityDestroySelf.Init(false, nil, EventRecursion_Discard, opts.HookCache, entity.opts.Inheritor)
+	entity.eventCompMgrAddComponents.Init(false, nil, EventRecursion_Allow, opts.HookCache, entity.opts.Inheritor)
+	entity.eventCompMgrRemoveComponent.Init(false, nil, EventRecursion_Allow, opts.HookCache, entity.opts.Inheritor)
 }
 
 func (entity *EntityBehavior) getOptions() *EntityOptions {
