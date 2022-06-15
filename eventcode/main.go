@@ -77,7 +77,7 @@ import (
 		impStr := string(declFileData[begin.Offset:end.Offset])
 
 		if !strings.Contains(impStr, "github.com/pangdogs/core") {
-			fmt.Fprintf(genCode, "\n%s", impStr)
+			fmt.Fprintf(genCode, "	\n%s", impStr)
 		}
 	}
 
