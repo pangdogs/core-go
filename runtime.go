@@ -87,7 +87,7 @@ func (runtime *RuntimeBehavior) init(runtimeCtx RuntimeContext, opts *RuntimeOpt
 	runtime.eventLateUpdate.Init(runtime.getOptions().EnableAutoRecover, runtimeCtx.GetReportError(), EventRecursion_Disallow, runtimeCtx.getOptions().HookCache, runtime.opts.Inheritor)
 
 	if opts.EnableAutoRun {
-		runtime.Run()
+		runtime.opts.Inheritor.Run()
 	}
 }
 
