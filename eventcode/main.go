@@ -66,13 +66,11 @@ package %s
 		}(),
 		*goPackage)
 
-	if *corePackage != "" && *corePackage != "core" {
-		fmt.Fprintf(genCode, `
+	fmt.Fprintf(genCode, `
 import (
 	%s "github.com/pangdogs/core"
 )
 `, *corePackage)
-	}
 
 	exp, err := regexp.Compile(*eventRegexp)
 	if err != nil {
