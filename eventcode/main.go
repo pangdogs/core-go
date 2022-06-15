@@ -41,10 +41,6 @@ func main() {
 		panic(flag.ErrHelp)
 	}
 
-	if *corePackage != "" {
-		*corePackage = *corePackage + "."
-	}
-
 	declFileData, err := ioutil.ReadFile(*declFile)
 	if err != nil {
 		panic(err)
@@ -217,7 +213,7 @@ func %[8]s%[1]s%[6]s(event %[5]sIEvent%[3]s) {
 		return %[5]sFast2IFace[%[1]s%[7]s](delegate).%[2]s(%[4]s)
 	})
 }
-`, eventName, eventFuncName, eventFuncParamsDecl, eventFuncParams, *corePackage, eventFuncTypeParamsDecl, eventFuncTypeParams, exportEmitStr)
+`, eventName, eventFuncName, eventFuncParamsDecl, eventFuncParams, *corePackage+".", eventFuncTypeParamsDecl, eventFuncTypeParams, exportEmitStr)
 
 		} else {
 
@@ -231,7 +227,7 @@ func %[8]s%[1]s%[6]s(event %[5]sIEvent%[3]s) {
 		return true
 	})
 }
-`, eventName, eventFuncName, eventFuncParamsDecl, eventFuncParams, *corePackage, eventFuncTypeParamsDecl, eventFuncTypeParams, exportEmitStr)
+`, eventName, eventFuncName, eventFuncParamsDecl, eventFuncParams, *corePackage+".", eventFuncTypeParamsDecl, eventFuncTypeParams, exportEmitStr)
 		}
 
 		fmt.Println(eventName)
