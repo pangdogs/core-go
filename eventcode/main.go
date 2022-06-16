@@ -66,9 +66,12 @@ package %s
 		}(),
 		*goPackage)
 
-	fmt.Fprintf(genCode, `
-import (
+	fmt.Fprintf(genCode, "\nimport (")
+
+	if *corePackage != "" {
+		fmt.Fprintf(genCode, `
 	%s "github.com/pangdogs/core"`, *corePackage)
+	}
 
 	for _, imp := range fast.Imports {
 		begin := fset.Position(imp.Pos())
@@ -203,6 +206,11 @@ import (
 			eventFuncTypeParams = fmt.Sprintf("[%s]", eventFuncTypeParams)
 		}
 
+		_corePackage := ""
+		if *corePackage != "" {
+			_corePackage = *corePackage + "."
+		}
+
 		if eventFunc.Results.NumFields() > 0 {
 			eventRet, ok := eventFunc.Results.List[0].Type.(*ast.Ident)
 			if !ok {
@@ -222,7 +230,7 @@ func %[8]s%[1]s%[6]s(event %[5]sIEvent%[3]s) {
 		return %[5]sFast2IFace[%[1]s%[7]s](delegate).%[2]s(%[4]s)
 	})
 }
-`, eventName, eventFuncName, eventFuncParamsDecl, eventFuncParams, *corePackage+".", eventFuncTypeParamsDecl, eventFuncTypeParams, exportEmitStr)
+`, eventName, eventFuncName, eventFuncParamsDecl, eventFuncParams, _corePackage, eventFuncTypeParamsDecl, eventFuncTypeParams, exportEmitStr)
 
 		} else {
 
@@ -236,7 +244,7 @@ func %[8]s%[1]s%[6]s(event %[5]sIEvent%[3]s) {
 		return true
 	})
 }
-`, eventName, eventFuncName, eventFuncParamsDecl, eventFuncParams, *corePackage+".", eventFuncTypeParamsDecl, eventFuncTypeParams, exportEmitStr)
+`, eventName, eventFuncName, eventFuncParamsDecl, eventFuncParams, _corePackage, eventFuncTypeParamsDecl, eventFuncTypeParams, exportEmitStr)
 		}
 
 		fmt.Println(eventName)
