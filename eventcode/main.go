@@ -66,10 +66,12 @@ package %s
 		}(),
 		*goPackage)
 
-	fmt.Fprintf(genCode, "\nimport (")
+	importCode := &bytes.Buffer{}
+
+	fmt.Fprintf(importCode, "\nimport (")
 
 	if *corePackage != "" {
-		fmt.Fprintf(genCode, `
+		fmt.Fprintf(importCode, `
 	%s "github.com/pangdogs/core"`, *corePackage)
 	}
 
@@ -80,11 +82,15 @@ package %s
 		impStr := string(declFileData[begin.Offset:end.Offset])
 
 		if !strings.Contains(impStr, "github.com/pangdogs/core") {
-			fmt.Fprintf(genCode, "	\n%s", impStr)
+			fmt.Fprintf(importCode, "	\n%s", impStr)
 		}
 	}
 
-	fmt.Fprintf(genCode, "\n)\n")
+	fmt.Fprintf(importCode, "\n)\n")
+
+	if importCode.Len() > 12 {
+		fmt.Fprintf(genCode, importCode.String())
+	}
 
 	exp, err := regexp.Compile(*eventRegexp)
 	if err != nil {
