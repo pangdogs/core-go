@@ -122,11 +122,19 @@ func (runtime *RuntimeBehavior) OnEntityMgrAddEntity(runtimeCtx RuntimeContext, 
 		return true
 	})
 
+	if entityInitFin, ok := entity.(EntityInitFin); ok {
+		entityInitFin.InitFin()
+	}
+
 	runtime.connectEntity(entity)
 }
 
 func (runtime *RuntimeBehavior) OnEntityMgrRemoveEntity(runtimeCtx RuntimeContext, entity Entity) {
 	runtime.disconnectEntity(entity)
+
+	if entityShut, ok := entity.(EntityShut); ok {
+		entityShut.Shut()
+	}
 
 	entity.RangeComponents(func(comp Component) bool {
 		if compShut, ok := comp.(ComponentShut); ok {
@@ -135,8 +143,8 @@ func (runtime *RuntimeBehavior) OnEntityMgrRemoveEntity(runtimeCtx RuntimeContex
 		return true
 	})
 
-	if entityShut, ok := entity.(EntityShut); ok {
-		entityShut.Shut()
+	if entityShutFin, ok := entity.(EntityShutFin); ok {
+		entityShutFin.ShutFin()
 	}
 }
 
