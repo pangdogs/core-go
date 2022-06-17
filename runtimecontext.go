@@ -80,6 +80,11 @@ func (runtimeCtx *RuntimeContextBehavior) GC() bool {
 	runtimeCtx.eventEntityMgrEntityAddComponents.GC()
 	runtimeCtx.eventEntityMgrEntityRemoveComponent.GC()
 
+	for _, gc := range runtimeCtx.gcList {
+		gc.GC()
+	}
+	runtimeCtx.gcList = runtimeCtx.gcList[:0]
+
 	return true
 }
 
