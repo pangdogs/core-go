@@ -59,23 +59,23 @@ func (e *Element[T]) Escaped() bool {
 }
 
 // NewList 创建链表
-func NewList[T any](cache *Cache[T], gcParent GC) *List[T] {
-	return new(List[T]).Init(cache, gcParent)
+func NewList[T any](cache *Cache[T], gcCollector GCCollector) *List[T] {
+	return new(List[T]).Init(cache, gcCollector)
 }
 
 // List 链表，非线程安全，支持在遍历过程中删除元素
 type List[T any] struct {
-	cache    *Cache[T]
-	root     Element[T]
-	len      int
-	gcMark   bool
-	gcParent GC
+	cache       *Cache[T]
+	root        Element[T]
+	len         int
+	gcMark      bool
+	gcCollector GCCollector
 }
 
 // Init 初始化
-func (l *List[T]) Init(cache *Cache[T], gcParent GC) *List[T] {
+func (l *List[T]) Init(cache *Cache[T], gcCollector GCCollector) *List[T] {
 	l.cache = cache
-	l.gcParent = gcParent
+	l.gcCollector = gcCollector
 	l.root._next = &l.root
 	l.root._prev = &l.root
 	l.len = 0
@@ -109,8 +109,8 @@ func (l *List[T]) MarkGC() {
 	}
 	l.gcMark = true
 
-	if l.gcParent != nil {
-		l.gcParent.MarkGC()
+	if l.gcCollector != nil {
+		l.gcCollector.CollectGC(l)
 	}
 }
 

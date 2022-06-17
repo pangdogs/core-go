@@ -4,6 +4,7 @@ import "github.com/pangdogs/core/container"
 
 type RuntimeContext interface {
 	container.GC
+	container.GCCollector
 	Context
 	_RunnableMark
 	EntityMgr
@@ -64,6 +65,7 @@ type RuntimeContextBehavior struct {
 	eventEntityMgrEntityAddComponents   Event
 	eventEntityMgrEntityRemoveComponent Event
 	gcMark                              bool
+	gcList                              []container.GC
 }
 
 func (runtimeCtx *RuntimeContextBehavior) GC() bool {
@@ -87,6 +89,15 @@ func (runtimeCtx *RuntimeContextBehavior) MarkGC() {
 
 func (runtimeCtx *RuntimeContextBehavior) NeedGC() bool {
 	return runtimeCtx.gcMark
+}
+
+func (runtimeCtx *RuntimeContextBehavior) CollectGC(gc container.GC) {
+	if gc == nil || !gc.NeedGC() {
+		return
+	}
+
+	runtimeCtx.gcList = append(runtimeCtx.gcList, gc)
+	runtimeCtx.opts.Inheritor.MarkGC()
 }
 
 func (runtimeCtx *RuntimeContextBehavior) init(appCtx AppContext, opts *RuntimeContextOptions) {

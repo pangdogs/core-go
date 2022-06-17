@@ -53,11 +53,19 @@ func (comp *ComponentBehavior) NeedGC() bool {
 	return comp.gcMark
 }
 
+func (comp *ComponentBehavior) CollectGC(gc container.GC) {
+	if gc == nil || !gc.NeedGC() {
+		return
+	}
+
+	comp.inheritor.MarkGC()
+}
+
 func (comp *ComponentBehavior) init(name string, entity Entity, inheritor Component, hookCache *container.Cache[Hook]) {
 	comp.name = name
 	comp.entity = entity
 	comp.inheritor = inheritor
-	comp.eventComponentDestroySelf.Init(false, nil, EventRecursion_Discard, hookCache, comp.inheritor)
+	comp.eventComponentDestroySelf.Init(false, nil, EventRecursion_Discard, hookCache, comp)
 }
 
 func (comp *ComponentBehavior) setID(id uint64) {

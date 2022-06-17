@@ -85,6 +85,14 @@ func (entity *EntityBehavior) NeedGC() bool {
 	return entity.gcMark
 }
 
+func (entity *EntityBehavior) CollectGC(gc container.GC) {
+	if gc == nil || !gc.NeedGC() {
+		return
+	}
+
+	entity.opts.Inheritor.MarkGC()
+}
+
 func (entity *EntityBehavior) init(opts *EntityOptions) {
 	if opts == nil {
 		panic("nil opts")
@@ -96,7 +104,7 @@ func (entity *EntityBehavior) init(opts *EntityOptions) {
 		entity.opts.Inheritor = entity
 	}
 
-	entity.componentList.Init(entity.opts.FaceCache, entity.opts.Inheritor)
+	entity.componentList.Init(entity.opts.FaceCache, entity)
 
 	if entity.opts.EnableFastGetComponent {
 		entity.componentMap = map[string]*container.Element[Face]{}
@@ -106,9 +114,9 @@ func (entity *EntityBehavior) init(opts *EntityOptions) {
 		entity.componentByIDMap = map[uint64]*container.Element[Face]{}
 	}
 
-	entity.eventEntityDestroySelf.Init(false, nil, EventRecursion_Discard, opts.HookCache, entity.opts.Inheritor)
-	entity.eventCompMgrAddComponents.Init(false, nil, EventRecursion_Allow, opts.HookCache, entity.opts.Inheritor)
-	entity.eventCompMgrRemoveComponent.Init(false, nil, EventRecursion_Allow, opts.HookCache, entity.opts.Inheritor)
+	entity.eventEntityDestroySelf.Init(false, nil, EventRecursion_Discard, opts.HookCache, entity)
+	entity.eventCompMgrAddComponents.Init(false, nil, EventRecursion_Allow, opts.HookCache, entity)
+	entity.eventCompMgrRemoveComponent.Init(false, nil, EventRecursion_Allow, opts.HookCache, entity)
 }
 
 func (entity *EntityBehavior) getOptions() *EntityOptions {

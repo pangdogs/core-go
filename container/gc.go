@@ -5,3 +5,7 @@ type GC interface {
 	MarkGC()
 	NeedGC() bool
 }
+
+type GCCollector interface {
+	CollectGC(gc GC)
+}

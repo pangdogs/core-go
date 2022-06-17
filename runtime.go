@@ -64,6 +64,9 @@ func (runtime *RuntimeBehavior) NeedGC() bool {
 	return true
 }
 
+func (runtime *RuntimeBehavior) CollectGC(gc container.GC) {
+}
+
 func (runtime *RuntimeBehavior) init(runtimeCtx RuntimeContext, opts *RuntimeOptions) {
 	if runtimeCtx == nil {
 		panic("nil runtimeCtx")
@@ -83,8 +86,8 @@ func (runtime *RuntimeBehavior) init(runtimeCtx RuntimeContext, opts *RuntimeOpt
 	runtime.ctx = runtimeCtx
 	runtime.hooksMap = make(map[uint64][3]Hook)
 
-	runtime.eventUpdate.Init(runtime.getOptions().EnableAutoRecover, runtimeCtx.GetReportError(), EventRecursion_Disallow, runtimeCtx.getOptions().HookCache, runtime.opts.Inheritor)
-	runtime.eventLateUpdate.Init(runtime.getOptions().EnableAutoRecover, runtimeCtx.GetReportError(), EventRecursion_Disallow, runtimeCtx.getOptions().HookCache, runtime.opts.Inheritor)
+	runtime.eventUpdate.Init(runtime.getOptions().EnableAutoRecover, runtimeCtx.GetReportError(), EventRecursion_Disallow, runtimeCtx.getOptions().HookCache, runtime)
+	runtime.eventLateUpdate.Init(runtime.getOptions().EnableAutoRecover, runtimeCtx.GetReportError(), EventRecursion_Disallow, runtimeCtx.getOptions().HookCache, runtime)
 
 	if opts.EnableAutoRun {
 		runtime.opts.Inheritor.Run()

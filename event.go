@@ -23,11 +23,11 @@ type Event struct {
 	emitted        int
 }
 
-func (event *Event) Init(autoRecover bool, reportError chan error, eventRecursion EventRecursion, hookCache *container.Cache[Hook], gcParent container.GC) {
+func (event *Event) Init(autoRecover bool, reportError chan error, eventRecursion EventRecursion, hookCache *container.Cache[Hook], gcCollector container.GCCollector) {
 	event.autoRecover = autoRecover
 	event.reportError = reportError
 	event.eventRecursion = eventRecursion
-	event.subscribers.Init(hookCache, gcParent)
+	event.subscribers.Init(hookCache, gcCollector)
 }
 
 func (event *Event) GC() {
