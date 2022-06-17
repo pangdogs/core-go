@@ -36,7 +36,7 @@
 
 ### Entity
 * 实体，提供Component管理功能。
-* 生命周期：`[Init] -> [Update] -> [LateUpdate] -> [Shut]`
+* 生命周期：`[Init] -> [InitFin] -> [Update] -> [LateUpdate] -> [Shut] -> [ShutFin] `
 
 ### Component
 * 组件，用于拓展编写逻辑。
