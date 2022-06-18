@@ -21,6 +21,7 @@ func main() {
 	corePackage := flag.String("core", "core", "core package")
 	eventRegexp := flag.String("regexp", "^[eE]vent.+", "event regexp")
 	exportEmit := flag.Bool("exportemit", true, "export emit")
+	genassist := flag.String("genassist", "", "generate event assist code")
 
 	flag.Parse()
 
@@ -48,7 +49,7 @@ func main() {
 
 	fset := token.NewFileSet()
 
-	fast, err := parser.ParseFile(fset, *declFile, declFileData, 0)
+	fast, err := parser.ParseFile(fset, *declFile, declFileData, parser.ParseComments)
 	if err != nil {
 		panic(err)
 	}
@@ -103,6 +104,13 @@ package %s
 		exportEmitStr = "Emit"
 	}
 
+	type EventInfo struct {
+		Name    string
+		Comment string
+	}
+
+	var events []EventInfo
+
 	ast.Inspect(fast, func(node ast.Node) bool {
 		ts, ok := node.(*ast.TypeSpec)
 		if !ok {
@@ -114,6 +122,14 @@ package %s
 		}
 
 		eventName := ts.Name.Name
+		var eventComment string
+
+		for _, comment := range fast.Comments {
+			if fset.Position(comment.End()).Line+1 == fset.Position(node.Pos()).Line {
+				eventComment = comment.Text()
+				break
+			}
+		}
 
 		if !exp.MatchString(eventName) {
 			return true
@@ -253,10 +269,71 @@ func %[8]s%[1]s%[6]s(event %[5]sIEvent%[3]s) {
 `, eventName, eventFuncName, eventFuncParamsDecl, eventFuncParams, _corePackage, eventFuncTypeParamsDecl, eventFuncTypeParams, exportEmitStr)
 		}
 
+		events = append(events, EventInfo{
+			Name:    eventName,
+			Comment: eventComment,
+		})
+
 		fmt.Println(eventName)
 
 		return true
 	})
+
+	if *genassist != "" {
+		var eventsCode string
+		var eventsRecursionCode string
+
+		_corePackage := ""
+		if *corePackage != "" {
+			_corePackage = *corePackage + "."
+		}
+
+		for _, event := range events {
+			eventsCode += fmt.Sprintf("%s() %sIEvent\n", event.Name, _corePackage)
+		}
+
+		fmt.Fprintf(genCode, `
+type %[1]sInterface interface {
+	%[2]s}
+`, *genassist, eventsCode)
+
+		for i, event := range events {
+			eventRecursion := "EventRecursion_Disallow"
+
+			if strings.Contains(event.Comment, "[EventRecursion_Allow]") {
+				eventRecursion = "EventRecursion_Allow"
+			} else if strings.Contains(event.Comment, "[EventRecursion_Discard]") {
+				eventRecursion = "EventRecursion_Discard"
+			}
+
+			eventsRecursionCode += fmt.Sprintf("assist.eventTab[%d].Init(autoRecover, reportError, %s%s, hookCache, gcCollector)\n", i, _corePackage, eventRecursion)
+		}
+
+		var eventsAccessCode string
+
+		for i, event := range events {
+			eventsAccessCode += fmt.Sprintf(`func (assist *%s) %s() %sIEvent {
+	return &assist.eventTab[%d]
+}
+`, *genassist, event.Name, _corePackage, i)
+		}
+
+		fmt.Fprintf(genCode, `
+type %[1]s struct {
+	eventTab [%[2]d]%[4]sEvent
+}
+
+func (assist *%[1]s) Init(autoRecover bool, reportError chan error, hookCache *container.Cache[%[4]sHook], gcCollector container.GCCollector) {
+	%[3]s}
+
+func (assist *%[1]s) Shut() {
+	for i := range assist.eventTab {
+		assist.eventTab[i].Clear()
+	}
+}
+%[5]s
+`, *genassist, len(events), eventsRecursionCode, _corePackage, eventsAccessCode)
+	}
 
 	if err := ioutil.WriteFile(*genFile, genCode.Bytes(), os.ModePerm); err != nil {
 		panic(err)
