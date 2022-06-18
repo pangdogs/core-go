@@ -21,6 +21,7 @@ type Event struct {
 	reportError    chan error
 	eventRecursion EventRecursion
 	emitted        int
+	closed         bool
 }
 
 func (event *Event) Init(autoRecover bool, reportError chan error, eventRecursion EventRecursion, hookCache *container.Cache[Hook], gcCollector container.GCCollector) {
@@ -28,6 +29,7 @@ func (event *Event) Init(autoRecover bool, reportError chan error, eventRecursio
 	event.reportError = reportError
 	event.eventRecursion = eventRecursion
 	event.subscribers.Init(hookCache, gcCollector)
+	event.closed = false
 }
 
 func (event *Event) GC() {
@@ -78,6 +80,10 @@ func (event *Event) Emit(fun func(delegate FastIFace) bool) {
 }
 
 func (event *Event) newHook(delegate interface{}, delegateFastIFace FastIFace, priority int32) Hook {
+	if event.closed {
+		panic("event closed")
+	}
+
 	hook := Hook{
 		delegate:          delegate,
 		delegateFastIFace: delegateFastIFace,
@@ -104,6 +110,15 @@ func (event *Event) newHook(delegate interface{}, delegateFastIFace FastIFace, p
 	hook.element.Value = hook
 
 	return hook
+}
+
+func (event *Event) Open() {
+	event.closed = false
+}
+
+func (event *Event) Close() {
+	event.Clear()
+	event.closed = true
 }
 
 func (event *Event) Clear() {
