@@ -338,7 +338,7 @@ type %[1]s struct {
 func (assist *%[1]s) Init(autoRecover bool, reportError chan error, hookCache *container.Cache[%[4]sHook], gcCollector container.GCCollector) {
 %[3]s}
 
-func (assist *%[1]s) Shut() {
+func (assist *%[1]s) Clear() {
 	for i := range assist.eventTab {
 		assist.eventTab[i].Clear()
 	}
