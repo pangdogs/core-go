@@ -76,15 +76,26 @@ package %s
 	%s "github.com/pangdogs/core"`, *corePackage)
 	}
 
+	if *genassist != "" {
+		fmt.Fprintf(importCode, `
+	"github.com/pangdogs/core/container"`)
+	}
+
 	for _, imp := range fast.Imports {
 		begin := fset.Position(imp.Pos())
 		end := fset.Position(imp.End())
 
 		impStr := string(declFileData[begin.Offset:end.Offset])
 
-		if !strings.Contains(impStr, "github.com/pangdogs/core") {
-			fmt.Fprintf(importCode, "	\n%s", impStr)
+		if *corePackage != "" && strings.Contains(impStr, "github.com/pangdogs/core") {
+			continue
 		}
+
+		if *genassist != "" && strings.Contains(impStr, "github.com/pangdogs/core/container") {
+			continue
+		}
+
+		fmt.Fprintf(importCode, "\n\t%s", impStr)
 	}
 
 	fmt.Fprintf(importCode, "\n)\n")
@@ -294,7 +305,7 @@ func %[8]s%[1]s%[6]s(event %[5]sIEvent%[3]s) {
 
 		fmt.Fprintf(genCode, `
 type %[1]sInterface interface {
-	%[2]s}
+%[2]s}
 `, *genassist, eventsCode)
 
 		for i, event := range events {
@@ -325,7 +336,7 @@ type %[1]s struct {
 }
 
 func (assist *%[1]s) Init(autoRecover bool, reportError chan error, hookCache *container.Cache[%[4]sHook], gcCollector container.GCCollector) {
-	%[3]s}
+%[3]s}
 
 func (assist *%[1]s) Shut() {
 	for i := range assist.eventTab {
