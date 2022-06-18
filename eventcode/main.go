@@ -289,7 +289,7 @@ func %[8]s%[1]s%[6]s(event %[5]sIEvent%[3]s) {
 		}
 
 		for _, event := range events {
-			eventsCode += fmt.Sprintf("%s() %sIEvent\n", event.Name, _corePackage)
+			eventsCode += fmt.Sprintf("\t%s() %sIEvent\n", event.Name, _corePackage)
 		}
 
 		fmt.Fprintf(genCode, `
@@ -306,13 +306,14 @@ type %[1]sInterface interface {
 				eventRecursion = "EventRecursion_Discard"
 			}
 
-			eventsRecursionCode += fmt.Sprintf("assist.eventTab[%d].Init(autoRecover, reportError, %s%s, hookCache, gcCollector)\n", i, _corePackage, eventRecursion)
+			eventsRecursionCode += fmt.Sprintf("\tassist.eventTab[%d].Init(autoRecover, reportError, %s%s, hookCache, gcCollector)\n", i, _corePackage, eventRecursion)
 		}
 
 		var eventsAccessCode string
 
 		for i, event := range events {
-			eventsAccessCode += fmt.Sprintf(`func (assist *%s) %s() %sIEvent {
+			eventsAccessCode += fmt.Sprintf(`
+func (assist *%s) %s() %sIEvent {
 	return &assist.eventTab[%d]
 }
 `, *genassist, event.Name, _corePackage, i)
