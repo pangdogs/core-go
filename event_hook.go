@@ -15,6 +15,13 @@ func BindEventWithPriority[T any](event IEvent, delegate T, priority int32) Hook
 	return event.newHook(delegate, IFace2Fast(delegate), priority)
 }
 
+func UnbindEvent(event IEvent, delegate interface{}) {
+	if event == nil {
+		panic("nil event")
+	}
+	event.removeDelegate(delegate)
+}
+
 type Hook struct {
 	delegate          interface{}
 	delegateFastIFace FastIFace

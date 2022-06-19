@@ -5,6 +5,7 @@ import "github.com/pangdogs/core/container"
 type IEvent interface {
 	Emit(fun func(delegate FastIFace) bool)
 	newHook(delegate interface{}, delegateFastIFace FastIFace, priority int32) Hook
+	removeDelegate(delegate interface{})
 }
 
 type EventRecursion int32
@@ -113,6 +114,16 @@ func (event *Event) newHook(delegate interface{}, delegateFastIFace FastIFace, p
 	hook.element.Value = hook
 
 	return hook
+}
+
+func (event *Event) removeDelegate(delegate interface{}) {
+	event.subscribers.ReverseTraversal(func(other *container.Element[Hook]) bool {
+		if other.Value.delegate == delegate {
+			other.Escape()
+			return false
+		}
+		return true
+	})
 }
 
 func (event *Event) Open() {
