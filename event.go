@@ -12,6 +12,14 @@ type IEventTab interface {
 	EventTab(id int) IEvent
 }
 
+type IEventAssist interface {
+	IEventTab
+	Init(autoRecover bool, reportError chan error, hookCache *container.Cache[Hook], gcCollector container.GCCollector)
+	Open()
+	Close()
+	Clear()
+}
+
 type EventRecursion int32
 
 const (
