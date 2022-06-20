@@ -8,6 +8,10 @@ type IEvent interface {
 	removeDelegate(delegate interface{})
 }
 
+type IEventTab interface {
+	EventTab(id int) IEvent
+}
+
 type EventRecursion int32
 
 const (
