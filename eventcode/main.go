@@ -358,7 +358,7 @@ func (assist *%[1]s) Clear() {
 	}
 }
 
-func (assist *%[1]s) EventTab(id int) IEvent {
+func (assist *%[1]s) EventTab(id int) %[4]sIEvent {
 	return &assist.eventTab[id]
 }
 %[5]s
