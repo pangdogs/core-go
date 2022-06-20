@@ -304,7 +304,7 @@ func %[8]s%[1]s%[6]s(event %[5]sIEvent%[3]s) {
 		}
 
 		fmt.Fprintf(genCode, `
-type %[1]sInterface interface {
+type I%[1]s interface {
 %[2]s}
 `, *genassist, eventsCode)
 
