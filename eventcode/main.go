@@ -324,8 +324,10 @@ type %[1]sInterface interface {
 
 		for i, event := range events {
 			eventsAccessCode += fmt.Sprintf(`
-func (assist *%s) %s() %sIEvent {
-	return &assist.eventTab[%d]
+const %[2]sID int = %[4]d
+
+func (assist *%[1]s) %[2]s() %[3]sIEvent {
+	return &assist.eventTab[%[2]sID]
 }
 `, *genassist, event.Name, _corePackage, i)
 		}
@@ -354,6 +356,10 @@ func (assist *%[1]s) Clear() {
 	for i := range assist.eventTab {
 		assist.eventTab[i].Clear()
 	}
+}
+
+func (assist *%[1]s) EventTab(id int) IEvent {
+	return &assist.eventTab[id]
 }
 %[5]s
 `, *genassist, len(events), eventsRecursionCode, _corePackage, eventsAccessCode)
