@@ -324,23 +324,6 @@ package %s
 		fmt.Fprintf(assistImportCode, `
 	"github.com/pangdogs/core/container"`)
 
-		for _, imp := range fast.Imports {
-			begin := fset.Position(imp.Pos())
-			end := fset.Position(imp.End())
-
-			impStr := string(declFileData[begin.Offset:end.Offset])
-
-			if *corePackage != "" && strings.Contains(impStr, "github.com/pangdogs/core") {
-				continue
-			}
-
-			if *genAssistCode != "" && strings.Contains(impStr, "github.com/pangdogs/core/container") {
-				continue
-			}
-
-			fmt.Fprintf(assistImportCode, "\n\t%s", impStr)
-		}
-
 		fmt.Fprintf(assistImportCode, "\n)\n")
 
 		if assistImportCode.Len() > 12 {
