@@ -19,11 +19,11 @@ func main() {
 	eventRegexp := flag.String("regexp", "^[eE]vent.+", "event regexp")
 	declFile := flag.String("decl", "", "event declare go file (*.go)")
 	emitGOPackage := flag.String("emit_package", "", "emit event go package")
-	emitGenFile := flag.String("gen_emit", "", "generate emit event go file (*.go)")
+	emitGenFile := flag.String("gen_emit_dir", "", "generate emit event go file (*.go) dir")
 	exportEmit := flag.Bool("export_emit", true, "export emit")
 	genAssistCode := flag.String("gen_assist_code", "", "generate event assist code")
 	assistGOPackage := flag.String("assist_package", "", "event assist go package")
-	assistGenFile := flag.String("assist_gen", "", "generate event assist go file (*.go)")
+	assistGenFile := flag.String("gen_assist_dir", "", "generate event assist go file (*.go) dir")
 
 	flag.Parse()
 
@@ -59,9 +59,8 @@ func main() {
 	{
 		if *emitGenFile == "" {
 			*emitGenFile = strings.TrimSuffix(*declFile, ".go") + "_emit_code.go"
-		} else if filepath.Ext(*emitGenFile) != ".go" {
-			flag.Usage()
-			panic(flag.ErrHelp)
+		} else {
+			*emitGenFile = filepath.Dir(*declFile) + string(filepath.Separator) + filepath.Base(strings.TrimSuffix(*declFile, ".go")) + "_emit_code.go"
 		}
 
 		genEmitCodeBuff := &bytes.Buffer{}
@@ -296,9 +295,8 @@ func %[8]s%[1]s%[6]s(event %[5]sIEvent%[3]s) {
 
 		if *assistGenFile == "" {
 			*assistGenFile = strings.TrimSuffix(*declFile, ".go") + "_assist_code.go"
-		} else if filepath.Ext(*assistGenFile) != ".go" {
-			flag.Usage()
-			panic(flag.ErrHelp)
+		} else {
+			*assistGenFile = filepath.Dir(*declFile) + string(filepath.Separator) + filepath.Base(strings.TrimSuffix(*declFile, ".go")) + "_assist_code.go"
 		}
 
 		genAssistCodeBuff := &bytes.Buffer{}
