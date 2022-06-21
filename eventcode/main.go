@@ -283,6 +283,8 @@ func %[8]s%[1]s%[6]s(event %[5]sIEvent%[3]s) {
 			return true
 		})
 
+		os.MkdirAll(filepath.Dir(*assistGenFile), os.ModePerm)
+
 		if err := ioutil.WriteFile(*emitGenFile, genEmitCodeBuff.Bytes(), os.ModePerm); err != nil {
 			panic(err)
 		}
@@ -402,6 +404,8 @@ func (assist *%[1]s) Clear() {
 }
 %[5]s
 `, *genAssistCode, len(events), eventsRecursionCode, _corePackage, eventsAccessCode)
+
+		os.MkdirAll(filepath.Dir(*assistGenFile), os.ModePerm)
 
 		if err := ioutil.WriteFile(*assistGenFile, genAssistCodeBuff.Bytes(), os.ModePerm); err != nil {
 			panic(err)
