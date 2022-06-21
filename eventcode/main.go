@@ -296,7 +296,7 @@ func %[8]s%[1]s%[6]s(event %[5]sIEvent%[3]s) {
 		if *assistGenFile == "" {
 			*assistGenFile = strings.TrimSuffix(*declFile, ".go") + "_assist_code.go"
 		} else {
-			*assistGenFile = filepath.Dir(*declFile) + string(filepath.Separator) + *emitGenFile + string(filepath.Separator) + filepath.Base(strings.TrimSuffix(*declFile, ".go")) + "_assist_code.go"
+			*assistGenFile = filepath.Dir(*declFile) + string(filepath.Separator) + *assistGenFile + string(filepath.Separator) + filepath.Base(strings.TrimSuffix(*declFile, ".go")) + "_assist_code.go"
 		}
 
 		genAssistCodeBuff := &bytes.Buffer{}
