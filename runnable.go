@@ -5,7 +5,7 @@ import (
 )
 
 type Runnable interface {
-	Run() chan struct{}
+	Run() <-chan struct{}
 	Stop()
 }
 

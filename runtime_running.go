@@ -2,7 +2,7 @@ package core
 
 import "time"
 
-func (runtime *RuntimeBehavior) Run() chan struct{} {
+func (runtime *RuntimeBehavior) Run() <-chan struct{} {
 	if !runtime.ctx.markRunning() {
 		panic("runtime already running")
 	}

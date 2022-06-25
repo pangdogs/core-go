@@ -1,6 +1,6 @@
 package core
 
-func (app *AppBehavior) Run() chan struct{} {
+func (app *AppBehavior) Run() <-chan struct{} {
 	if !app.ctx.markRunning() {
 		panic("app already running")
 	}
