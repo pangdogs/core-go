@@ -101,6 +101,9 @@ func (runtimeCtx *RuntimeContextBehavior) EventEntityMgrEntityRemoveComponent() 
 }
 
 func (runtimeCtx *RuntimeContextBehavior) OnCompMgrAddComponents(entity Entity, components []Component) {
+	for _, comp := range components {
+		comp.setID(runtimeCtx.appCtx.genUID())
+	}
 	emitEventEntityMgrEntityAddComponents(&runtimeCtx.eventEntityMgrEntityAddComponents, runtimeCtx.opts.Inheritor, entity, components)
 }
 
