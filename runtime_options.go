@@ -5,13 +5,14 @@ import "time"
 var NewRuntimeOption = &NewRuntimeOptions{}
 
 type RuntimeOptions struct {
-	Inheritor            Runtime
-	EnableAutoRun        bool
-	EnableAutoRecover    bool
-	ProcessQueueCapacity int
-	ProcessQueueTimeout  time.Duration
-	Frame                Frame
-	GCInterval           time.Duration
+	Inheritor                Runtime
+	EnableAutoRun            bool
+	EnableAutoRecover        bool
+	EnableSortCompStartOrder bool
+	ProcessQueueCapacity     int
+	ProcessQueueTimeout      time.Duration
+	Frame                    Frame
+	GCInterval               time.Duration
 }
 
 type NewRuntimeOptionFunc func(o *RuntimeOptions)
@@ -23,6 +24,7 @@ func (*NewRuntimeOptions) Default() NewRuntimeOptionFunc {
 		o.Inheritor = nil
 		o.EnableAutoRun = false
 		o.EnableAutoRecover = false
+		o.EnableSortCompStartOrder = false
 		o.ProcessQueueCapacity = 128
 		o.ProcessQueueTimeout = 5 * time.Second
 		o.Frame = nil
@@ -45,6 +47,12 @@ func (*NewRuntimeOptions) EnableAutoRun(v bool) NewRuntimeOptionFunc {
 func (*NewRuntimeOptions) EnableAutoRecover(v bool) NewRuntimeOptionFunc {
 	return func(o *RuntimeOptions) {
 		o.EnableAutoRecover = v
+	}
+}
+
+func (*NewRuntimeOptions) EnableSortCompStartOrder(v bool) NewRuntimeOptionFunc {
+	return func(o *RuntimeOptions) {
+		o.EnableSortCompStartOrder = v
 	}
 }
 

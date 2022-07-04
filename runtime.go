@@ -1,6 +1,9 @@
 package core
 
-import "github.com/pangdogs/core/container"
+import (
+	"github.com/pangdogs/core/container"
+	"sort"
+)
 
 type Runtime interface {
 	container.GC
@@ -111,19 +114,99 @@ func (runtime *RuntimeBehavior) OnEntityMgrAddEntity(runtimeCtx RuntimeContext, 
 		entityInit.Init()
 	}
 
+	var primeCompCount int32
+
 	entity.RangeComponents(func(comp Component) bool {
-		if compAwake, ok := comp.(ComponentAwake); ok {
-			compAwake.Awake()
-		}
+		comp.setPrimer(true)
+		comp.setPriority(0)
+		primeCompCount++
 		return true
 	})
 
-	entity.RangeComponents(func(comp Component) bool {
-		if compStart, ok := comp.(ComponentStart); ok {
-			compStart.Start()
+	if runtime.opts.EnableSortCompStartOrder && primeCompCount > 1 {
+		primeComps := make([]Component, 0, primeCompCount)
+
+		entity.RangeComponents(func(comp Component) bool {
+			if comp.getPrimer() {
+				primeComps = append(primeComps, comp)
+			}
+			return true
+		})
+
+		foreachPrimeComps := func(fun func(comp Component)) {
+			for _, comp := range primeComps {
+				fun(comp)
+			}
 		}
-		return true
-	})
+
+		entity.RangeComponents(func(comp Component) bool {
+			if !comp.getPrimer() {
+				return true
+			}
+
+			foreachPrimeComps(func(comp Component) {
+				comp.setReference(false)
+			})
+
+			if compAwake, ok := comp.(ComponentAwake); ok {
+				compAwake.Awake()
+			}
+
+			priority := comp.getPriority()
+
+			foreachPrimeComps(func(other Component) {
+				if other.GetID() == comp.GetID() {
+					return
+				}
+
+				otherPriority := other.getPriority()
+
+				if other.getReference() || otherPriority > priority {
+					other.setPriority(otherPriority + priority + 1)
+				}
+			})
+
+			return true
+		})
+
+		sort.SliceStable(primeComps, func(i, j int) bool {
+			return primeComps[i].getPriority() < primeComps[j].getPriority()
+		})
+
+		foreachPrimeComps(func(comp Component) {
+			if entity.GetComponentByID(comp.GetID()) == nil {
+				return
+			}
+
+			if compStart, ok := comp.(ComponentStart); ok {
+				compStart.Start()
+			}
+		})
+	} else {
+		entity.RangeComponents(func(comp Component) bool {
+			if !comp.getPrimer() {
+				return true
+			}
+
+			if compAwake, ok := comp.(ComponentAwake); ok {
+				compAwake.Awake()
+			}
+
+			return true
+		})
+
+		entity.RangeComponents(func(comp Component) bool {
+			if !comp.getPrimer() {
+				return true
+			}
+
+			if compStart, ok := comp.(ComponentStart); ok {
+				compStart.Start()
+			}
+
+			return true
+		})
+	}
 
 	if entityInitFin, ok := entity.(EntityInitFin); ok {
 		entityInitFin.InitFin()
@@ -196,14 +279,14 @@ func (runtime *RuntimeBehavior) connectEntity(entity Entity) {
 		hooks[1] = BindEvent[EntityLateUpdate](&runtime.eventLateUpdate, entityLateUpdate)
 	}
 
+	hooks[2] = BindEvent[EventEntityDestroySelf](entity.EventEntityDestroySelf(), runtime)
+
+	runtime.hooksMap[entity.GetID()] = hooks
+
 	entity.RangeComponents(func(comp Component) bool {
 		runtime.connectComponent(comp)
 		return true
 	})
-
-	hooks[2] = BindEvent[EventEntityDestroySelf](entity.EventEntityDestroySelf(), runtime)
-
-	runtime.hooksMap[entity.GetID()] = hooks
 }
 
 func (runtime *RuntimeBehavior) connectComponent(comp Component) {
@@ -223,6 +306,11 @@ func (runtime *RuntimeBehavior) connectComponent(comp Component) {
 }
 
 func (runtime *RuntimeBehavior) disconnectEntity(entity Entity) {
+	entity.RangeComponents(func(comp Component) bool {
+		runtime.disconnectComponent(comp)
+		return true
+	})
+
 	hooks, ok := runtime.hooksMap[entity.GetID()]
 	if ok {
 		delete(runtime.hooksMap, entity.GetID())
@@ -231,11 +319,6 @@ func (runtime *RuntimeBehavior) disconnectEntity(entity Entity) {
 			hook.Unbind()
 		}
 	}
-
-	entity.RangeComponents(func(comp Component) bool {
-		runtime.disconnectComponent(comp)
-		return true
-	})
 }
 
 func (runtime *RuntimeBehavior) disconnectComponent(comp Component) {

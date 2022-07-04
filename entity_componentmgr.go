@@ -7,7 +7,9 @@ import (
 
 func (entity *EntityBehavior) GetComponent(name string) Component {
 	if e, ok := entity.getComponentElement(name); ok {
-		return Fast2IFace[Component](e.Value.FastIFace)
+		comp := Fast2IFace[Component](e.Value.FastIFace)
+		comp.setReference(true)
+		return comp
 	}
 
 	return nil
@@ -15,7 +17,9 @@ func (entity *EntityBehavior) GetComponent(name string) Component {
 
 func (entity *EntityBehavior) GetComponentByID(id uint64) Component {
 	if e, ok := entity.getComponentElementByID(id); ok {
-		return Fast2IFace[Component](e.Value.FastIFace)
+		comp := Fast2IFace[Component](e.Value.FastIFace)
+		comp.setReference(true)
+		return comp
 	}
 
 	return nil
@@ -28,6 +32,7 @@ func (entity *EntityBehavior) GetComponents(name string) []Component {
 		entity.componentList.TraversalAt(func(other *container.Element[Face]) bool {
 			comp := Fast2IFace[Component](other.Value.FastIFace)
 			if comp.GetName() == name {
+				comp.setReference(true)
 				components = append(components, comp)
 				return true
 			}
@@ -46,7 +51,9 @@ func (entity *EntityBehavior) RangeComponents(fun func(component Component) bool
 	}
 
 	entity.componentList.Traversal(func(e *container.Element[Face]) bool {
-		return fun(Fast2IFace[Component](e.Value.FastIFace))
+		comp := Fast2IFace[Component](e.Value.FastIFace)
+		comp.setReference(true)
+		return fun(comp)
 	})
 }
 
