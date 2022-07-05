@@ -170,7 +170,7 @@ func (runtime *RuntimeBehavior) OnEntityMgrAddEntity(runtimeCtx RuntimeContext, 
 		})
 
 		sort.SliceStable(primeComps, func(i, j int) bool {
-			return primeComps[i].getPriority() < primeComps[j].getPriority()
+			return primeComps[i].getPriority() > primeComps[j].getPriority()
 		})
 
 		foreachPrimeComps(func(comp Component) {
