@@ -218,7 +218,9 @@ func (runtime *RuntimeBehavior) connectEntity(entity Entity) {
 	runtime.hooksMap[entity.GetID()] = hooks
 
 	entity.RangeComponents(func(comp Component) bool {
-		runtime.connectComponent(comp)
+		if comp.getPrimary() {
+			runtime.connectComponent(comp)
+		}
 		return true
 	})
 }
