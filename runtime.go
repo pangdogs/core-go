@@ -2,7 +2,6 @@ package core
 
 import (
 	"github.com/pangdogs/core/container"
-	"sort"
 )
 
 type Runtime interface {
@@ -114,99 +113,34 @@ func (runtime *RuntimeBehavior) OnEntityMgrAddEntity(runtimeCtx RuntimeContext, 
 		entityInit.Init()
 	}
 
-	var primeCompCount int32
-
 	entity.RangeComponents(func(comp Component) bool {
 		comp.setPrimary(true)
-		comp.setPriority(0)
-		primeCompCount++
 		return true
 	})
 
-	if runtime.opts.EnableSortCompStartOrder && primeCompCount > 1 {
-		primeComps := make([]Component, 0, primeCompCount)
-
-		entity.RangeComponents(func(comp Component) bool {
-			if comp.getPrimary() {
-				primeComps = append(primeComps, comp)
-			}
+	entity.RangeComponents(func(comp Component) bool {
+		if !comp.getPrimary() {
 			return true
-		})
-
-		foreachPrimeComps := func(fun func(comp Component)) {
-			for _, comp := range primeComps {
-				fun(comp)
-			}
 		}
 
-		entity.RangeComponents(func(comp Component) bool {
-			if !comp.getPrimary() {
-				return true
-			}
+		if compAwake, ok := comp.(ComponentAwake); ok {
+			compAwake.Awake()
+		}
 
-			foreachPrimeComps(func(comp Component) {
-				comp.setReference(false)
-			})
+		return true
+	})
 
-			if compAwake, ok := comp.(ComponentAwake); ok {
-				compAwake.Awake()
-			}
-
-			priority := comp.getPriority()
-
-			foreachPrimeComps(func(other Component) {
-				if other.GetID() == comp.GetID() {
-					return
-				}
-
-				otherPriority := other.getPriority()
-
-				if (other.getReference() && otherPriority >= priority) || otherPriority > priority {
-					other.setPriority(otherPriority + priority + 1)
-				}
-			})
-
+	entity.RangeComponents(func(comp Component) bool {
+		if !comp.getPrimary() {
 			return true
-		})
+		}
 
-		sort.SliceStable(primeComps, func(i, j int) bool {
-			return primeComps[i].getPriority() > primeComps[j].getPriority()
-		})
+		if compStart, ok := comp.(ComponentStart); ok {
+			compStart.Start()
+		}
 
-		foreachPrimeComps(func(comp Component) {
-			if entity.GetComponentByID(comp.GetID()) == nil {
-				return
-			}
-
-			if compStart, ok := comp.(ComponentStart); ok {
-				compStart.Start()
-			}
-		})
-	} else {
-		entity.RangeComponents(func(comp Component) bool {
-			if !comp.getPrimary() {
-				return true
-			}
-
-			if compAwake, ok := comp.(ComponentAwake); ok {
-				compAwake.Awake()
-			}
-
-			return true
-		})
-
-		entity.RangeComponents(func(comp Component) bool {
-			if !comp.getPrimary() {
-				return true
-			}
-
-			if compStart, ok := comp.(ComponentStart); ok {
-				compStart.Start()
-			}
-
-			return true
-		})
-	}
+		return true
+	})
 
 	if entityInitFin, ok := entity.(EntityInitFin); ok {
 		entityInitFin.InitFin()

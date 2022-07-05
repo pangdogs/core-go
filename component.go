@@ -12,10 +12,6 @@ type Component interface {
 	getInheritor() Component
 	setPrimary(v bool)
 	getPrimary() bool
-	setReference(v bool)
-	getReference() bool
-	setPriority(v int32)
-	getPriority() int32
 	DestroySelf()
 	EventComponentDestroySelf() IEvent
 }
@@ -30,8 +26,6 @@ type ComponentBehavior struct {
 	entity                    Entity
 	inheritor                 Component
 	primary                   bool
-	reference                 bool
-	priority                  int32
 	eventComponentDestroySelf Event
 	gcMark                    bool
 }
@@ -103,22 +97,6 @@ func (comp *ComponentBehavior) setPrimary(v bool) {
 
 func (comp *ComponentBehavior) getPrimary() bool {
 	return comp.primary
-}
-
-func (comp *ComponentBehavior) setReference(v bool) {
-	comp.reference = v
-}
-
-func (comp *ComponentBehavior) getReference() bool {
-	return comp.reference
-}
-
-func (comp *ComponentBehavior) setPriority(v int32) {
-	comp.priority = v
-}
-
-func (comp *ComponentBehavior) getPriority() int32 {
-	return comp.priority
 }
 
 func (comp *ComponentBehavior) DestroySelf() {
