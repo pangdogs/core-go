@@ -10,8 +10,8 @@ type Component interface {
 	GetName() string
 	GetEntity() Entity
 	getInheritor() Component
-	setPrimer(v bool)
-	getPrimer() bool
+	setPrimary(v bool)
+	getPrimary() bool
 	setReference(v bool)
 	getReference() bool
 	setPriority(v int32)
@@ -29,7 +29,7 @@ type ComponentBehavior struct {
 	name                      string
 	entity                    Entity
 	inheritor                 Component
-	primer                    bool
+	primary                   bool
 	reference                 bool
 	priority                  int32
 	eventComponentDestroySelf Event
@@ -97,12 +97,12 @@ func (comp *ComponentBehavior) getInheritor() Component {
 	return comp.inheritor
 }
 
-func (comp *ComponentBehavior) setPrimer(v bool) {
-	comp.primer = v
+func (comp *ComponentBehavior) setPrimary(v bool) {
+	comp.primary = v
 }
 
-func (comp *ComponentBehavior) getPrimer() bool {
-	return comp.primer
+func (comp *ComponentBehavior) getPrimary() bool {
+	return comp.primary
 }
 
 func (comp *ComponentBehavior) setReference(v bool) {

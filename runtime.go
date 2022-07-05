@@ -117,7 +117,7 @@ func (runtime *RuntimeBehavior) OnEntityMgrAddEntity(runtimeCtx RuntimeContext, 
 	var primeCompCount int32
 
 	entity.RangeComponents(func(comp Component) bool {
-		comp.setPrimer(true)
+		comp.setPrimary(true)
 		comp.setPriority(0)
 		primeCompCount++
 		return true
@@ -127,7 +127,7 @@ func (runtime *RuntimeBehavior) OnEntityMgrAddEntity(runtimeCtx RuntimeContext, 
 		primeComps := make([]Component, 0, primeCompCount)
 
 		entity.RangeComponents(func(comp Component) bool {
-			if comp.getPrimer() {
+			if comp.getPrimary() {
 				primeComps = append(primeComps, comp)
 			}
 			return true
@@ -140,7 +140,7 @@ func (runtime *RuntimeBehavior) OnEntityMgrAddEntity(runtimeCtx RuntimeContext, 
 		}
 
 		entity.RangeComponents(func(comp Component) bool {
-			if !comp.getPrimer() {
+			if !comp.getPrimary() {
 				return true
 			}
 
@@ -184,7 +184,7 @@ func (runtime *RuntimeBehavior) OnEntityMgrAddEntity(runtimeCtx RuntimeContext, 
 		})
 	} else {
 		entity.RangeComponents(func(comp Component) bool {
-			if !comp.getPrimer() {
+			if !comp.getPrimary() {
 				return true
 			}
 
@@ -196,7 +196,7 @@ func (runtime *RuntimeBehavior) OnEntityMgrAddEntity(runtimeCtx RuntimeContext, 
 		})
 
 		entity.RangeComponents(func(comp Component) bool {
-			if !comp.getPrimer() {
+			if !comp.getPrimary() {
 				return true
 			}
 
