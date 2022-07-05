@@ -161,7 +161,7 @@ func (runtime *RuntimeBehavior) OnEntityMgrAddEntity(runtimeCtx RuntimeContext, 
 
 				otherPriority := other.getPriority()
 
-				if other.getReference() || otherPriority > priority {
+				if (other.getReference() && otherPriority >= priority) || otherPriority > priority {
 					other.setPriority(otherPriority + priority + 1)
 				}
 			})
