@@ -5,6 +5,10 @@ type EntityQuery interface {
 	RangeEntities(func(entity Entity) bool)
 }
 
+type EntityReverseQuery interface {
+	ReverseRangeEntities(func(entity Entity) bool)
+}
+
 type EntityMgr interface {
 	EntityQuery
 	AddEntity(entity Entity)

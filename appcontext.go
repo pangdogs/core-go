@@ -27,8 +27,8 @@ func NewAppContext(ctx context.Context, optFuncs ...NewAppContextOptionFunc) App
 	opts := &AppContextOptions{}
 	NewAppContextOption.Default()(opts)
 
-	for _, optFunc := range optFuncs {
-		optFunc(opts)
+	for i := range optFuncs {
+		optFuncs[i](opts)
 	}
 
 	if opts.Inheritor != nil {

@@ -25,8 +25,8 @@ func NewRuntime(runtimeCtx RuntimeContext, optFuncs ...NewRuntimeOptionFunc) Run
 	opts := &RuntimeOptions{}
 	NewRuntimeOption.Default()(opts)
 
-	for _, optFun := range optFuncs {
-		optFun(opts)
+	for i := range optFuncs {
+		optFuncs[i](opts)
 	}
 
 	var runtime *RuntimeBehavior
@@ -169,20 +169,20 @@ func (runtime *RuntimeBehavior) OnEntityMgrRemoveEntity(runtimeCtx RuntimeContex
 }
 
 func (runtime *RuntimeBehavior) OnEntityMgrEntityAddComponents(runtimeCtx RuntimeContext, entity Entity, components []Component) {
-	for _, comp := range components {
-		if compAwake, ok := comp.(ComponentAwake); ok {
+	for i := range components {
+		if compAwake, ok := components[i].(ComponentAwake); ok {
 			compAwake.Awake()
 		}
 	}
 
-	for _, comp := range components {
-		if compStart, ok := comp.(ComponentStart); ok {
+	for i := range components {
+		if compStart, ok := components[i].(ComponentStart); ok {
 			compStart.Start()
 		}
 	}
 
-	for _, comp := range components {
-		runtime.connectComponent(comp)
+	for i := range components {
+		runtime.connectComponent(components[i])
 	}
 }
 
@@ -251,8 +251,8 @@ func (runtime *RuntimeBehavior) disconnectEntity(entity Entity) {
 	if ok {
 		delete(runtime.hooksMap, entity.GetID())
 
-		for _, hook := range hooks {
-			hook.Unbind()
+		for i := range hooks {
+			hooks[i].Unbind()
 		}
 	}
 }
@@ -262,8 +262,8 @@ func (runtime *RuntimeBehavior) disconnectComponent(comp Component) {
 	if ok {
 		delete(runtime.hooksMap, comp.GetID())
 
-		for _, hook := range hooks {
-			hook.Unbind()
+		for i := range hooks {
+			hooks[i].Unbind()
 		}
 	}
 }

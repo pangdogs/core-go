@@ -28,8 +28,8 @@ func NewEntity(optFuncs ...NewEntityOptionFunc) Entity {
 	opts := &EntityOptions{}
 	NewEntityOption.Default()(opts)
 
-	for _, optFunc := range optFuncs {
-		optFunc(opts)
+	for i := range optFuncs {
+		optFuncs[i](opts)
 	}
 
 	if opts.Inheritor != nil {
@@ -115,8 +115,8 @@ func (entity *EntityBehavior) init(opts *EntityOptions) {
 	}
 
 	entity.eventEntityDestroySelf.Init(false, nil, EventRecursion_Discard, opts.HookCache, entity)
-	entity.eventCompMgrAddComponents.Init(false, nil, EventRecursion_Allow, opts.HookCache, entity)
-	entity.eventCompMgrRemoveComponent.Init(false, nil, EventRecursion_Allow, opts.HookCache, entity)
+	entity.eventCompMgrAddComponents.Init(false, nil, EventRecursion_Discard, opts.HookCache, entity)
+	entity.eventCompMgrRemoveComponent.Init(false, nil, EventRecursion_Discard, opts.HookCache, entity)
 }
 
 func (entity *EntityBehavior) getOptions() *EntityOptions {

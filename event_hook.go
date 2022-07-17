@@ -27,6 +27,7 @@ type Hook struct {
 	delegateFastIFace FastIFace
 	priority          int32
 	element           *container.Element[Hook]
+	received          int
 }
 
 func (hook *Hook) Bind(event IEvent) {
@@ -38,7 +39,7 @@ func (hook *Hook) BindWithPriority(event IEvent, priority int32) {
 		panic("nil event")
 	}
 
-	if hook.element != nil && !hook.element.Escaped() {
+	if hook.IsBound() {
 		panic("repeated bind event invalid")
 	}
 
@@ -50,6 +51,10 @@ func (hook *Hook) Unbind() {
 		hook.element.Escape()
 		hook.element = nil
 	}
+}
+
+func (hook *Hook) IsBound() bool {
+	return hook.element != nil && !hook.element.Escaped()
 }
 
 func (hook *Hook) Delegate() FastIFace {

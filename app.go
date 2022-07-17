@@ -19,8 +19,8 @@ func NewApp(appCtx AppContext, optFuncs ...NewAppOptionFunc) App {
 	opts := &AppOptions{}
 	NewAppOption.Default()(opts)
 
-	for _, optFunc := range optFuncs {
-		optFunc(opts)
+	for i := range optFuncs {
+		optFuncs[i](opts)
 	}
 
 	if opts.Inheritor != nil {

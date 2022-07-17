@@ -54,8 +54,8 @@ func (entity *EntityBehavior) RangeComponents(fun func(component Component) bool
 }
 
 func (entity *EntityBehavior) AddComponents(name string, components []Component) error {
-	for _, comp := range components {
-		if err := entity.addSingleComponent(name, comp); err != nil {
+	for i := range components {
+		if err := entity.addSingleComponent(name, components[i]); err != nil {
 			return err
 		}
 	}

@@ -28,6 +28,16 @@ func (runtimeCtx *RuntimeContextBehavior) RangeEntities(fun func(entity Entity) 
 	})
 }
 
+func (runtimeCtx *RuntimeContextBehavior) ReverseRangeEntities(fun func(entity Entity) bool) {
+	if fun == nil {
+		return
+	}
+
+	runtimeCtx.entityList.ReverseTraversal(func(e *container.Element[Face]) bool {
+		return fun(Fast2IFace[Entity](e.Value.FastIFace))
+	})
+}
+
 func (runtimeCtx *RuntimeContextBehavior) AddEntity(entity Entity) {
 	if entity == nil {
 		panic("nil entity")
@@ -77,8 +87,8 @@ func (runtimeCtx *RuntimeContextBehavior) RemoveEntity(id uint64) {
 	delete(runtimeCtx.entityMap, id)
 	e.Element.Escape()
 
-	for _, hook := range e.Hooks {
-		hook.Unbind()
+	for i := range e.Hooks {
+		e.Hooks[i].Unbind()
 	}
 
 	emitEventEntityMgrRemoveEntity[RuntimeContext](&runtimeCtx.eventEntityMgrRemoveEntity, runtimeCtx.opts.Inheritor, Fast2IFace[Entity](e.Element.Value.FastIFace))
@@ -101,8 +111,8 @@ func (runtimeCtx *RuntimeContextBehavior) EventEntityMgrEntityRemoveComponent() 
 }
 
 func (runtimeCtx *RuntimeContextBehavior) OnCompMgrAddComponents(entity Entity, components []Component) {
-	for _, comp := range components {
-		comp.setID(runtimeCtx.appCtx.genUID())
+	for i := range components {
+		components[i].setID(runtimeCtx.appCtx.genUID())
 	}
 	emitEventEntityMgrEntityAddComponents(&runtimeCtx.eventEntityMgrEntityAddComponents, runtimeCtx.opts.Inheritor, entity, components)
 }

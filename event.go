@@ -26,6 +26,7 @@ const (
 	EventRecursion_Allow EventRecursion = iota
 	EventRecursion_Disallow
 	EventRecursion_Discard
+	EventRecursion_Deep
 )
 
 type Event struct {
@@ -34,6 +35,7 @@ type Event struct {
 	reportError    chan error
 	eventRecursion EventRecursion
 	emitted        int
+	depth          int
 	opened         bool
 }
 
@@ -62,36 +64,53 @@ func (event *Event) Emit(fun func(delegate FastIFace) bool) {
 		return
 	}
 
-	if event.emitted > 0 {
-		switch event.eventRecursion {
-		case EventRecursion_Allow:
-			break
-		case EventRecursion_Disallow:
-			panic("recursive event disallowed")
-		case EventRecursion_Discard:
-			return
-		}
-	}
-
 	event.emitted++
 	defer func() {
 		event.emitted--
 	}()
 
+	event.depth = event.emitted
+
 	event.subscribers.Traversal(func(e *container.Element[Hook]) bool {
 		if !event.opened {
 			return false
 		}
-		if e.Value.delegateFastIFace != NilFastIFace {
-			ret, err := CallOuter(event.autoRecover, event.reportError, func() bool {
-				return fun(e.Value.delegateFastIFace)
-			})
-			if err != nil {
+
+		if e.Value.delegateFastIFace == NilFastIFace {
+			return true
+		}
+
+		switch event.eventRecursion {
+		case EventRecursion_Allow:
+			break
+		case EventRecursion_Disallow:
+			if e.Value.received > 0 {
+				panic("recursive event disallowed")
+			}
+		case EventRecursion_Discard:
+			if e.Value.received > 0 {
 				return true
 			}
-			return ret
+		case EventRecursion_Deep:
+			if event.depth != event.emitted {
+				return false
+			}
 		}
-		return true
+
+		e.Value.received++
+		defer func() {
+			e.Value.received--
+		}()
+
+		ret, err := CallOuter(event.autoRecover, event.reportError, func() bool {
+			return fun(e.Value.delegateFastIFace)
+		})
+
+		if err != nil {
+			return true
+		}
+
+		return ret
 	})
 }
 
@@ -103,6 +122,7 @@ func (event *Event) newHook(delegate interface{}, delegateFastIFace FastIFace, p
 	hook := Hook{
 		delegate:          delegate,
 		delegateFastIFace: delegateFastIFace,
+		priority:          priority,
 	}
 
 	var mark *container.Element[Hook]
@@ -115,12 +135,10 @@ func (event *Event) newHook(delegate interface{}, delegateFastIFace FastIFace, p
 		return true
 	})
 
-	hook.priority = priority
-
 	if mark != nil {
 		hook.element = event.subscribers.InsertAfter(Hook{}, mark)
 	} else {
-		hook.element = event.subscribers.PushBack(Hook{})
+		hook.element = event.subscribers.PushFront(Hook{})
 	}
 
 	hook.element.Value = hook

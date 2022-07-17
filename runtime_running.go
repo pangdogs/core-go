@@ -97,15 +97,15 @@ func (runtime *RuntimeBehavior) loopStopped(hooks [4]Hook) {
 		}
 	})
 
-	runtimeCtx.RangeEntities(func(entity Entity) bool {
+	runtimeCtx.ReverseRangeEntities(func(entity Entity) bool {
 		CallOuterNoRet(runtime.opts.EnableAutoRecover, runtimeCtx.GetReportError(), func() {
 			runtime.OnEntityMgrRemoveEntity(runtimeCtx, entity)
 		})
 		return true
 	})
 
-	for _, hook := range hooks {
-		hook.Unbind()
+	for i := range hooks {
+		hooks[i].Unbind()
 	}
 
 	if frame != nil {
