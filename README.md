@@ -16,11 +16,11 @@
 * 类似C#的事件机制，注意非线程安全，不能用于实现跨线程通知。
 
 ## 主要对象与函数
-### AppContext
-* 应用上下文，提供存储变量、全局Entity管理、全局异常报告、全局Cancel等几项功能，所有方法线程安全。
+### ServiceContext
+* 服务上下文，提供存储变量、全局Entity管理、全局异常报告、全局Cancel等几项功能，所有方法线程安全。
 
-### App
-* 应用，提供开始、停止运行功能。
+### Service
+* 服务，提供开始、停止运行功能。
 
 ### RuntimeContext
 * 运行时上下文，提供存储变量、Entity管理、异常报告、Cancel、跨运行时安全调用、获取帧数据等几项功能，除了Entity管理与获取帧数据外，其他方法均线程安全。
@@ -55,6 +55,15 @@
 * UnbindEvent
 	* 解绑定事件回调函数，比使用Hook解除订阅性能差，且在同个回调函数绑定多次事件的情况下，只能从最后依次解除，无法指定解除哪一个。
 
-* eventcode
+* EventRecursion 
+	* 定义递归发送事件时的行为，即在事件回调中再次发送事件如何处理。
+```
+  	EventRecursion_Allow    允许递归
+	EventRecursion_Disallow 不允许递归
+	EventRecursion_Discard  事件广播时，跳过已进入的回调函数
+	EventRecursion_Deep     只会在递归最深层广播事件，并且跳过已进入的回调
+```
+
+* eventcode包
 	* 用于生成发送事件代码，使用`go:generate`功能加在事件定义代码头部，即可生成代码。
 	* 通常使用`//go:generate go run github.com/pangdogs/core/eventcode -decl $GOFILE -package $GOPACKAGE`
