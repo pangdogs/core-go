@@ -24,7 +24,7 @@ func main() {
 	genAssistCode := flag.String("gen_assist_code", "", "generate event assist code")
 	assistGOPackage := flag.String("assist_package", "", "event assist go package")
 	assistGenFile := flag.String("gen_assist_dir", "", "generate event assist go file (*.go) dir")
-	assistDefEventRecursion := flag.String("assist_default_event_recursion", "EventRecursion_Disallow", "assist default event recursion")
+	assistDefEventRecursion := flag.String("assist_default_event_recursion", "EventRecursion_Discard", "assist default event recursion")
 
 	flag.Parse()
 
@@ -356,7 +356,7 @@ type I%[1]s interface {
 			switch eventRecursion {
 			case "EventRecursion_Allow", "EventRecursion_Discard", "EventRecursion_Deep", "EventRecursion_Disallow":
 			default:
-				eventRecursion = "EventRecursion_Disallow"
+				eventRecursion = "EventRecursion_Discard"
 			}
 
 			if strings.Contains(event.Comment, "[EventRecursion_Allow]") {

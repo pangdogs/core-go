@@ -13,7 +13,7 @@ type Entity interface {
 	setRuntimeCtx(runtimeCtx RuntimeContext)
 	GetRuntimeCtx() RuntimeContext
 	DestroySelf()
-	EventEntityDestroySelf() IEvent
+	eventEntityDestroySelf() IEvent
 }
 
 func EntityGetOptions(e Entity) EntityOptions {
@@ -50,7 +50,7 @@ type EntityBehavior struct {
 	componentList               container.List[Face]
 	componentMap                map[string]*container.Element[Face]
 	componentByIDMap            map[uint64]*container.Element[Face]
-	eventEntityDestroySelf      Event
+	_eventEntityDestroySelf     Event
 	eventCompMgrAddComponents   Event
 	eventCompMgrRemoveComponent Event
 	gcMark                      bool
@@ -63,7 +63,7 @@ func (entity *EntityBehavior) GC() bool {
 	entity.gcMark = false
 
 	entity.componentList.GC()
-	entity.eventEntityDestroySelf.GC()
+	entity._eventEntityDestroySelf.GC()
 	entity.eventCompMgrAddComponents.GC()
 	entity.eventCompMgrRemoveComponent.GC()
 
@@ -114,7 +114,7 @@ func (entity *EntityBehavior) init(opts *EntityOptions) {
 		entity.componentByIDMap = map[uint64]*container.Element[Face]{}
 	}
 
-	entity.eventEntityDestroySelf.Init(false, nil, EventRecursion_Discard, opts.HookCache, entity)
+	entity._eventEntityDestroySelf.Init(false, nil, EventRecursion_Discard, opts.HookCache, entity)
 	entity.eventCompMgrAddComponents.Init(false, nil, EventRecursion_Discard, opts.HookCache, entity)
 	entity.eventCompMgrRemoveComponent.Init(false, nil, EventRecursion_Discard, opts.HookCache, entity)
 }
@@ -140,9 +140,9 @@ func (entity *EntityBehavior) GetRuntimeCtx() RuntimeContext {
 }
 
 func (entity *EntityBehavior) DestroySelf() {
-	emitEventEntityDestroySelf(&entity.eventEntityDestroySelf, entity.opts.Inheritor)
+	emitEventEntityDestroySelf(&entity._eventEntityDestroySelf, entity.opts.Inheritor)
 }
 
-func (entity *EntityBehavior) EventEntityDestroySelf() IEvent {
-	return &entity.eventEntityDestroySelf
+func (entity *EntityBehavior) eventEntityDestroySelf() IEvent {
+	return &entity._eventEntityDestroySelf
 }

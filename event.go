@@ -95,6 +95,9 @@ func (event *Event) Emit(fun func(delegate FastIFace) bool) {
 			if event.depth != event.emitted {
 				return false
 			}
+			if e.Value.received > 0 {
+				return true
+			}
 		}
 
 		e.Value.received++

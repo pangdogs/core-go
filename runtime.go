@@ -213,7 +213,7 @@ func (runtime *RuntimeBehavior) connectEntity(entity Entity) {
 		hooks[1] = BindEvent[EntityLateUpdate](&runtime.eventLateUpdate, entityLateUpdate)
 	}
 
-	hooks[2] = BindEvent[EventEntityDestroySelf](entity.EventEntityDestroySelf(), runtime)
+	hooks[2] = BindEvent[EventEntityDestroySelf](entity.eventEntityDestroySelf(), runtime)
 
 	runtime.hooksMap[entity.GetID()] = hooks
 
@@ -236,7 +236,7 @@ func (runtime *RuntimeBehavior) connectComponent(comp Component) {
 		hooks[1] = BindEvent[ComponentLateUpdate](&runtime.eventLateUpdate, compLateUpdate)
 	}
 
-	hooks[2] = BindEvent[EventComponentDestroySelf](comp.EventComponentDestroySelf(), runtime)
+	hooks[2] = BindEvent[EventComponentDestroySelf](comp.eventComponentDestroySelf(), runtime)
 
 	runtime.hooksMap[comp.GetID()] = hooks
 }

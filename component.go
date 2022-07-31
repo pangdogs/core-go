@@ -13,7 +13,7 @@ type Component interface {
 	setPrimary(v bool)
 	getPrimary() bool
 	DestroySelf()
-	EventComponentDestroySelf() IEvent
+	eventComponentDestroySelf() IEvent
 }
 
 func ComponentGetInheritor(comp Component) Component {
@@ -21,13 +21,13 @@ func ComponentGetInheritor(comp Component) Component {
 }
 
 type ComponentBehavior struct {
-	id                        uint64
-	name                      string
-	entity                    Entity
-	inheritor                 Component
-	primary                   bool
-	eventComponentDestroySelf Event
-	gcMark                    bool
+	id                         uint64
+	name                       string
+	entity                     Entity
+	inheritor                  Component
+	primary                    bool
+	_eventComponentDestroySelf Event
+	gcMark                     bool
 }
 
 func (comp *ComponentBehavior) GC() bool {
@@ -36,7 +36,7 @@ func (comp *ComponentBehavior) GC() bool {
 	}
 	comp.gcMark = false
 
-	comp.eventComponentDestroySelf.GC()
+	comp._eventComponentDestroySelf.GC()
 
 	return true
 }
@@ -68,7 +68,7 @@ func (comp *ComponentBehavior) init(name string, entity Entity, inheritor Compon
 	comp.name = name
 	comp.entity = entity
 	comp.inheritor = inheritor
-	comp.eventComponentDestroySelf.Init(false, nil, EventRecursion_Discard, hookCache, comp)
+	comp._eventComponentDestroySelf.Init(false, nil, EventRecursion_Discard, hookCache, comp)
 }
 
 func (comp *ComponentBehavior) setID(id uint64) {
@@ -100,9 +100,9 @@ func (comp *ComponentBehavior) getPrimary() bool {
 }
 
 func (comp *ComponentBehavior) DestroySelf() {
-	emitEventComponentDestroySelf(&comp.eventComponentDestroySelf, comp.inheritor)
+	emitEventComponentDestroySelf(&comp._eventComponentDestroySelf, comp.inheritor)
 }
 
-func (comp *ComponentBehavior) EventComponentDestroySelf() IEvent {
-	return &comp.eventComponentDestroySelf
+func (comp *ComponentBehavior) eventComponentDestroySelf() IEvent {
+	return &comp._eventComponentDestroySelf
 }
