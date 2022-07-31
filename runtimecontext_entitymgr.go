@@ -47,10 +47,10 @@ func (runtimeCtx *RuntimeContextBehavior) AddEntity(entity Entity) {
 		panic("entity already added in runtime context")
 	}
 
-	entity.setID(runtimeCtx.appCtx.genUID())
+	entity.setID(runtimeCtx.servCtx.genUID())
 	entity.setRuntimeCtx(runtimeCtx.opts.Inheritor)
 	entity.RangeComponents(func(comp Component) bool {
-		comp.setID(runtimeCtx.appCtx.genUID())
+		comp.setID(runtimeCtx.servCtx.genUID())
 		return true
 	})
 
@@ -112,7 +112,7 @@ func (runtimeCtx *RuntimeContextBehavior) EventEntityMgrEntityRemoveComponent() 
 
 func (runtimeCtx *RuntimeContextBehavior) OnCompMgrAddComponents(entity Entity, components []Component) {
 	for i := range components {
-		components[i].setID(runtimeCtx.appCtx.genUID())
+		components[i].setID(runtimeCtx.servCtx.genUID())
 	}
 	emitEventEntityMgrEntityAddComponents(&runtimeCtx.eventEntityMgrEntityAddComponents, runtimeCtx.opts.Inheritor, entity, components)
 }

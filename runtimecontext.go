@@ -11,9 +11,9 @@ type RuntimeContext interface {
 	EntityMgrEvents
 	EntityReverseQuery
 	SafeCall
-	init(appCtx AppContext, opts *RuntimeContextOptions)
+	init(servCtx ServiceContext, opts *RuntimeContextOptions)
 	getOptions() *RuntimeContextOptions
-	GetAppCtx() AppContext
+	GetServiceCtx() ServiceContext
 	setFrame(frame Frame)
 	GetFrame() Frame
 }
@@ -26,7 +26,7 @@ func RuntimeContextGetInheritor(runtimeCtx RuntimeContext) RuntimeContext {
 	return runtimeCtx.getOptions().Inheritor
 }
 
-func NewRuntimeContext(appCtx AppContext, optFuncs ...NewRuntimeContextOptionFunc) RuntimeContext {
+func NewRuntimeContext(servCtx ServiceContext, optFuncs ...NewRuntimeContextOptionFunc) RuntimeContext {
 	opts := &RuntimeContextOptions{}
 	NewRuntimeContextOption.Default()(opts)
 
@@ -37,12 +37,12 @@ func NewRuntimeContext(appCtx AppContext, optFuncs ...NewRuntimeContextOptionFun
 	var runtimeCtx *RuntimeContextBehavior
 
 	if opts.Inheritor != nil {
-		opts.Inheritor.init(appCtx, opts)
+		opts.Inheritor.init(servCtx, opts)
 		return opts.Inheritor
 	}
 
 	runtimeCtx = &RuntimeContextBehavior{}
-	runtimeCtx.init(appCtx, opts)
+	runtimeCtx.init(servCtx, opts)
 
 	return runtimeCtx.opts.Inheritor
 }
@@ -56,7 +56,7 @@ type RuntimeContextBehavior struct {
 	_ContextBehavior
 	_RunnableMarkBehavior
 	opts                                RuntimeContextOptions
-	appCtx                              AppContext
+	servCtx                             ServiceContext
 	entityMap                           map[uint64]RuntimeCtxEntityInfo
 	entityList                          container.List[Face]
 	frame                               Frame
@@ -106,9 +106,9 @@ func (runtimeCtx *RuntimeContextBehavior) CollectGC(gc container.GC) {
 	runtimeCtx.opts.Inheritor.MarkGC()
 }
 
-func (runtimeCtx *RuntimeContextBehavior) init(appCtx AppContext, opts *RuntimeContextOptions) {
-	if appCtx == nil {
-		panic("nil appCtx")
+func (runtimeCtx *RuntimeContextBehavior) init(servCtx ServiceContext, opts *RuntimeContextOptions) {
+	if servCtx == nil {
+		panic("nil servCtx")
 	}
 
 	if opts == nil {
@@ -121,8 +121,8 @@ func (runtimeCtx *RuntimeContextBehavior) init(appCtx AppContext, opts *RuntimeC
 		runtimeCtx.opts.Inheritor = runtimeCtx
 	}
 
-	runtimeCtx._ContextBehavior.init(appCtx, runtimeCtx.opts.ReportError)
-	runtimeCtx.appCtx = appCtx
+	runtimeCtx._ContextBehavior.init(servCtx, runtimeCtx.opts.ReportError)
+	runtimeCtx.servCtx = servCtx
 
 	runtimeCtx.entityList.Init(runtimeCtx.opts.FaceCache, runtimeCtx.opts.Inheritor)
 	runtimeCtx.entityMap = map[uint64]RuntimeCtxEntityInfo{}
@@ -137,8 +137,8 @@ func (runtimeCtx *RuntimeContextBehavior) getOptions() *RuntimeContextOptions {
 	return &runtimeCtx.opts
 }
 
-func (runtimeCtx *RuntimeContextBehavior) GetAppCtx() AppContext {
-	return runtimeCtx.appCtx
+func (runtimeCtx *RuntimeContextBehavior) GetServiceCtx() ServiceContext {
+	return runtimeCtx.servCtx
 }
 
 func (runtimeCtx *RuntimeContextBehavior) setFrame(frame Frame) {

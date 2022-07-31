@@ -84,7 +84,7 @@ func (runtime *RuntimeBehavior) init(runtimeCtx RuntimeContext, opts *RuntimeOpt
 		runtime.opts.Inheritor = runtime
 	}
 
-	runtime.id = runtimeCtx.GetAppCtx().genUID()
+	runtime.id = runtimeCtx.GetServiceCtx().genUID()
 	runtime.ctx = runtimeCtx
 	runtime.hooksMap = make(map[uint64][3]Hook)
 
